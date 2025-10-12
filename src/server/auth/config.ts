@@ -109,9 +109,20 @@ export const authConfig = {
         id: token.id as string,
       },
     }),
+    authorized: ({ auth, request }) => {
+      const { pathname } = request.nextUrl;
+      
+      // Public routes (login page)
+      if (pathname === "/") {
+        return true; // Always allow access to root
+      }
+      
+      // Protected routes - require authentication
+      return !!auth;
+    },
   },
   pages: {
-    signIn: "/auth/signin", // Opcional: página personalizada de login
+    signIn: "/", // Redirect to root for login
   },
   session: {
     strategy: "jwt", // Usar JWT para credenciales (en lugar de database sessions)
