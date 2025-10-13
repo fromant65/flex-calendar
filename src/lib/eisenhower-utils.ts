@@ -1,7 +1,7 @@
 import type { OccurrenceWithTask, QuadrantPosition } from "./types"
 
 export function calculateQuadrant(occurrence: OccurrenceWithTask): QuadrantPosition {
-  const importance = occurrence.task.importance
+  const importance = occurrence.task?.importance || 0
   const urgency = occurrence.urgency || 0
 
   const isImportant = importance >= 6

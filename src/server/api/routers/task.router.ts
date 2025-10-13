@@ -19,6 +19,8 @@ const createTaskSchema = z.object({
   name: z.string().min(1).max(512),
   description: z.string().optional(),
   importance: z.number().min(1).max(10).optional(),
+  targetDate: z.date().optional(),
+  limitDate: z.date().optional(),
   recurrence: createRecurrenceSchema.optional(),
 });
 

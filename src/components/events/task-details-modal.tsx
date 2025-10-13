@@ -2,17 +2,26 @@
 
 import type { EventWithDetails, OccurrenceWithTask } from "~/lib/types"
 import { Calendar, Clock, Flag, Lock, Target } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog"
+
+
+type TaskLike = {
+  id?: number
+  name?: string
+  description?: string | null
+  importance?: number
+}
 
 interface TaskDetailsModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  task?: TaskLike | null
   occurrence?: OccurrenceWithTask | null
   event?: EventWithDetails | null
 }
 
-export function TaskDetailsModal({ open, onOpenChange, occurrence, event }: TaskDetailsModalProps) {
-  const task = occurrence?.task || event?.task
+export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrence, event }: TaskDetailsModalProps) {
+  const task = taskProp || occurrence?.task || event?.task
   const displayOccurrence = occurrence || event?.occurrence
 
   if (!task && !event) return null

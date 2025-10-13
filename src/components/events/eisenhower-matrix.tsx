@@ -177,13 +177,13 @@ function TaskCard({ occurrence, quadrant, onSelect, onDragStart, onClick, isSele
       }`}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <h4 className="text-sm font-medium text-foreground line-clamp-2">{occurrence.task.name}</h4>
+        <h4 className="text-sm font-medium text-foreground line-clamp-2">{occurrence.task?.name}</h4>
         <div className="flex items-center gap-1 shrink-0">
           <Flag className="w-3 h-3 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">{occurrence.task.importance}</span>
+          <span className="text-xs text-muted-foreground">{occurrence.task?.importance}</span>
         </div>
       </div>
-      {occurrence.task.description && (
+      {occurrence.task?.description && (
         <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{occurrence.task.description}</p>
       )}
       <div className="flex items-center gap-3 text-xs text-muted-foreground">

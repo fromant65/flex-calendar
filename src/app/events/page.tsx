@@ -1,12 +1,12 @@
 "use client"
 
-import { CalendarViewComponent } from "~/components/calendar-view"
-import { EisenhowerMatrix } from "~/components/eisenhower-matrix"
-import { ScheduleDialog } from "~/components/schedule-dialog"
-import { TaskDetailsModal } from "~/components/task-details-modal"
-import { mockTrpc, subscribeToUpdates } from "~/lib/mock-trpc"
+import { CalendarViewComponent } from "~/components/events/calendar-view"
+import { EisenhowerMatrix } from "~/components/events/eisenhower-matrix"
+import { ScheduleDialog } from "~/components/events/schedule-dialog"
+import { TaskDetailsModal } from "~/components/events/task-details-modal"
+import { api } from "~/trpc/react"
 import type { CalendarView, EventWithDetails, OccurrenceWithTask } from "~/lib/types"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 export default function TaskCalendarPage() {
   const [calendarView, setCalendarView] = useState<CalendarView>("week")
@@ -16,29 +16,52 @@ export default function TaskCalendarPage() {
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedHour, setSelectedHour] = useState<number | undefined>(undefined)
-  const [, setRefreshTrigger] = useState(0)
   const [detailsModalOpen, setDetailsModalOpen] = useState(false)
   const [detailsOccurrence, setDetailsOccurrence] = useState<OccurrenceWithTask | null>(null)
   const [detailsEvent, setDetailsEvent] = useState<EventWithDetails | null>(null)
   const [eventToReschedule, setEventToReschedule] = useState<EventWithDetails | null>(null)
 
-  // Fetch data using mock tRPC
-  const { data: events = [] } = mockTrpc.calendarEvent.getMyEventsWithDetails.useQuery()
-  const { data: occurrences = [] } = mockTrpc.occurrence.getByDateRange.useQuery()
-  const createEventMutation = mockTrpc.calendarEvent.create.useMutation()
-  const updateEventMutation = mockTrpc.calendarEvent.update.useMutation()
+  // Calculate date range for queries (current week)
+  const today = new Date()
+  const startOfWeek = new Date(today)
+  startOfWeek.setDate(today.getDate() - today.getDay())
+  startOfWeek.setHours(0, 0, 0, 0)
+  const endOfWeek = new Date(startOfWeek)
+  endOfWeek.setDate(startOfWeek.getDate() + 7)
 
-  useEffect(() => {
-    const unsubscribe = subscribeToUpdates(() => {
-      setRefreshTrigger((prev) => prev + 1)
-    })
-    return unsubscribe
-  }, [])
+  // Fetch data using tRPC API
+  const { data: eventsData = [], isLoading: eventsLoading } = api.calendarEvent.getMyEventsWithDetails.useQuery()
+  const { data: occurrencesData = [], isLoading: occurrencesLoading } = api.occurrence.getByDateRange.useQuery({
+    startDate: startOfWeek,
+    endDate: endOfWeek,
+  })
+  
+  // Cast to expected types (API returns data with relations)
+  const events = eventsData as EventWithDetails[]
+  const occurrences = occurrencesData as OccurrenceWithTask[]
+
+  const createEventMutation = api.calendarEvent.create.useMutation({
+    onSuccess: () => {
+      // Refetch data after creating event
+      void api.useUtils().calendarEvent.getMyEventsWithDetails.invalidate()
+      void api.useUtils().occurrence.getByDateRange.invalidate()
+    }
+  })
+  const updateEventMutation = api.calendarEvent.update.useMutation({
+    onSuccess: () => {
+      // Refetch data after updating event
+      void api.useUtils().calendarEvent.getMyEventsWithDetails.invalidate()
+      void api.useUtils().occurrence.getByDateRange.invalidate()
+    }
+  })
 
   const availableOccurrences = occurrences.filter((occurrence) => {
     const hasActiveEvent = events.some((event) => event.associatedOccurrenceId === occurrence.id && !event.isCompleted)
     return !hasActiveEvent
   })
+
+  console.log("All Occurrences:", occurrences)
+  console.log("Available Occurrences:", availableOccurrences)
 
   const handleTaskSelect = (occurrence: OccurrenceWithTask) => {
     setSelectedTask(occurrence)
@@ -97,8 +120,10 @@ export default function TaskCalendarPage() {
     if (eventToReschedule) {
       updateEventMutation.mutate({
         id: eventToReschedule.id,
-        start,
-        finish,
+        data: {
+          start,
+          finish,
+        }
       })
       setEventToReschedule(null)
     } else if (selectedTask) {
@@ -114,6 +139,14 @@ export default function TaskCalendarPage() {
     setSelectedTask(null)
     setSelectedDate(null)
     setSelectedHour(undefined)
+  }
+
+  if(eventsLoading || occurrencesLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+        </div>
+    )
   }
 
   return (

@@ -42,19 +42,25 @@ export class TaskOccurrenceRepository extends BaseRepository<typeof taskOccurren
   }
 
   /**
-   * Find occurrences within a date range
+   * Find occurrences within a date range and include the associated task
    */
-  async findByDateRange(startDate: Date, endDate: Date): Promise<OccurrenceSelect[]> {
-    return await db
-      .select()
-      .from(taskOccurrences)
-      .where(
-        and(
-          gte(taskOccurrences.startDate, startDate),
-          lte(taskOccurrences.startDate, endDate),
-        ),
-      )
-      .orderBy(taskOccurrences.startDate);
+  async findByDateRange(startDate: Date, endDate: Date): Promise<(OccurrenceSelect & { task?: any | null })[]> {
+    const results = await db.query.taskOccurrences.findMany({
+      where: and(
+        gte(taskOccurrences.startDate, startDate),
+        lte(taskOccurrences.startDate, endDate),
+      ),
+      with: {
+        task: true,
+      },
+    });
+
+    // Ensure consistent ordering by startDate
+    return results.sort((a, b) => {
+      const aTime = a.startDate instanceof Date ? a.startDate.getTime() : new Date(a.startDate).getTime();
+      const bTime = b.startDate instanceof Date ? b.startDate.getTime() : new Date(b.startDate).getTime();
+      return aTime - bTime;
+    });
   }
 
   /**

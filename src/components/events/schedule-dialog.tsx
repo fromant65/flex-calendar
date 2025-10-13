@@ -2,10 +2,10 @@
 
 import type { EventWithDetails, OccurrenceWithTask } from "~/lib/types"
 import { useState, useEffect } from "react"
-import { Button } from "./ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog"
-import { Input } from "./ui/input"
-import { Label } from "./ui/label"
+import { Button } from "../ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog"
+import { Input } from "../ui/input"
+import { Label } from "../ui/label"
 
 interface ScheduleDialogProps {
   open: boolean
