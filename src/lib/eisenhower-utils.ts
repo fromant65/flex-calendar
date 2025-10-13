@@ -1,4 +1,4 @@
-import type { OccurrenceWithTask, QuadrantPosition } from "../types"
+import type { OccurrenceWithTask, QuadrantPosition } from "./types"
 
 export function calculateQuadrant(occurrence: OccurrenceWithTask): QuadrantPosition {
   const importance = occurrence.task.importance

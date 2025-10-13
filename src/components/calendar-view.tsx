@@ -5,9 +5,9 @@ import { getCurrentTimePosition, getWeekDays } from "~/lib/calendar-utils"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Button } from "./ui/button"
-import { DayView } from "./calendar-views/day-view"
-import { WeekView } from "./calendar-views/week-view"
-import { MonthView } from "./calendar-views/month-view"
+import { DayView } from "./day-view"
+import { WeekView } from "./week-view"
+import { MonthView } from "./month-view"
 
 interface CalendarViewProps {
   events: EventWithDetails[]
@@ -79,7 +79,7 @@ export function CalendarViewComponent({
       const weekDays = getWeekDays(currentDate)
       const start = weekDays[0]
       const end = weekDays[6]
-      return `${start.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${end.toLocaleDateString(
+      return `${start?.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${end?.toLocaleDateString(
         "en-US",
         { month: "short", day: "numeric", year: "numeric" },
       )}`

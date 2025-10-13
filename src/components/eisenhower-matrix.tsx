@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import type { OccurrenceWithTask } from "~/lib/types"
+import type { OccurrenceWithTask, QuadrantPosition } from "~/lib/types"
 import { calculateQuadrant, getQuadrantColor, getQuadrantLabel } from "~/lib/eisenhower-utils"
 import { Clock, Flag } from "lucide-react"
 import { useMemo } from "react"
@@ -23,7 +23,7 @@ export function EisenhowerMatrix({
   selectedTaskId,
 }: EisenhowerMatrixProps) {
   const quadrants = useMemo(() => {
-    const grouped = {
+    const grouped: Record<QuadrantPosition["quadrant"], OccurrenceWithTask[]> = {
       "urgent-important": [] as OccurrenceWithTask[],
       "not-urgent-important": [] as OccurrenceWithTask[],
       "urgent-not-important": [] as OccurrenceWithTask[],
@@ -31,7 +31,7 @@ export function EisenhowerMatrix({
     }
 
     occurrences.forEach((occurrence) => {
-      const { quadrant } = calculateQuadrant(occurrence)
+      const quadrant = calculateQuadrant(occurrence).quadrant as keyof typeof grouped
       grouped[quadrant].push(occurrence)
     })
 

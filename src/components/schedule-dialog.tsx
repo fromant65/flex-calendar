@@ -60,10 +60,10 @@ export function ScheduleDialog({
     const [endHour, endMinute] = endTime.split(":").map(Number)
 
     const start = new Date(selectedDate)
-    start.setHours(startHour, startMinute, 0, 0)
+    start.setHours(startHour!, startMinute, 0, 0)
 
     const finish = new Date(selectedDate)
-    finish.setHours(endHour, endMinute, 0, 0)
+    finish.setHours(endHour!, endMinute, 0, 0)
 
     // Validate that end time is after start time
     if (finish <= start) {
@@ -136,7 +136,7 @@ export function ScheduleDialog({
               (() => {
                 const [startHour, startMinute] = startTime.split(":").map(Number)
                 const [endHour, endMinute] = endTime.split(":").map(Number)
-                const durationMinutes = endHour * 60 + endMinute - (startHour * 60 + startMinute)
+                const durationMinutes = endHour! * 60 + endMinute! - (startHour! * 60 + startMinute!)
 
                 if (durationMinutes > 0) {
                   return (
