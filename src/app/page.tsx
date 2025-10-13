@@ -72,13 +72,13 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-background dark">
       <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-        <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
-          Flex <span className="text-[hsl(280,100%,70%)]">Calendar</span>
+        <h1 className="text-5xl font-extrabold tracking-tight text-foreground sm:text-[5rem]">
+          Flex <span className="text-primary">Calendar</span>
         </h1>
 
-        <div className="w-full max-w-md rounded-xl bg-white/10 p-8 backdrop-blur-sm">
+        <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 shadow-lg">
           <div className="mb-6 flex gap-4">
             <button
               onClick={() => {
@@ -87,8 +87,8 @@ export default function Home() {
               }}
               className={`flex-1 rounded-lg py-2 font-semibold transition-colors ${
                 isLogin
-                  ? "bg-[hsl(280,100%,70%)] text-white"
-                  : "bg-white/10 text-white/60 hover:bg-white/20"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
               Iniciar Sesión
@@ -100,8 +100,8 @@ export default function Home() {
               }}
               className={`flex-1 rounded-lg py-2 font-semibold transition-colors ${
                 !isLogin
-                  ? "bg-[hsl(280,100%,70%)] text-white"
-                  : "bg-white/10 text-white/60 hover:bg-white/20"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
               Registrarse
@@ -111,7 +111,7 @@ export default function Home() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div>
-                <label htmlFor="name" className="mb-2 block text-sm font-medium">
+                <label htmlFor="name" className="mb-2 block text-sm font-medium text-foreground">
                   Nombre
                 </label>
                 <input
@@ -121,7 +121,7 @@ export default function Home() {
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="w-full rounded-lg bg-white/5 px-4 py-3 text-white placeholder-white/50 outline-none ring-2 ring-white/10 transition-all focus:ring-[hsl(280,100%,70%)]"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground placeholder-muted-foreground outline-none transition-all focus:ring-2 focus:ring-primary"
                   placeholder="Tu nombre"
                   required={!isLogin}
                 />
@@ -129,7 +129,7 @@ export default function Home() {
             )}
 
             <div>
-              <label htmlFor="email" className="mb-2 block text-sm font-medium">
+              <label htmlFor="email" className="mb-2 block text-sm font-medium text-foreground">
                 Email
               </label>
               <input
@@ -139,14 +139,14 @@ export default function Home() {
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
-                className="w-full rounded-lg bg-white/5 px-4 py-3 text-white placeholder-white/50 outline-none ring-2 ring-white/10 transition-all focus:ring-[hsl(280,100%,70%)]"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground placeholder-muted-foreground outline-none transition-all focus:ring-2 focus:ring-primary"
                 placeholder="tu@email.com"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="mb-2 block text-sm font-medium">
+              <label htmlFor="password" className="mb-2 block text-sm font-medium text-foreground">
                 Contraseña
               </label>
               <input
@@ -156,7 +156,7 @@ export default function Home() {
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
                 }
-                className="w-full rounded-lg bg-white/5 px-4 py-3 text-white placeholder-white/50 outline-none ring-2 ring-white/10 transition-all focus:ring-[hsl(280,100%,70%)]"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground placeholder-muted-foreground outline-none transition-all focus:ring-2 focus:ring-primary"
                 placeholder="••••••••"
                 required
                 minLength={6}
@@ -164,7 +164,7 @@ export default function Home() {
             </div>
 
             {error && (
-              <div className="rounded-lg bg-red-500/20 p-3 text-sm text-red-200">
+              <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
                 {error}
               </div>
             )}
@@ -172,7 +172,7 @@ export default function Home() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-lg bg-[hsl(280,100%,70%)] px-4 py-3 font-semibold text-white transition-colors hover:bg-[hsl(280,100%,60%)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-lg bg-primary px-4 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading
                 ? "Cargando..."
@@ -182,21 +182,21 @@ export default function Home() {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-white/60">
+          <div className="mt-6 text-center text-sm text-muted-foreground">
             {isLogin ? "¿No tienes cuenta? " : "¿Ya tienes cuenta? "}
             <button
               onClick={() => {
                 setIsLogin(!isLogin);
                 setError("");
               }}
-              className="font-semibold text-[hsl(280,100%,70%)] hover:underline"
+              className="font-semibold text-primary hover:underline"
             >
               {isLogin ? "Regístrate" : "Inicia sesión"}
             </button>
           </div>
         </div>
 
-        <p className="text-sm text-white/40">
+        <p className="text-sm text-muted-foreground">
           Sistema de gestión de tareas con calendario integrado
         </p>
       </div>
