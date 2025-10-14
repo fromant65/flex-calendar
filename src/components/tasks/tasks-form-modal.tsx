@@ -53,6 +53,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
     endDate: undefined as string | undefined,
     targetDate: undefined as string | undefined,
     limitDate: undefined as string | undefined,
+    targetTimeConsumption: undefined as number | undefined,
   })
 
   const createMutation = api.task.create.useMutation({ onSuccess })
@@ -73,6 +74,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
           : undefined,
         targetDate: undefined,
         limitDate: undefined,
+        targetTimeConsumption: undefined,
       })
     } else {
       resetForm()
@@ -91,6 +93,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
       endDate: undefined,
       targetDate: undefined,
       limitDate: undefined,
+      targetTimeConsumption: undefined,
     })
     setTaskType("unique")
     setShowAdvanced(false)
@@ -101,19 +104,32 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
 
     const recurrence =
       taskType === "unique"
-        ? undefined
-        : {
-            interval: taskType === "habit" || taskType === "habit-plus" ? formData.interval : undefined,
-            daysOfWeek:
-              taskType === "habit-plus" && formData.daysOfWeek.length > 0
-                ? (formData.daysOfWeek as Array<"Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun">)
-                : undefined,
-            daysOfMonth:
-              taskType === "habit-plus" && formData.daysOfMonth.length > 0 ? formData.daysOfMonth : undefined,
-            maxOccurrences:
-              taskType === "finite" ? formData.maxOccurrences : taskType === "habit" ? 1 : formData.maxOccurrences,
-            endDate: formData.endDate ? new Date(formData.endDate) : undefined,
+        ? {
+            maxOccurrences: 1, // Unique tasks have exactly 1 occurrence
           }
+        : taskType === "finite"
+          ? {
+              maxOccurrences: formData.maxOccurrences,
+              endDate: formData.endDate ? new Date(formData.endDate) : undefined,
+            }
+          : taskType === "habit"
+            ? {
+                interval: formData.interval,
+                maxOccurrences: 1, // 1 occurrence per period
+                lastPeriodStart: new Date(), // Start period now
+              }
+            : {
+                // habit-plus
+                interval: formData.interval,
+                daysOfWeek:
+                  formData.daysOfWeek.length > 0
+                    ? (formData.daysOfWeek as Array<"Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun">)
+                    : undefined,
+                daysOfMonth: formData.daysOfMonth.length > 0 ? formData.daysOfMonth : undefined,
+                maxOccurrences: formData.maxOccurrences,
+                endDate: formData.endDate ? new Date(formData.endDate) : undefined,
+                lastPeriodStart: new Date(), // Start period now
+              }
 
     if (editingTask) {
       updateMutation.mutate({
@@ -131,6 +147,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
         importance: formData.importance,
         targetDate: formData.targetDate ? new Date(formData.targetDate) : undefined,
         limitDate: formData.limitDate ? new Date(formData.limitDate) : undefined,
+        targetTimeConsumption: formData.targetTimeConsumption,
         recurrence,
       })
     }
@@ -219,6 +236,30 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
                 step={1}
                 className="mt-2"
               />
+            </div>
+
+            <div>
+              <Label htmlFor="targetTimeConsumption" className="text-foreground">
+                Tiempo Objetivo (horas) - Opcional
+              </Label>
+              <Input
+                id="targetTimeConsumption"
+                type="number"
+                min="0.5"
+                step="0.5"
+                value={formData.targetTimeConsumption || ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    targetTimeConsumption: e.target.value ? Number.parseFloat(e.target.value) : undefined,
+                  })
+                }
+                placeholder="Ej: 2.5 horas"
+                className="mt-1.5"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Tiempo estimado que debería tomar completar esta tarea
+              </p>
             </div>
           </div>
 

@@ -73,16 +73,25 @@ export default function TasksPage() {
 
   const getTaskTypeLabel = (task: TaskWithRecurrence) => {
     if (!task.recurrence) return "Única"
-    if (task.recurrence.maxOccurrences === 1) return "Recurrente Finita"
-    if (task.recurrence.interval && !task.recurrence.daysOfWeek && !task.recurrence.daysOfMonth) {
+    if (task.recurrence.maxOccurrences === 1 
+        && !task.recurrence.interval) return "Única"
+    if (task.recurrence.maxOccurrences && task.recurrence.maxOccurrences > 1 && !task.recurrence.interval) {
+      return "Recurrente Finita"
+    }
+    if (task.recurrence.interval 
+        && (!task.recurrence.maxOccurrences || task.recurrence.maxOccurrences <= 1)
+        && !task.recurrence.daysOfWeek 
+        && !task.recurrence.daysOfMonth) {
       return "Hábito"
     }
     return "Hábito +"
   }
 
   const getTaskTypeIcon = (task: TaskWithRecurrence) => {
-    if (!task.recurrence) return <Calendar className="h-4 w-4" />
-    if (task.recurrence.maxOccurrences === 1) return <Repeat className="h-4 w-4" />
+    if (!task.recurrence || task.recurrence.maxOccurrences === 1) return <Calendar className="h-4 w-4" />
+    if (task.recurrence.maxOccurrences && task.recurrence.maxOccurrences > 1 && !task.recurrence.interval) {
+      return <Repeat className="h-4 w-4" />
+    }
     return <Target className="h-4 w-4" />
   }
 

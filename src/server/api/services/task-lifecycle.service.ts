@@ -35,19 +35,25 @@ export class TaskLifecycleService {
    * Create a new task
    */
   async createTask(userId: string, data: CreateTaskDTO) {
-    const task = await this.taskAdapter.createTask(userId, data);
+    // Ensure all tasks have recurrence (even unique tasks with maxOccurrences=1)
+    const recurrenceData = data.recurrence ?? {
+      maxOccurrences: 1, // Default for unique tasks
+    };
 
-    // If it's a recurring task, create the first occurrence
-    if (data.recurrence) {
-      await this.schedulerService.createNextOccurrence(task.id);
-    } else {
-      // For non-recurring tasks, create a single occurrence
-      const occurrenceData: CreateOccurrenceDTO = {
-        associatedTaskId: task.id,
-        startDate: new Date(), // Default to now
-      };
-      await this.occurrenceAdapter.createOccurrence(occurrenceData);
-    }
+    const taskData = {
+      ...data,
+      recurrence: recurrenceData,
+    };
+
+    const task = await this.taskAdapter.createTask(userId, taskData);
+
+    // Create the first occurrence (works for all task types)
+    // Pass the initial dates for unique tasks
+    await this.schedulerService.createNextOccurrence(task.id, {
+      targetDate: data.targetDate,
+      limitDate: data.limitDate,
+      targetTimeConsumption: data.targetTimeConsumption,
+    });
 
     return task;
   }
@@ -78,7 +84,7 @@ export class TaskLifecycleService {
    * Get all tasks for a user
    */
   async getUserTasks(userId: string) {
-    return await this.taskAdapter.getTasksByOwnerId(userId);
+    return await this.taskAdapter.getTasksWithRecurrenceByOwnerId(userId);
   }
 
   /**
@@ -109,10 +115,6 @@ export class TaskLifecycleService {
    */
   async createOccurrence(data: CreateOccurrenceDTO) {
     const occurrence = await this.occurrenceAdapter.createOccurrence(data);
-    
-    // Calculate initial urgency
-    await this.analyticsService.updateOccurrenceUrgency(occurrence.id);
-    
     return occurrence;
   }
 
@@ -149,11 +151,6 @@ export class TaskLifecycleService {
    */
   async updateOccurrence(occurrenceId: number, data: UpdateOccurrenceDTO) {
     const updated = await this.occurrenceAdapter.updateOccurrence(occurrenceId, data);
-    
-    // Recalculate urgency if dates changed
-    if (data.targetDate || data.limitDate) {
-      await this.analyticsService.updateOccurrenceUrgency(occurrenceId);
-    }
     
     return updated;
   }
@@ -260,15 +257,76 @@ export class TaskLifecycleService {
   }
 
   /**
-   * Complete a calendar event and update occurrence time
+   * Complete a calendar event and handle task lifecycle based on task type
    */
-  async completeCalendarEvent(eventId: number) {
-    const event = await this.eventAdapter.completeEvent(eventId);
-    
-    // If event is associated with an occurrence, sync time consumed
-    if (event?.associatedOccurrenceId) {
-      await this.eventAdapter.syncOccurrenceTimeFromEvents(event.associatedOccurrenceId);
-      await this.analyticsService.updateOccurrenceUrgency(event.associatedOccurrenceId);
+  async completeCalendarEvent(eventId: number, dedicatedTime?: number) {
+    // Get event with full details
+    const eventDetails = await this.eventAdapter.getEventWithDetails(eventId);
+    if (!eventDetails) {
+      throw new Error("Event not found");
+    }
+
+    // Calculate dedicated time if not provided (from start to finish)
+    const calculatedTime = dedicatedTime ?? 
+      (eventDetails.finish.getTime() - eventDetails.start.getTime()) / (1000 * 60 * 60); // Convert to hours
+
+    // Mark event as completed
+    const event = await this.eventAdapter.updateEvent(eventId, {
+      isCompleted: true,
+      dedicatedTime: calculatedTime,
+    });
+
+    // If event is associated with an occurrence, handle the task lifecycle
+    if (eventDetails.associatedOccurrenceId) {
+      const occurrence = eventDetails.occurrence;
+      const task = occurrence?.task;
+
+      // Sync time consumed for the occurrence
+      await this.eventAdapter.syncOccurrenceTimeFromEvents(eventDetails.associatedOccurrenceId);
+
+      // Mark occurrence as completed
+      await this.occurrenceAdapter.updateOccurrence(eventDetails.associatedOccurrenceId, {
+        status: "Completed"
+      });
+
+      if (task && task.recurrenceId) {
+        const recurrence = await this.schedulerService.getRecurrence(task.recurrenceId);
+        
+        if (recurrence) {
+          // Increment completed occurrences counter
+          await this.schedulerService.incrementCompletedOccurrences(task.recurrenceId);
+
+          // Handle based on task type
+          // Type 1: Unique task (maxOccurrences = 1, no interval)
+          if (recurrence.maxOccurrences === 1 && !recurrence.interval) {
+            // Mark task as inactive
+            await this.taskAdapter.updateTask(task.id, { isActive: false });
+          }
+          // Type 2: Finite recurrence (maxOccurrences > 1, no interval)
+          else if (recurrence.maxOccurrences && recurrence.maxOccurrences > 1 && !recurrence.interval) {
+            // Create next occurrence if we haven't reached the max
+            const occurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(task.id);
+            const completedCount = occurrences.filter(o => o.status === "Completed").length;
+            
+            if (completedCount < recurrence.maxOccurrences) {
+              // Create next occurrence with same parameters
+              await this.schedulerService.createNextOccurrence(task.id, {
+                targetDate: occurrence.targetDate ?? undefined,
+                limitDate: occurrence.limitDate ?? undefined,
+                targetTimeConsumption: occurrence.targetTimeConsumption ?? undefined,
+              });
+            } else {
+              // All occurrences completed, mark task as inactive
+              await this.taskAdapter.updateTask(task.id, { isActive: false });
+            }
+          }
+          // Type 3 & 4: Habit or Habit+ (has interval)
+          else if (recurrence.interval) {
+            // Create next occurrence based on recurrence pattern
+            await this.schedulerService.createNextOccurrence(task.id);
+          }
+        }
+      }
     }
     
     return event;

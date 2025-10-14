@@ -22,8 +22,8 @@ export class OccurrenceAdapter {
   /**
    * Create a new task occurrence
    */
-  async createOccurrence(data: CreateOccurrenceDTO) {
-    return await this.occurrenceRepo.create({
+  async createOccurrence(data: CreateOccurrenceDTO): Promise<TaskOccurrence> {
+    const occurrence = await this.occurrenceRepo.create({
       associatedTaskId: data.associatedTaskId,
       startDate: data.startDate,
       limitDate: data.limitDate ?? null,
@@ -33,13 +33,15 @@ export class OccurrenceAdapter {
       status: "Pending",
       urgency: 0,
     });
+    return occurrence as TaskOccurrence;
   }
 
   /**
    * Get occurrence by ID
    */
-  async getOccurrenceById(occurrenceId: number) {
-    return await this.occurrenceRepo.findById(occurrenceId);
+  async getOccurrenceById(occurrenceId: number): Promise<TaskOccurrence | undefined> {
+    const occurrence = await this.occurrenceRepo.findById(occurrenceId);
+    return occurrence ? (occurrence as TaskOccurrence) : undefined;
   }
 
   /**

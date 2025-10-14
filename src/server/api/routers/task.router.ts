@@ -12,6 +12,7 @@ const createRecurrenceSchema = z.object({
   daysOfWeek: z.array(z.enum(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])).optional(),
   daysOfMonth: z.array(z.number().min(1).max(31)).optional(),
   maxOccurrences: z.number().positive().optional(),
+  lastPeriodStart: z.date().optional(),
   endDate: z.date().optional(),
 });
 
@@ -21,6 +22,7 @@ const createTaskSchema = z.object({
   importance: z.number().min(1).max(10).optional(),
   targetDate: z.date().optional(),
   limitDate: z.date().optional(),
+  targetTimeConsumption: z.number().positive().optional(),
   recurrence: createRecurrenceSchema.optional(),
 });
 

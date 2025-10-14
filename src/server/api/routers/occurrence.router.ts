@@ -4,7 +4,7 @@
 
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { TaskLifecycleService } from "../services";
+import { TaskLifecycleService, TaskAnalyticsService } from "../services";
 
 const createOccurrenceSchema = z.object({
   associatedTaskId: z.number(),
@@ -41,7 +41,9 @@ export const occurrenceRouter = createTRPCRouter({
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
       const service = new TaskLifecycleService();
-      return await service.getOccurrence(input.id);
+      const analyticsService = new TaskAnalyticsService();
+      const occurrence = await service.getOccurrence(input.id);
+      return occurrence ? analyticsService.enrichOccurrenceWithUrgency(occurrence) : undefined;
     }),
 
   /**
@@ -51,7 +53,9 @@ export const occurrenceRouter = createTRPCRouter({
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
       const service = new TaskLifecycleService();
-      return await service.getOccurrenceWithTask(input.id);
+      const analyticsService = new TaskAnalyticsService();
+      const occurrence = await service.getOccurrenceWithTask(input.id);
+      return occurrence ? analyticsService.enrichOccurrenceWithUrgency(occurrence) : undefined;
     }),
 
   /**
@@ -61,7 +65,9 @@ export const occurrenceRouter = createTRPCRouter({
     .input(z.object({ taskId: z.number() }))
     .query(async ({ input }) => {
       const service = new TaskLifecycleService();
-      return await service.getTaskOccurrences(input.taskId);
+      const analyticsService = new TaskAnalyticsService();
+      const occurrences = await service.getTaskOccurrences(input.taskId);
+      return analyticsService.enrichOccurrencesWithUrgency(occurrences);
     }),
 
   /**
@@ -76,7 +82,33 @@ export const occurrenceRouter = createTRPCRouter({
     )
     .query(async ({ input }) => {
       const service = new TaskLifecycleService();
-      return await service.getOccurrencesByDateRange(input.startDate, input.endDate);
+      const analyticsService = new TaskAnalyticsService();
+      const occurrences = await service.getOccurrencesByDateRange(input.startDate, input.endDate);
+      
+      console.log("=== DEBUG getByDateRange ===");
+      console.log("Total occurrences from DB:", occurrences.length);
+      if (occurrences.length > 0) {
+        const sample = occurrences[0];
+        console.log("Sample occurrence:", {
+          id: sample?.id,
+          createdAt: sample?.createdAt,
+          createdAtType: typeof sample?.createdAt,
+          targetDate: sample?.targetDate,
+          targetDateType: typeof sample?.targetDate,
+          limitDate: sample?.limitDate,
+          limitDateType: typeof sample?.limitDate,
+        });
+      }
+      
+      const enriched = analyticsService.enrichOccurrencesWithUrgency(occurrences);
+      
+      console.log("Total enriched:", enriched.length);
+      for (const occ of enriched) {
+        console.log("Sample enriched urgency:", occ.urgency);
+      }
+      console.log("=== END DEBUG ===");
+      
+      return enriched;
     }),
     // TODO - Get by limit and target date
   /**

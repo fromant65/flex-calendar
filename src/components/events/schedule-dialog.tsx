@@ -39,16 +39,18 @@ export function ScheduleDialog({
     } else if (selectedHour !== undefined) {
       // New event with suggested hour
       setStartTime(`${String(selectedHour).padStart(2, "0")}:00`)
-      const suggestedDuration = occurrence?.targetTimeConsumption || 60
-      const endHour = Math.floor((selectedHour * 60 + suggestedDuration) / 60)
-      const endMinute = (selectedHour * 60 + suggestedDuration) % 60
+      // targetTimeConsumption is in HOURS, convert to minutes
+      const suggestedDurationMinutes = (occurrence?.targetTimeConsumption || 1) * 60
+      const endHour = Math.floor((selectedHour * 60 + suggestedDurationMinutes) / 60)
+      const endMinute = (selectedHour * 60 + suggestedDurationMinutes) % 60
       setEndTime(`${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`)
     } else {
       // Default times
       setStartTime("09:00")
-      const suggestedDuration = occurrence?.targetTimeConsumption || 60
-      const endHour = Math.floor((9 * 60 + suggestedDuration) / 60)
-      const endMinute = (9 * 60 + suggestedDuration) % 60
+      // targetTimeConsumption is in HOURS, convert to minutes
+      const suggestedDurationMinutes = (occurrence?.targetTimeConsumption || 1) * 60
+      const endHour = Math.floor((9 * 60 + suggestedDurationMinutes) / 60)
+      const endMinute = (9 * 60 + suggestedDurationMinutes) % 60
       setEndTime(`${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`)
     }
   }, [event, selectedHour, occurrence, open])
@@ -75,7 +77,7 @@ export function ScheduleDialog({
     onOpenChange(false)
   }
 
-  const task = occurrence?.task || event?.task
+  const task = occurrence?.task || event?.occurrence?.task
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -103,7 +103,7 @@ export function DayView({
                 onClick={() => onEventClick(event)}
               >
                 <div className="text-xs font-medium text-foreground line-clamp-1">
-                  {event.task?.name || "Untitled Event"}
+                  {event.occurrence?.task?.name || "Untitled Event"}
                   {event.isFixed && " 🔒"}
                 </div>
                 <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">

@@ -78,7 +78,7 @@ export function MonthView({ date, events, onTimeSlotClick, onEventClick, onDrop 
                       onEventClick(event)
                     }}
                   >
-                    {event.task?.name || "Untitled"}
+                    {event.occurrence?.task?.name || "Untitled"}
                   </div>
                 ))}
                 {dayEvents.length > 3 && (

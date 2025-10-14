@@ -6,7 +6,8 @@ import { ScheduleDialog } from "~/components/events/schedule-dialog"
 import { TaskDetailsModal } from "~/components/events/task-details-modal"
 import { api } from "~/trpc/react"
 import type { CalendarView, EventWithDetails, OccurrenceWithTask } from "~/lib/types"
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
+import { GripVertical } from "lucide-react"
 
 export default function TaskCalendarPage() {
   const [calendarView, setCalendarView] = useState<CalendarView>("week")
@@ -20,6 +21,11 @@ export default function TaskCalendarPage() {
   const [detailsOccurrence, setDetailsOccurrence] = useState<OccurrenceWithTask | null>(null)
   const [detailsEvent, setDetailsEvent] = useState<EventWithDetails | null>(null)
   const [eventToReschedule, setEventToReschedule] = useState<EventWithDetails | null>(null)
+  
+  // Resizable panel state - 40% for matrix (2/5), 60% for calendar (3/5)
+  const [leftWidth, setLeftWidth] = useState(40)
+  const [isDragging, setIsDragging] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // Calculate date range for queries (current week)
   const today = new Date()
@@ -45,6 +51,11 @@ export default function TaskCalendarPage() {
       // Refetch data after creating event
       void api.useUtils().calendarEvent.getMyEventsWithDetails.invalidate()
       void api.useUtils().occurrence.getByDateRange.invalidate()
+      // Close the schedule dialog
+      setScheduleDialogOpen(false)
+      setSelectedTask(null)
+      setSelectedDate(null)
+      setSelectedHour(undefined)
     }
   })
   const updateEventMutation = api.calendarEvent.update.useMutation({
@@ -52,6 +63,11 @@ export default function TaskCalendarPage() {
       // Refetch data after updating event
       void api.useUtils().calendarEvent.getMyEventsWithDetails.invalidate()
       void api.useUtils().occurrence.getByDateRange.invalidate()
+      // Close the schedule dialog
+      setScheduleDialogOpen(false)
+      setEventToReschedule(null)
+      setSelectedDate(null)
+      setSelectedHour(undefined)
     }
   })
 
@@ -60,8 +76,40 @@ export default function TaskCalendarPage() {
     return !hasActiveEvent
   })
 
-  console.log("All Occurrences:", occurrences)
-  console.log("Available Occurrences:", availableOccurrences)
+  // Handle resizable divider
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !containerRef.current) return
+      
+      const containerRect = containerRef.current.getBoundingClientRect()
+      const newLeftWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100
+      
+      // Constrain between 20% and 80%
+      const constrainedWidth = Math.min(Math.max(newLeftWidth, 20), 80)
+      setLeftWidth(constrainedWidth)
+    }
+
+    const handleMouseUp = () => {
+      setIsDragging(false)
+    }
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  }, [isDragging])
+
+  //console.log("All Occurrences:", occurrences)
+  //console.log("Available Occurrences:", availableOccurrences)
 
   const handleTaskSelect = (occurrence: OccurrenceWithTask) => {
     setSelectedTask(occurrence)
@@ -125,7 +173,6 @@ export default function TaskCalendarPage() {
           finish,
         }
       })
-      setEventToReschedule(null)
     } else if (selectedTask) {
       // Create new event
       createEventMutation.mutate({
@@ -135,24 +182,21 @@ export default function TaskCalendarPage() {
         finish,
       })
     }
-
-    setSelectedTask(null)
-    setSelectedDate(null)
-    setSelectedHour(undefined)
+    // State cleanup is now handled in mutation onSuccess callbacks
   }
 
   if(eventsLoading || occurrencesLoading) {
     return (
-      <div className="h-screen flex items-center justify-center">
+      <div className="h-[calc(100vh-4rem)] flex items-center justify-center bg-background">
         <div className="text-muted-foreground">Loading...</div>
-        </div>
+      </div>
     )
   }
 
   return (
-    <div className="h-screen flex flex-col dark">
+    <div className="h-[calc(100vh-4rem)] flex flex-col bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card">
+      <header className="border-b border-border bg-card flex-shrink-0">
         <div className="px-6 py-4">
           <h1 className="text-2xl font-bold text-foreground">Task Planner</h1>
           <p className="text-sm text-muted-foreground">Organize and schedule your tasks efficiently</p>
@@ -160,9 +204,12 @@ export default function TaskCalendarPage() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div ref={containerRef} className="flex-1 flex overflow-hidden relative">
         {/* Left Panel: Eisenhower Matrix */}
-        <div className="w-[400px] border-r border-border bg-card">
+        <div 
+          className="border-r border-border bg-card overflow-hidden flex-shrink-0"
+          style={{ width: `${leftWidth}%` }}
+        >
           <EisenhowerMatrix
             occurrences={availableOccurrences}
             onTaskSelect={handleTaskSelect}
@@ -172,8 +219,20 @@ export default function TaskCalendarPage() {
           />
         </div>
 
+        {/* Resizable Divider */}
+        <div
+          className="w-1 bg-border hover:bg-primary/50 cursor-col-resize flex-shrink-0 relative group transition-colors"
+          onMouseDown={() => setIsDragging(true)}
+        >
+          <div className="absolute inset-y-0 -left-1 -right-1 flex items-center justify-center">
+            <div className="bg-border group-hover:bg-primary/50 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <GripVertical className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+            </div>
+          </div>
+        </div>
+
         {/* Right Panel: Calendar */}
-        <div className="flex-1 bg-background">
+        <div className="flex-1 bg-background overflow-hidden">
           <CalendarViewComponent
             events={events}
             view={calendarView}
@@ -202,6 +261,11 @@ export default function TaskCalendarPage() {
         onOpenChange={setDetailsModalOpen}
         occurrence={detailsOccurrence}
         event={detailsEvent}
+        onEventCompleted={() => {
+          // Refetch data after completing event
+          void api.useUtils().calendarEvent.getMyEventsWithDetails.invalidate()
+          void api.useUtils().occurrence.getByDateRange.invalidate()
+        }}
       />
     </div>
   )

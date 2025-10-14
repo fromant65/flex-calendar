@@ -67,6 +67,9 @@ export interface CreateTaskDTO {
   name: string;
   description?: string;
   importance?: number; // 1-10
+  targetDate?: Date;
+  limitDate?: Date;
+  targetTimeConsumption?: number;
   recurrence?: CreateRecurrenceDTO;
 }
 
@@ -117,6 +120,7 @@ export interface UpdateCalendarEventDTO {
   start?: Date;
   finish?: Date;
   isCompleted?: boolean;
+  dedicatedTime?: number;
 }
 
 // Output DTOs with calculated fields

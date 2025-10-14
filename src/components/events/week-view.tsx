@@ -113,7 +113,7 @@ export function WeekView({
                     onClick={() => onEventClick(event)}
                   >
                     <div className="text-xs font-medium text-foreground line-clamp-1">
-                      {event.task?.name || "Untitled"}
+                      {event.occurrence?.task?.name ?? "Untitled"}
                       {event.isFixed && " 🔒"}
                     </div>
                     {duration >= 0.5 && (

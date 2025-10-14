@@ -62,8 +62,7 @@ export interface OccurrenceWithTask extends TaskOccurrence {
 }
 
 export interface EventWithDetails extends CalendarEvent {
-  occurrence?: TaskOccurrence
-  task?: Task
+  occurrence?: OccurrenceWithTask
 }
 
 export type CalendarView = "day" | "week" | "month"

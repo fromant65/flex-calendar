@@ -6,6 +6,7 @@ import type {
   UrgencyCalculationInput,
   UrgencyCalculationResult,
   TaskStatistics,
+  TaskOccurrence,
 } from "./types";
 import { OccurrenceAdapter } from "../adapter";
 import { TaskRepository, TaskOccurrenceRepository } from "../repository";
@@ -77,9 +78,11 @@ export class TaskAnalyticsService {
       // Evitar división por cero
       if (timeRemaining <= 0) {
         urgency = 5;
-      } else if (timeElapsed < 0) {
-        // Si la fecha actual es antes de la creación, urgencia mínima
-        urgency = 0;
+      } else if (timeElapsed <= 0) {
+        // Si acabamos de crear la tarea, urgencia mínima pero no cero
+        // Usar una pequeña fracción basada en el tiempo total disponible
+        const totalTime = target - created;
+        urgency = totalTime > 0 ? 0.5 : 1; // Mínimo 0.5, máximo 1
       } else {
         // urgency = 5 * (timeElapsed / timeRemaining)
         // A medida que nos acercamos al target, timeRemaining disminuye y urgency aumenta
@@ -94,8 +97,10 @@ export class TaskAnalyticsService {
       // Evitar división por cero
       if (timeRemaining <= 0) {
         urgency = 10;
-      } else if (timeElapsed < 0) {
-        urgency = 0;
+      } else if (timeElapsed <= 0) {
+        // Si acabamos de crear la tarea, urgencia mínima pero no cero
+        const totalTime = limit - created;
+        urgency = totalTime > 0 ? 0.5 : 1; // Mínimo 0.5, máximo 1
       } else {
         // Similar al caso 3, pero escalado a 10 en lugar de 5
         urgency = Math.min(10, 10 * (timeElapsed / timeRemaining));
@@ -110,13 +115,13 @@ export class TaskAnalyticsService {
     };
   }
 
-  /**
-   * Update urgency for a specific occurrence
-   */
-  async updateOccurrenceUrgency(occurrenceId: number): Promise<void> {
-    const occurrence = await this.occurrenceAdapter.getOccurrenceById(occurrenceId);
-    if (!occurrence) return;
 
+  /**
+   * Calculate and add urgency to an occurrence (no DB update)
+   */
+  enrichOccurrenceWithUrgency<T extends { createdAt: Date; targetDate: Date | null; limitDate: Date | null }>(
+    occurrence: T
+  ): T & { urgency: number } {
     const result = this.calculateUrgency({
       currentDate: new Date(),
       creationDate: occurrence.createdAt,
@@ -124,19 +129,21 @@ export class TaskAnalyticsService {
       limitDate: occurrence.limitDate ?? undefined,
     });
 
-    await this.occurrenceAdapter.updateUrgency(occurrenceId, result.urgency);
+    return {
+      ...occurrence,
+      urgency: result.urgency,
+    };
   }
 
   /**
-   * Update urgency for all pending/in-progress occurrences of a task
+   * Calculate and add urgency to multiple occurrences (no DB update)
    */
-  async updateTaskOccurrencesUrgency(taskId: number): Promise<void> {
-    const activeOccurrences = await this.occurrenceAdapter.getActiveOccurrencesByTaskId(taskId);
-
-    for (const occurrence of activeOccurrences) {
-      await this.updateOccurrenceUrgency(occurrence.id);
-    }
+  enrichOccurrencesWithUrgency<T extends { createdAt: Date; targetDate: Date | null; limitDate: Date | null }>(
+    occurrences: T[]
+  ): Array<T & { urgency: number }> {
+    return occurrences.map(occ => this.enrichOccurrenceWithUrgency(occ));
   }
+
 
   /**
    * Get statistics for a user's tasks
