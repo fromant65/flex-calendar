@@ -87,6 +87,27 @@ export class CalendarEventRepository extends BaseRepository<typeof calendarEvent
   }
 
   /**
+   * Find events with details in a date range
+   */
+  async findByDateRangeWithDetails(ownerId: string, startDate: Date, endDate: Date) {
+    return await db.query.calendarEvents.findMany({
+      where: and(
+        eq(calendarEvents.ownerId, ownerId),
+        gte(calendarEvents.start, startDate),
+        lte(calendarEvents.start, endDate),
+      ),
+      with: {
+        occurrence: {
+          with: {
+            task: true,
+          },
+        },
+      },
+      orderBy: [calendarEvents.start],
+    });
+  }
+
+  /**
    * Find incomplete events for an occurrence
    */
   async findIncompleteByOccurrenceId(occurrenceId: number): Promise<EventSelect[]> {

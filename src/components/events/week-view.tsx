@@ -4,6 +4,7 @@ import type React from "react"
 
 import type { EventWithDetails } from "~/lib/types"
 import { formatTime, getHoursArray, getWeekDays, isSameDay, isToday } from "~/lib/calendar-utils"
+import { getTaskTypeClassName } from "~/lib/task-type-colors"
 import { Clock } from "lucide-react"
 
 interface WeekViewProps {
@@ -64,7 +65,7 @@ export function WeekView({
         </div>
 
         {/* Day columns */}
-        {weekDays.map((day) => {
+        {weekDays.map((day: Date) => {
           const dayEvents = events.filter((event) => isSameDay(new Date(event.start), day))
           const showCurrentTime = isToday(day)
 
@@ -97,13 +98,17 @@ export function WeekView({
                 const finish = new Date(event.finish)
                 const startHour = start.getHours() + start.getMinutes() / 60
                 const duration = (finish.getTime() - start.getTime()) / (1000 * 60 * 60)
+                const taskTypeClassName = getTaskTypeClassName(event.occurrence?.task?.taskType, {
+                  includeHover: true,
+                  includeRing: false,
+                })
 
                 return (
                   <div
                     key={event.id}
                     draggable={!event.isFixed}
                     onDragStart={() => onEventDragStart(event)}
-                    className={`absolute left-1 right-1 bg-primary/20 border-l-2 border-primary rounded p-1 hover:bg-primary/30 transition-colors overflow-hidden ${
+                    className={`absolute left-1 right-1 rounded p-1 transition-colors overflow-hidden ${taskTypeClassName} ${
                       event.isFixed ? "cursor-default" : "cursor-move"
                     }`}
                     style={{

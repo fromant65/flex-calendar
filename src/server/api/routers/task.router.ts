@@ -120,4 +120,12 @@ export const taskRouter = createTRPCRouter({
     const service = new TaskAnalyticsService();
     return await service.getOccurrencesByUrgency(ctx.session.user.id);
   }),
+
+  /**
+   * Get tasks sorted by importance
+   */
+  getByImportance: protectedProcedure.query(async ({ ctx }) => {
+    const service = new TaskAnalyticsService();
+    return await service.getOccurrencesByImportance(ctx.session.user.id);
+  }),
 });

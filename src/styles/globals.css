@@ -28,6 +28,12 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -48,71 +54,196 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  
+  /* 🎨 Fondos y estructura monocromáticos (neutros suaves) */
+  --background: oklch(0.98 0.005 270); /* Blanco ligeramente cálido */
+  --foreground: oklch(0.20 0.015 270); /* Gris oscuro con toque neutro */
+  --card: oklch(0.995 0.003 270); /* Blanco muy suave */
+  --card-foreground: oklch(0.20 0.015 270);
+  --popover: oklch(0.995 0.003 270);
+  --popover-foreground: oklch(0.20 0.015 270);
+  
+  /* 🔵 Primary - Azul suave (acciones principales, enfoque) */
+  --primary: oklch(0.55 0.15 250); /* Azul medio pastel */
+  --primary-foreground: oklch(0.99 0.01 250);
+  
+  /* 🟦 Secondary - Gris azulado (elementos secundarios) */
+  --secondary: oklch(0.94 0.015 250);
+  --secondary-foreground: oklch(0.25 0.02 250);
+  
+  /* 🔇 Muted - Grises neutros (texto y fondos desactivados) */
+  --muted: oklch(0.95 0.01 270);
+  --muted-foreground: oklch(0.50 0.02 270);
+  
+  /* 🎯 Accent - Cyan/Turquesa (información, destacados) */
+  --accent: oklch(0.92 0.04 200);
+  --accent-foreground: oklch(0.25 0.08 200);
+  
+  /* 🔴 Destructive - Rojo suave (errores, eliminaciones) */
+  --destructive: oklch(0.60 0.18 25); /* Rojo pastel */
+  
+  /* 🖌️ Bordes e inputs */
+  --border: oklch(0.90 0.01 270);
+  --input: oklch(0.92 0.01 270);
+  --ring: oklch(0.55 0.15 250); /* Igual que primary */
+  
+  /* 📊 Charts - Paleta multicromática armoniosa y accesible */
+  --chart-1: oklch(0.65 0.16 40); /* Naranja cálido - para datos generales */
+  --chart-2: oklch(0.65 0.16 150); /* Verde esmeralda - hábitos, crecimiento */
+  --chart-3: oklch(0.62 0.16 245); /* Azul profundo - tareas únicas, estabilidad */
+  --chart-4: oklch(0.65 0.16 310); /* Magenta vibrante - hábitos avanzados */
+  --chart-5: oklch(0.62 0.14 195); /* Cyan brillante - recurrencias finitas */
+  
+  /* 📁 Sidebar */
+  --sidebar: oklch(0.97 0.005 270);
+  --sidebar-foreground: oklch(0.25 0.015 270);
+  --sidebar-primary: oklch(0.55 0.15 250);
+  --sidebar-primary-foreground: oklch(0.99 0.01 250);
+  --sidebar-accent: oklch(0.93 0.015 270);
+  --sidebar-accent-foreground: oklch(0.25 0.02 270);
+  --sidebar-border: oklch(0.90 0.01 270);
+  --sidebar-ring: oklch(0.55 0.15 250);
+  
+  /* ✅ Success - Verde suave (completado, éxito) */
+  --success: oklch(0.60 0.14 145);
+  --success-foreground: oklch(0.99 0.01 145);
+  
+  /* ⚠️ Warning - Naranja/Ámbar suave (advertencias) */
+  --warning: oklch(0.70 0.16 60);
+  --warning-foreground: oklch(0.20 0.03 60);
+  
+  /* ℹ️ Info - Cyan suave (información) */
+  --info: oklch(0.65 0.12 200);
+  --info-foreground: oklch(0.99 0.01 200);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* 🎨 Fondos y estructura monocromáticos oscuros (evitar negro puro) */
+  --background: oklch(0.17 0.01 270); /* Gris muy oscuro con toque neutro */
+  --foreground: oklch(0.95 0.01 270); /* Blanco suave */
+  --card: oklch(0.20 0.012 270); /* Gris oscuro ligeramente más claro */
+  --card-foreground: oklch(0.95 0.01 270);
+  --popover: oklch(0.20 0.012 270);
+  --popover-foreground: oklch(0.95 0.01 270);
+  
+  /* 🔵 Primary - Azul más luminoso para contraste en oscuro */
+  --primary: oklch(0.70 0.18 250); /* Azul más brillante */
+  --primary-foreground: oklch(0.15 0.02 250);
+  
+  /* 🟦 Secondary - Gris azulado oscuro */
+  --secondary: oklch(0.27 0.02 250);
+  --secondary-foreground: oklch(0.95 0.01 250);
+  
+  /* 🔇 Muted - Grises oscuros */
+  --muted: oklch(0.27 0.015 270);
+  --muted-foreground: oklch(0.65 0.02 270);
+  
+  /* 🎯 Accent - Cyan más vivo */
+  --accent: oklch(0.35 0.06 200);
+  --accent-foreground: oklch(0.95 0.01 200);
+  
+  /* 🔴 Destructive - Rojo más saturado para visibilidad */
+  --destructive: oklch(0.65 0.22 25);
+  
+  /* 🖌️ Bordes e inputs con alpha para sutileza */
+  --border: oklch(0.95 0.01 270 / 12%);
+  --input: oklch(0.95 0.01 270 / 18%);
+  --ring: oklch(0.70 0.18 250);
+  
+  /* 📊 Charts - Colores más saturados y vibrantes para modo oscuro */
+  --chart-1: oklch(0.70 0.20 40); /* Naranja luminoso */
+  --chart-2: oklch(0.70 0.20 150); /* Verde brillante */
+  --chart-3: oklch(0.68 0.20 245); /* Azul eléctrico */
+  --chart-4: oklch(0.70 0.20 310); /* Magenta neón */
+  --chart-5: oklch(0.68 0.18 195); /* Cyan intenso */
+  
+  /* 📁 Sidebar */
+  --sidebar: oklch(0.20 0.012 270);
+  --sidebar-foreground: oklch(0.95 0.01 270);
+  --sidebar-primary: oklch(0.70 0.18 250);
+  --sidebar-primary-foreground: oklch(0.15 0.02 250);
+  --sidebar-accent: oklch(0.27 0.02 270);
+  --sidebar-accent-foreground: oklch(0.95 0.01 270);
+  --sidebar-border: oklch(0.95 0.01 270 / 12%);
+  --sidebar-ring: oklch(0.70 0.18 250);
+  
+  /* ✅ Success - Verde más luminoso */
+  --success: oklch(0.65 0.18 145);
+  --success-foreground: oklch(0.15 0.02 145);
+  
+  /* ⚠️ Warning - Naranja/Ámbar más brillante */
+  --warning: oklch(0.72 0.19 60);
+  --warning-foreground: oklch(0.15 0.02 60);
+  
+  /* ℹ️ Info - Cyan más luminoso */
+  --info: oklch(0.68 0.16 200);
+  --info-foreground: oklch(0.15 0.02 200);
+}
+
+/* Theme-aware scrollbar variables and utility
+   - Uses semantic theme tokens so thumb/track adapt to light/dark modes
+   - Works for Firefox (scrollbar-color) and WebKit (::-webkit-scrollbar)
+*/
+:root,
+.dark {
+  --scrollbar-track: transparent;
+  /* Use a semi-opaque version of muted-foreground for thumb */
+  --scrollbar-thumb: color-mix(in srgb, var(--muted-foreground) 22%, transparent);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--muted-foreground) 38%, transparent);
+}
+
+.scrollbar-themed,
+/* Apply to common Tailwind overflow utility classes so scrollbars look consistent app-wide */
+.overflow-auto,
+.overflow-y-auto,
+.overflow-x-auto,
+.overflow-scroll,
+.overflow-y-scroll,
+.overflow-x-scroll {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* WebKit-based browsers */
+.scrollbar-themed::-webkit-scrollbar,
+.overflow-auto::-webkit-scrollbar,
+.overflow-y-auto::-webkit-scrollbar,
+.overflow-x-auto::-webkit-scrollbar,
+.overflow-scroll::-webkit-scrollbar,
+.overflow-y-scroll::-webkit-scrollbar,
+.overflow-x-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.scrollbar-themed::-webkit-scrollbar-track,
+.overflow-auto::-webkit-scrollbar-track,
+.overflow-y-auto::-webkit-scrollbar-track,
+.overflow-x-auto::-webkit-scrollbar-track,
+.overflow-scroll::-webkit-scrollbar-track,
+.overflow-y-scroll::-webkit-scrollbar-track,
+.overflow-x-scroll::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+.scrollbar-themed::-webkit-scrollbar-thumb,
+.overflow-auto::-webkit-scrollbar-thumb,
+.overflow-y-auto::-webkit-scrollbar-thumb,
+.overflow-x-auto::-webkit-scrollbar-thumb,
+.overflow-scroll::-webkit-scrollbar-thumb,
+.overflow-y-scroll::-webkit-scrollbar-thumb,
+.overflow-x-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.scrollbar-themed::-webkit-scrollbar-thumb:hover,
+.overflow-auto::-webkit-scrollbar-thumb:hover,
+.overflow-y-auto::-webkit-scrollbar-thumb:hover,
+.overflow-x-auto::-webkit-scrollbar-thumb:hover,
+.overflow-scroll::-webkit-scrollbar-thumb:hover,
+.overflow-y-scroll::-webkit-scrollbar-thumb:hover,
+.overflow-x-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
 }
 
 @layer base {

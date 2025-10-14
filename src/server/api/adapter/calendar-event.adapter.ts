@@ -2,16 +2,19 @@
  * Calendar Event Adapter - connects service layer with repository layer for calendar events
  */
 
-import { CalendarEventRepository, TaskOccurrenceRepository } from "../repository";
+import { CalendarEventRepository, TaskOccurrenceRepository, TaskRecurrenceRepository } from "../repository";
 import type { CreateCalendarEventDTO, UpdateCalendarEventDTO } from "../services/types";
+import { calculateTaskType } from "../helpers";
 
 export class CalendarEventAdapter {
   private eventRepo: CalendarEventRepository;
   private occurrenceRepo: TaskOccurrenceRepository;
+  private recurrenceRepo: TaskRecurrenceRepository;
 
   constructor() {
     this.eventRepo = new CalendarEventRepository();
     this.occurrenceRepo = new TaskOccurrenceRepository();
+    this.recurrenceRepo = new TaskRecurrenceRepository();
   }
 
   /**
@@ -55,7 +58,35 @@ export class CalendarEventAdapter {
    * Get events with details for a user
    */
   async getEventsWithDetailsByOwnerId(ownerId: string) {
-    return await this.eventRepo.findByOwnerIdWithDetails(ownerId);
+    const events = await this.eventRepo.findByOwnerIdWithDetails(ownerId);
+    
+    // Enrich each event's task with taskType
+    const enrichedEvents = await Promise.all(
+      events.map(async (event) => {
+        if (event.occurrence?.task) {
+          // Get recurrence for the task using the recurrenceId
+          let recurrence = null;
+          if (event.occurrence.task.recurrenceId) {
+            recurrence = await this.recurrenceRepo.findById(event.occurrence.task.recurrenceId);
+          }
+          
+          // Calculate and add taskType
+          return {
+            ...event,
+            occurrence: {
+              ...event.occurrence,
+              task: {
+                ...event.occurrence.task,
+                taskType: calculateTaskType(recurrence),
+              },
+            },
+          };
+        }
+        return event;
+      })
+    );
+    
+    return enrichedEvents;
   }
 
   /**
@@ -63,6 +94,41 @@ export class CalendarEventAdapter {
    */
   async getEventsByDateRange(ownerId: string, startDate: Date, endDate: Date) {
     return await this.eventRepo.findByDateRange(ownerId, startDate, endDate);
+  }
+
+  /**
+   * Get events with details in a date range
+   */
+  async getEventsWithDetailsByDateRange(ownerId: string, startDate: Date, endDate: Date) {
+    const events = await this.eventRepo.findByDateRangeWithDetails(ownerId, startDate, endDate);
+    
+    // Enrich each event's task with taskType
+    const enrichedEvents = await Promise.all(
+      events.map(async (event) => {
+        if (event.occurrence?.task) {
+          // Get recurrence for the task using the recurrenceId
+          let recurrence = null;
+          if (event.occurrence.task.recurrenceId) {
+            recurrence = await this.recurrenceRepo.findById(event.occurrence.task.recurrenceId);
+          }
+          
+          // Calculate and add taskType
+          return {
+            ...event,
+            occurrence: {
+              ...event.occurrence,
+              task: {
+                ...event.occurrence.task,
+                taskType: calculateTaskType(recurrence),
+              },
+            },
+          };
+        }
+        return event;
+      })
+    );
+    
+    return enrichedEvents;
   }
 
   /**

@@ -2,21 +2,24 @@
  * Occurrence Adapter - connects service layer with repository layer for task occurrences
  */
 
-import { TaskOccurrenceRepository, CalendarEventRepository } from "../repository";
+import { TaskOccurrenceRepository, CalendarEventRepository, TaskRecurrenceRepository } from "../repository";
 import type {
   CreateOccurrenceDTO,
   UpdateOccurrenceDTO,
   TaskOccurrence,
   TaskOccurrenceStatus,
 } from "../services/types";
+import { calculateTaskType } from "../helpers";
 
 export class OccurrenceAdapter {
   private occurrenceRepo: TaskOccurrenceRepository;
   private eventRepo: CalendarEventRepository;
+  private recurrenceRepo: TaskRecurrenceRepository;
 
   constructor() {
     this.occurrenceRepo = new TaskOccurrenceRepository();
     this.eventRepo = new CalendarEventRepository();
+    this.recurrenceRepo = new TaskRecurrenceRepository();
   }
 
   /**
@@ -69,7 +72,64 @@ export class OccurrenceAdapter {
    * Get occurrences in a date range
    */
   async getOccurrencesByDateRange(startDate: Date, endDate: Date) {
-    return await this.occurrenceRepo.findByDateRange(startDate, endDate);
+    const occurrences = await this.occurrenceRepo.findByDateRange(startDate, endDate);
+    
+    // Enrich each occurrence's task with taskType
+    const enrichedOccurrences = await Promise.all(
+      occurrences.map(async (occurrence) => {
+        if (occurrence.task) {
+          // Get recurrence for the task using the recurrenceId
+          let recurrence = null;
+          if (occurrence.task.recurrenceId) {
+            recurrence = await this.recurrenceRepo.findById(occurrence.task.recurrenceId);
+          }
+          
+          // Calculate and add taskType
+          return {
+            ...occurrence,
+            task: {
+              ...occurrence.task,
+              taskType: calculateTaskType(recurrence),
+            },
+          };
+        }
+        return occurrence;
+      })
+    );
+    
+    return enrichedOccurrences;
+  }
+
+  /**
+   * Get all occurrences with task details for a user
+   */
+  async getOccurrencesWithTaskByUserId(userId: string) {
+    const occurrences = await this.occurrenceRepo.findByOwnerIdWithTask(userId);
+    
+    // Enrich each occurrence's task with taskType
+    const enrichedOccurrences = await Promise.all(
+      occurrences.map(async (occurrence: any) => {
+        if (occurrence.task) {
+          // Get recurrence for the task using the recurrenceId
+          let recurrence = null;
+          if (occurrence.task.recurrenceId) {
+            recurrence = await this.recurrenceRepo.findById(occurrence.task.recurrenceId);
+          }
+          
+          // Calculate and add taskType
+          return {
+            ...occurrence,
+            task: {
+              ...occurrence.task,
+              taskType: calculateTaskType(recurrence),
+            },
+          };
+        }
+        return occurrence;
+      })
+    );
+    
+    return enrichedOccurrences;
   }
 
   /**

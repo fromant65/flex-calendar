@@ -79,10 +79,20 @@ export class TaskOccurrenceRepository extends BaseRepository<typeof taskOccurren
    * Find all occurrences with task details for a specific user
    */
   async findByOwnerIdWithTask(ownerId: string) {
+    const { tasks } = await import("~/server/db/schema");
+    
     return await db.query.taskOccurrences.findMany({
       with: {
         task: true,
       },
+      where: (occurrences, { inArray, eq }) => {
+        // We need to get task IDs for this owner first
+        // This is a workaround since we can't directly join in findMany
+        return eq(occurrences.associatedTaskId, occurrences.associatedTaskId); // This will be filtered below
+      },
+    }).then(async (allOccurrences) => {
+      // Filter occurrences by owner through the task relation
+      return allOccurrences.filter(occ => occ.task?.ownerId === ownerId);
     });
   }
 

@@ -5,6 +5,9 @@
 // Task Occurrence Status
 export type TaskOccurrenceStatus = 'Pending' | 'In Progress' | 'Completed' | 'Skipped';
 
+// Task Type (based on recurrence pattern)
+export type TaskType = 'Única' | 'Recurrente Finita' | 'Hábito' | 'Hábito +';
+
 // Day of Week
 export type DayOfWeek = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
 
@@ -126,8 +129,9 @@ export interface UpdateCalendarEventDTO {
 // Output DTOs with calculated fields
 
 export interface TaskWithDetails extends Task {
-  recurrence?: TaskRecurrence;
+  recurrence?: TaskRecurrence | null;
   nextOccurrence?: TaskOccurrence;
+  taskType: TaskType;
 }
 
 export interface OccurrenceWithTask extends TaskOccurrence {

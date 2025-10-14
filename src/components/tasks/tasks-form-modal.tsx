@@ -12,6 +12,7 @@ import { Textarea } from "~/components/ui/textarea"
 import { Button } from "~/components/ui/button"
 import { Slider } from "~/components/ui/slider"
 import { Badge } from "~/components/ui/badge"
+import { LoadingSpinner } from "~/components/ui/loading-spinner"
 
 type TaskType = "unique" | "finite" | "habit" | "habit-plus"
 
@@ -480,9 +481,16 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
           {/* Form Actions */}
           <div className="flex gap-3">
             <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="flex-1">
-              {editingTask ? "Actualizar Tarea" : "Crear Tarea"}
+              {createMutation.isPending || updateMutation.isPending ? (
+                <>
+                  <LoadingSpinner size="xs" />
+                  <span className="ml-2">{editingTask ? "Actualizando..." : "Creando..."}</span>
+                </>
+              ) : (
+                editingTask ? "Actualizar Tarea" : "Crear Tarea"
+              )}
             </Button>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={createMutation.isPending || updateMutation.isPending}>
               Cancelar
             </Button>
           </div>

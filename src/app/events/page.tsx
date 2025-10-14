@@ -4,6 +4,7 @@ import { CalendarViewComponent } from "~/components/events/calendar-view"
 import { EisenhowerMatrix } from "~/components/events/eisenhower-matrix"
 import { ScheduleDialog } from "~/components/events/schedule-dialog"
 import { TaskDetailsModal } from "~/components/events/task-details-modal"
+import { LoadingPage } from "~/components/ui/loading-spinner"
 import { api } from "~/trpc/react"
 import type { CalendarView, EventWithDetails, OccurrenceWithTask } from "~/lib/types"
 import { useState, useRef, useEffect } from "react"
@@ -27,6 +28,9 @@ export default function TaskCalendarPage() {
   const [isDragging, setIsDragging] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // Get utils for query invalidation
+  const utils = api.useUtils()
+
   // Calculate date range for queries (current week)
   const today = new Date()
   const startOfWeek = new Date(today)
@@ -47,10 +51,10 @@ export default function TaskCalendarPage() {
   const occurrences = occurrencesData as OccurrenceWithTask[]
 
   const createEventMutation = api.calendarEvent.create.useMutation({
-    onSuccess: () => {
-      // Refetch data after creating event
-      void api.useUtils().calendarEvent.getMyEventsWithDetails.invalidate()
-      void api.useUtils().occurrence.getByDateRange.invalidate()
+    onSuccess: async () => {
+      // Invalidate queries to refresh the UI
+      await utils.calendarEvent.getMyEventsWithDetails.invalidate()
+      await utils.occurrence.invalidate()
       // Close the schedule dialog
       setScheduleDialogOpen(false)
       setSelectedTask(null)
@@ -58,11 +62,12 @@ export default function TaskCalendarPage() {
       setSelectedHour(undefined)
     }
   })
+  
   const updateEventMutation = api.calendarEvent.update.useMutation({
-    onSuccess: () => {
-      // Refetch data after updating event
-      void api.useUtils().calendarEvent.getMyEventsWithDetails.invalidate()
-      void api.useUtils().occurrence.getByDateRange.invalidate()
+    onSuccess: async () => {
+      // Invalidate queries to refresh the UI
+      await utils.calendarEvent.getMyEventsWithDetails.invalidate()
+      await utils.occurrence.invalidate()
       // Close the schedule dialog
       setScheduleDialogOpen(false)
       setEventToReschedule(null)
@@ -186,11 +191,7 @@ export default function TaskCalendarPage() {
   }
 
   if(eventsLoading || occurrencesLoading) {
-    return (
-      <div className="h-[calc(100vh-4rem)] flex items-center justify-center bg-background">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    )
+    return <LoadingPage text="Cargando eventos y tareas..." />
   }
 
   return (
@@ -261,10 +262,10 @@ export default function TaskCalendarPage() {
         onOpenChange={setDetailsModalOpen}
         occurrence={detailsOccurrence}
         event={detailsEvent}
-        onEventCompleted={() => {
-          // Refetch data after completing event
-          void api.useUtils().calendarEvent.getMyEventsWithDetails.invalidate()
-          void api.useUtils().occurrence.getByDateRange.invalidate()
+        onEventCompleted={async () => {
+          // Refetch data after completing event using the utils instance
+          await utils.calendarEvent.getMyEventsWithDetails.invalidate()
+          await utils.occurrence.invalidate()
         }}
       />
     </div>

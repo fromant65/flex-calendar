@@ -4,7 +4,7 @@
 
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { TaskLifecycleService, TaskAnalyticsService } from "../services";
+import { TaskLifecycleService } from "../services";
 
 const createCalendarEventSchema = z.object({
   context: z.string().optional(),
@@ -50,15 +50,7 @@ export const calendarEventRouter = createTRPCRouter({
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
       const service = new TaskLifecycleService();
-      const analyticsService = new TaskAnalyticsService();
-      const event = await service.getCalendarEventWithDetails(input.id);
-      
-      // Enrich occurrence with urgency if it exists
-      if (event?.occurrence) {
-        event.occurrence = analyticsService.enrichOccurrenceWithUrgency(event.occurrence);
-      }
-      
-      return event;
+      return await service.getCalendarEventWithDetailsEnriched(input.id);
     }),
 
   /**
@@ -74,19 +66,7 @@ export const calendarEventRouter = createTRPCRouter({
    */
   getMyEventsWithDetails: protectedProcedure.query(async ({ ctx }) => {
     const service = new TaskLifecycleService();
-    const analyticsService = new TaskAnalyticsService();
-    const events = await service.getUserCalendarEventsWithDetails(ctx.session.user.id);
-    
-    // Enrich all occurrences with urgency
-    return events.map(event => {
-      if (event.occurrence) {
-        return {
-          ...event,
-          occurrence: analyticsService.enrichOccurrenceWithUrgency(event.occurrence)
-        };
-      }
-      return event;
-    });
+    return await service.getUserCalendarEventsWithDetails(ctx.session.user.id);
   }),
 
   /**
@@ -107,6 +87,22 @@ export const calendarEventRouter = createTRPCRouter({
         input.endDate
       );
     }),
+
+  /**
+   * Get today's events with details
+   */
+  getTodayEvents: protectedProcedure.query(async ({ ctx }) => {
+    const service = new TaskLifecycleService();
+    return await service.getTodayEventsWithDetails(ctx.session.user.id);
+  }),
+
+  /**
+   * Get this week's events with details
+   */
+  getWeekEvents: protectedProcedure.query(async ({ ctx }) => {
+    const service = new TaskLifecycleService();
+    return await service.getWeekEventsWithDetails(ctx.session.user.id);
+  }),
 
   /**
    * Update a calendar event

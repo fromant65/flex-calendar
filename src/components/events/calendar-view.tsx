@@ -121,8 +121,8 @@ export function CalendarViewComponent({
         </div>
       </div>
 
-      {/* Calendar Content */}
-      <div className="flex-1 overflow-auto">
+  {/* Calendar Content */}
+  <div className="flex-1 overflow-auto scrollbar-themed">
         {view === "day" && (
           <DayView
             date={currentDate}

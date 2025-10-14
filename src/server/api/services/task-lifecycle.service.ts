@@ -229,6 +229,23 @@ export class TaskLifecycleService {
   }
 
   /**
+   * Get event with details and enriched urgency
+   */
+  async getCalendarEventWithDetailsEnriched(eventId: number) {
+    const event = await this.eventAdapter.getEventWithDetails(eventId);
+    
+    // Enrich occurrence with urgency if it exists
+    if (event?.occurrence) {
+      return {
+        ...event,
+        occurrence: this.analyticsService.enrichOccurrenceWithUrgency(event.occurrence)
+      };
+    }
+    
+    return event;
+  }
+
+  /**
    * Get all events for a user
    */
   async getUserCalendarEvents(userId: string) {
@@ -239,7 +256,18 @@ export class TaskLifecycleService {
    * Get events with details for a user
    */
   async getUserCalendarEventsWithDetails(userId: string) {
-    return await this.eventAdapter.getEventsWithDetailsByOwnerId(userId);
+    const events = await this.eventAdapter.getEventsWithDetailsByOwnerId(userId);
+    
+    // Enrich all occurrences with urgency
+    return events.map(event => {
+      if (event.occurrence) {
+        return {
+          ...event,
+          occurrence: this.analyticsService.enrichOccurrenceWithUrgency(event.occurrence)
+        };
+      }
+      return event;
+    });
   }
 
   /**
@@ -247,6 +275,69 @@ export class TaskLifecycleService {
    */
   async getCalendarEventsByDateRange(userId: string, startDate: Date, endDate: Date) {
     return await this.eventAdapter.getEventsByDateRange(userId, startDate, endDate);
+  }
+
+  /**
+   * Get events with details in a date range
+   */
+  async getCalendarEventsWithDetailsByDateRange(userId: string, startDate: Date, endDate: Date) {
+    return await this.eventAdapter.getEventsWithDetailsByDateRange(userId, startDate, endDate);
+  }
+
+  /**
+   * Get today's events with details and enriched urgency
+   */
+  async getTodayEventsWithDetails(userId: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const events = await this.eventAdapter.getEventsWithDetailsByDateRange(
+      userId,
+      today,
+      tomorrow
+    );
+    
+    // Enrich occurrences with urgency
+    return events.map(event => {
+      if (event.occurrence) {
+        return {
+          ...event,
+          occurrence: this.analyticsService.enrichOccurrenceWithUrgency(event.occurrence)
+        };
+      }
+      return event;
+    });
+  }
+
+  /**
+   * Get this week's events with details and enriched urgency
+   */
+  async getWeekEventsWithDetails(userId: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+    
+    const events = await this.eventAdapter.getEventsWithDetailsByDateRange(
+      userId,
+      startOfWeek,
+      endOfWeek
+    );
+    
+    // Enrich occurrences with urgency
+    return events.map(event => {
+      if (event.occurrence) {
+        return {
+          ...event,
+          occurrence: this.analyticsService.enrichOccurrenceWithUrgency(event.occurrence)
+        };
+      }
+      return event;
+    });
   }
 
   /**

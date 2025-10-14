@@ -4,6 +4,7 @@ import type React from "react"
 
 import type { EventWithDetails } from "~/lib/types"
 import { formatTime, getHoursArray, isToday } from "~/lib/calendar-utils"
+import { getTaskTypeClassName } from "~/lib/task-type-colors"
 import { Clock } from "lucide-react"
 
 interface DayViewProps {
@@ -87,13 +88,17 @@ export function DayView({
             const finish = new Date(event.finish)
             const startHour = start.getHours() + start.getMinutes() / 60
             const duration = (finish.getTime() - start.getTime()) / (1000 * 60 * 60)
+            const taskTypeClassName = getTaskTypeClassName(event.occurrence?.task?.taskType, {
+              includeHover: true,
+              includeRing: false,
+            })
 
             return (
               <div
                 key={event.id}
                 draggable={!event.isFixed}
                 onDragStart={() => onEventDragStart(event)}
-                className={`absolute left-2 right-2 bg-primary/20 border-l-4 border-primary rounded p-2 hover:bg-primary/30 transition-colors ${
+                className={`absolute left-2 right-2 border-l-4 rounded p-2 transition-colors ${taskTypeClassName} ${
                   event.isFixed ? "cursor-default" : "cursor-move"
                 }`}
                 style={{

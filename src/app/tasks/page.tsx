@@ -5,6 +5,7 @@ import { api } from "~/trpc/react"
 import { Plus, Pencil, Trash2, Calendar, Repeat, Target } from "lucide-react"
 import { TaskFormModal } from "~/components/tasks/tasks-form-modal"
 import { TaskDetailsModal } from "~/components/events/task-details-modal"
+import { LoadingPage } from "~/components/ui/loading-spinner"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,6 +18,8 @@ import {
 } from "~/components/ui/alert-dialog"
 import { Badge } from "~/components/ui/badge"
 
+type TaskType = "Única" | "Recurrente Finita" | "Hábito" | "Hábito +"
+
 type TaskWithRecurrence = {
   id: number
   name: string
@@ -24,6 +27,7 @@ type TaskWithRecurrence = {
   importance: number
   isActive: boolean
   recurrenceId: number | null
+  taskType: TaskType
   recurrence?: {
     id: number
     interval: number | null
@@ -41,7 +45,7 @@ export default function TasksPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState<number | null>(null)
 
-  const { data: tasks = [], refetch } = api.task.getMyTasks.useQuery()
+  const { data: tasks = [], refetch, isLoading } = api.task.getMyTasks.useQuery()
   const deleteMutation = api.task.delete.useMutation({
     onSuccess: () => {
       refetch()
@@ -72,19 +76,7 @@ export default function TasksPage() {
   }
 
   const getTaskTypeLabel = (task: TaskWithRecurrence) => {
-    if (!task.recurrence) return "Única"
-    if (task.recurrence.maxOccurrences === 1 
-        && !task.recurrence.interval) return "Única"
-    if (task.recurrence.maxOccurrences && task.recurrence.maxOccurrences > 1 && !task.recurrence.interval) {
-      return "Recurrente Finita"
-    }
-    if (task.recurrence.interval 
-        && (!task.recurrence.maxOccurrences || task.recurrence.maxOccurrences <= 1)
-        && !task.recurrence.daysOfWeek 
-        && !task.recurrence.daysOfMonth) {
-      return "Hábito"
-    }
-    return "Hábito +"
+    return task.taskType
   }
 
   const getTaskTypeIcon = (task: TaskWithRecurrence) => {
@@ -93,6 +85,10 @@ export default function TasksPage() {
       return <Repeat className="h-4 w-4" />
     }
     return <Target className="h-4 w-4" />
+  }
+
+  if (isLoading) {
+    return <LoadingPage text="Cargando tareas..." />
   }
 
   return (

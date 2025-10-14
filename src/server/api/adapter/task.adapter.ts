@@ -13,7 +13,10 @@ import type {
   Task,
   TaskWithDetails,
   CreateRecurrenceDTO,
+  TaskRecurrence,
+  TaskType,
 } from "../services/types";
+import { calculateTaskType } from "../helpers";
 
 export class TaskAdapter {
   private taskRepo: TaskRepository;
@@ -76,8 +79,15 @@ export class TaskAdapter {
   /**
    * Get task with its recurrence details
    */
-  async getTaskWithRecurrence(taskId: number) {
-    return await this.taskRepo.findWithRecurrence(taskId);
+  async getTaskWithRecurrence(taskId: number): Promise<TaskWithDetails | undefined> {
+    const task = await this.taskRepo.findWithRecurrence(taskId);
+    
+    if (!task) return undefined;
+    
+    return {
+      ...task,
+      taskType: calculateTaskType(task.recurrence),
+    };
   }
 
   /**
@@ -97,8 +107,14 @@ export class TaskAdapter {
   /**
    * Get tasks with recurrence for a user
    */
-  async getTasksWithRecurrenceByOwnerId(ownerId: string) {
-    return await this.taskRepo.findByOwnerIdWithRecurrence(ownerId);
+  async getTasksWithRecurrenceByOwnerId(ownerId: string): Promise<TaskWithDetails[]> {
+    const tasksWithRecurrence = await this.taskRepo.findByOwnerIdWithRecurrence(ownerId);
+    
+    // Add calculated taskType to each task
+    return tasksWithRecurrence.map((task) => ({
+      ...task,
+      taskType: calculateTaskType(task.recurrence),
+    }));
   }
 
   /**

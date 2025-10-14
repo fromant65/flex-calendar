@@ -188,17 +188,51 @@ export class TaskAnalyticsService {
    * Get occurrences sorted by urgency
    */
   async getOccurrencesByUrgency(userId: string) {
-    const tasks = await this.taskRepo.findByOwnerId(userId);
-    const taskIds = tasks.map((t) => t.id);
+    // Use the adapter to get occurrences with task details
+    const occurrencesWithTask = await this.occurrenceAdapter.getOccurrencesWithTaskByUserId(userId);
     
-    const allOccurrences = await Promise.all(
-      taskIds.map((id) => this.occurrenceRepo.findByTaskId(id))
+    // Filter only pending/in-progress occurrences
+    const activeOccurrences = occurrencesWithTask.filter(
+      (o) => o.status === "Pending" || o.status === "In Progress"
     );
-    const occurrences = allOccurrences.flat();
+    
+    // Enrich with urgency
+    const enrichedOccurrences = this.enrichOccurrencesWithUrgency(activeOccurrences);
+    
+    // Filter by urgency > 5
+    const urgentOccurrences = enrichedOccurrences.filter(
+      (o) => (o.urgency ?? 0) > 5
+    );
+    
+    // Sort by urgency (descending)
+    return urgentOccurrences.sort((a, b) => (b.urgency ?? 0) - (a.urgency ?? 0));
+  }
 
-    // Filter active occurrences and sort by urgency (descending)
-    return occurrences
-      .filter((o) => o.status === "Pending" || o.status === "In Progress")
-      .sort((a, b) => (b.urgency ?? 0) - (a.urgency ?? 0));
+  /**
+   * Get occurrences sorted by importance
+   */
+  async getOccurrencesByImportance(userId: string) {
+    // Use the adapter to get occurrences with task details
+    const occurrencesWithTask = await this.occurrenceAdapter.getOccurrencesWithTaskByUserId(userId);
+    
+    // Filter only pending/in-progress occurrences
+    const activeOccurrences = occurrencesWithTask.filter(
+      (o) => o.status === "Pending" || o.status === "In Progress"
+    );
+    
+    // Enrich with urgency
+    const enrichedOccurrences = this.enrichOccurrencesWithUrgency(activeOccurrences);
+    
+    // Filter by importance > 5
+    const importantOccurrences = enrichedOccurrences.filter(
+      (o) => (o.task?.importance ?? 0) > 5
+    );
+    
+    // Sort by importance (descending), then by urgency
+    return importantOccurrences.sort((a, b) => {
+      const importanceDiff = (b.task?.importance ?? 0) - (a.task?.importance ?? 0);
+      if (importanceDiff !== 0) return importanceDiff;
+      return (b.urgency ?? 0) - (a.urgency ?? 0);
+    });
   }
 }

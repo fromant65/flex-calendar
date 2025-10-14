@@ -1,5 +1,7 @@
 export type TaskOccurrenceStatus = "Pending" | "In Progress" | "Completed" | "Skipped"
 
+export type TaskType = "Única" | "Recurrente Finita" | "Hábito" | "Hábito +"
+
 export interface Task {
   id: number
   ownerId: string
@@ -8,6 +10,7 @@ export interface Task {
   recurrenceId: number | null
   importance: number
   isActive: boolean
+  taskType?: TaskType
   createdAt: Date
   updatedAt: Date | null
 }

@@ -4,6 +4,7 @@ import type React from "react"
 
 import type { EventWithDetails } from "~/lib/types"
 import { getMonthDays, isSameDay, isToday } from "~/lib/calendar-utils"
+import { getTaskTypeClassName } from "~/lib/task-type-colors"
 
 interface MonthViewProps {
   date: Date
@@ -69,18 +70,25 @@ export function MonthView({ date, events, onTimeSlotClick, onEventClick, onDrop 
                 {day.getDate()}
               </div>
               <div className="space-y-1">
-                {dayEvents.slice(0, 3).map((event) => (
-                  <div
-                    key={event.id}
-                    className="text-xs bg-primary/20 border-l-2 border-primary rounded px-1 py-0.5 truncate cursor-pointer hover:bg-primary/30"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onEventClick(event)
-                    }}
-                  >
-                    {event.occurrence?.task?.name || "Untitled"}
-                  </div>
-                ))}
+                {dayEvents.slice(0, 3).map((event) => {
+                  const taskTypeClassName = getTaskTypeClassName(event.occurrence?.task?.taskType, {
+                    includeHover: true,
+                    includeRing: false,
+                  })
+                  
+                  return (
+                    <div
+                      key={event.id}
+                      className={`text-xs rounded px-1 py-0.5 truncate cursor-pointer ${taskTypeClassName}`}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onEventClick(event)
+                      }}
+                    >
+                      {event.occurrence?.task?.name || "Untitled"}
+                    </div>
+                  )
+                })}
                 {dayEvents.length > 3 && (
                   <div className="text-xs text-muted-foreground">+{dayEvents.length - 3} more</div>
                 )}
