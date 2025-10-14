@@ -1,6 +1,6 @@
 "use client"
 
-import type { OccurrenceWithTask } from "~/lib/types"
+import type { OccurrenceWithTask } from "~/types"
 import { Star, Calendar, Clock, Flag, AlertCircle } from "lucide-react"
 import { cn } from "~/lib/utils"
 import { getTaskTypeClassName } from "~/lib/task-type-colors"

@@ -77,7 +77,7 @@ export class CalendarEventAdapter {
               ...event.occurrence,
               task: {
                 ...event.occurrence.task,
-                taskType: calculateTaskType(recurrence),
+                taskType: calculateTaskType(recurrence, event.occurrence.task),
               },
             },
           };
@@ -119,7 +119,7 @@ export class CalendarEventAdapter {
               ...event.occurrence,
               task: {
                 ...event.occurrence.task,
-                taskType: calculateTaskType(recurrence),
+                taskType: calculateTaskType(recurrence, event.occurrence.task),
               },
             },
           };

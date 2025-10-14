@@ -4,7 +4,8 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { api } from "~/trpc/react"
-import { ChevronDown, ChevronUp, Calendar, Repeat, Target, Info } from "lucide-react"
+import type { TaskWithRecurrence } from "~/types"
+import { ChevronDown, ChevronUp, Calendar, Repeat, Target, Info, Lock } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "~/components/ui/dialog"
 import { Label } from "~/components/ui/label"
 import { Input } from "~/components/ui/input"
@@ -13,25 +14,10 @@ import { Button } from "~/components/ui/button"
 import { Slider } from "~/components/ui/slider"
 import { Badge } from "~/components/ui/badge"
 import { LoadingSpinner } from "~/components/ui/loading-spinner"
+import { toast } from "sonner"
 
-type TaskType = "unique" | "finite" | "habit" | "habit-plus"
-
-type TaskWithRecurrence = {
-  id: number
-  name: string
-  description: string | null
-  importance: number
-  isActive: boolean
-  recurrenceId: number | null
-  recurrence?: {
-    id: number
-    interval: number | null
-    daysOfWeek: string[] | null
-    daysOfMonth: number[] | null
-    maxOccurrences: number | null
-    endDate: Date | null
-  } | null
-}
+// Internal form task type (different from display TaskType)
+type FormTaskType = "unique" | "finite" | "habit" | "habit-plus" | "fixed-unique" | "fixed-repetitive"
 
 interface TaskFormModalProps {
   open: boolean
@@ -41,7 +27,7 @@ interface TaskFormModalProps {
 }
 
 export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: TaskFormModalProps) {
-  const [taskType, setTaskType] = useState<TaskType>("unique")
+  const [taskType, setTaskType] = useState<FormTaskType>("unique")
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
@@ -55,10 +41,38 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
     targetDate: undefined as string | undefined,
     limitDate: undefined as string | undefined,
     targetTimeConsumption: undefined as number | undefined,
+    fixedDate: undefined as string | undefined,
+    fixedStartTime: "",
+    fixedEndTime: "",
   })
 
-  const createMutation = api.task.create.useMutation({ onSuccess })
-  const updateMutation = api.task.update.useMutation({ onSuccess })
+  const createMutation = api.task.create.useMutation({
+    onSuccess: () => {
+      toast.success("Tarea creada exitosamente", {
+        description: `"${formData.name}" ha sido agregada a tu lista de tareas`,
+      })
+      onSuccess()
+    },
+    onError: (error) => {
+      toast.error("Error al crear tarea", {
+        description: error.message || "Hubo un problema al crear la tarea",
+      })
+    },
+  })
+
+  const updateMutation = api.task.update.useMutation({
+    onSuccess: () => {
+      toast.success("Tarea actualizada", {
+        description: "Los cambios han sido guardados correctamente",
+      })
+      onSuccess()
+    },
+    onError: (error) => {
+      toast.error("Error al actualizar tarea", {
+        description: error.message || "Hubo un problema al actualizar la tarea",
+      })
+    },
+  })
 
   useEffect(() => {
     if (editingTask) {
@@ -76,6 +90,9 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
         targetDate: undefined,
         limitDate: undefined,
         targetTimeConsumption: undefined,
+        fixedDate: undefined,
+        fixedStartTime: editingTask.fixedStartTime || "",
+        fixedEndTime: editingTask.fixedEndTime || "",
       })
     } else {
       resetForm()
@@ -95,6 +112,9 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
       targetDate: undefined,
       limitDate: undefined,
       targetTimeConsumption: undefined,
+      fixedDate: undefined,
+      fixedStartTime: "",
+      fixedEndTime: "",
     })
     setTaskType("unique")
     setShowAdvanced(false)
@@ -102,6 +122,30 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+
+    const isFixed = taskType === "fixed-unique" || taskType === "fixed-repetitive"
+
+    // Validation for fixed tasks
+    if (isFixed) {
+      if (!formData.fixedStartTime || !formData.fixedEndTime) {
+        alert("Las tareas fijas deben tener horario de inicio y fin")
+        return
+      }
+      if (taskType === "fixed-unique" && !formData.fixedDate) {
+        alert("Las tareas fijas únicas deben tener una fecha definida")
+        return
+      }
+      if (taskType === "fixed-repetitive") {
+        if (!formData.daysOfWeek.length && !formData.daysOfMonth.length) {
+          alert("Las tareas fijas repetitivas deben tener días de la semana o del mes definidos")
+          return
+        }
+        if (!formData.endDate) {
+          alert("Las tareas fijas repetitivas deben tener una fecha de finalización para evitar generar eventos infinitamente")
+          return
+        }
+      }
+    }
 
     const recurrence =
       taskType === "unique"
@@ -111,6 +155,11 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
         : taskType === "finite"
           ? {
               maxOccurrences: formData.maxOccurrences,
+              daysOfWeek:
+                formData.daysOfWeek.length > 0
+                  ? (formData.daysOfWeek as Array<"Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun">)
+                  : undefined,
+              daysOfMonth: formData.daysOfMonth.length > 0 ? formData.daysOfMonth : undefined,
               endDate: formData.endDate ? new Date(formData.endDate) : undefined,
             }
           : taskType === "habit"
@@ -119,18 +168,33 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
                 maxOccurrences: 1, // 1 occurrence per period
                 lastPeriodStart: new Date(), // Start period now
               }
-            : {
-                // habit-plus
-                interval: formData.interval,
-                daysOfWeek:
-                  formData.daysOfWeek.length > 0
-                    ? (formData.daysOfWeek as Array<"Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun">)
-                    : undefined,
-                daysOfMonth: formData.daysOfMonth.length > 0 ? formData.daysOfMonth : undefined,
-                maxOccurrences: formData.maxOccurrences,
-                endDate: formData.endDate ? new Date(formData.endDate) : undefined,
-                lastPeriodStart: new Date(), // Start period now
-              }
+            : taskType === "habit-plus"
+              ? {
+                  // habit-plus
+                  interval: formData.interval,
+                  daysOfWeek:
+                    formData.daysOfWeek.length > 0
+                      ? (formData.daysOfWeek as Array<"Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun">)
+                      : undefined,
+                  daysOfMonth: formData.daysOfMonth.length > 0 ? formData.daysOfMonth : undefined,
+                  maxOccurrences: formData.maxOccurrences,
+                  endDate: formData.endDate ? new Date(formData.endDate) : undefined,
+                  lastPeriodStart: new Date(), // Start period now
+                }
+              : taskType === "fixed-unique"
+                ? {
+                    maxOccurrences: 1,
+                    // Fixed unique tasks don't need daysOfWeek - they use targetDate instead
+                  }
+                : {
+                    // fixed-repetitive
+                    daysOfWeek:
+                      formData.daysOfWeek.length > 0
+                        ? (formData.daysOfWeek as Array<"Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun">)
+                        : undefined,
+                    daysOfMonth: formData.daysOfMonth.length > 0 ? formData.daysOfMonth : undefined,
+                    endDate: new Date(formData.endDate!), // Required for fixed-repetitive
+                  }
 
     if (editingTask) {
       updateMutation.mutate({
@@ -146,9 +210,17 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
         name: formData.name,
         description: formData.description,
         importance: formData.importance,
-        targetDate: formData.targetDate ? new Date(formData.targetDate) : undefined,
+        targetDate:
+          taskType === "fixed-unique" && formData.fixedDate
+            ? new Date(formData.fixedDate)
+            : formData.targetDate
+              ? new Date(formData.targetDate)
+              : undefined,
         limitDate: formData.limitDate ? new Date(formData.limitDate) : undefined,
         targetTimeConsumption: formData.targetTimeConsumption,
+        isFixed: isFixed,
+        fixedStartTime: isFixed ? `${formData.fixedStartTime}:00` : undefined,
+        fixedEndTime: isFixed ? `${formData.fixedEndTime}:00` : undefined,
         recurrence,
       })
     }
@@ -173,10 +245,12 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
   }
 
   const taskTypes = [
-    { value: "unique" as TaskType, label: "Única", icon: Calendar, description: "Tarea de una sola vez" },
-    { value: "finite" as TaskType, label: "Recurrente Finita", icon: Repeat, description: "Se repite N veces" },
-    { value: "habit" as TaskType, label: "Hábito", icon: Target, description: "Se repite cada X días" },
-    { value: "habit-plus" as TaskType, label: "Hábito +", icon: Target, description: "Hábito con opciones avanzadas" },
+    { value: "unique" as FormTaskType, label: "Única", icon: Calendar, description: "Tarea de una sola vez" },
+    { value: "finite" as FormTaskType, label: "Recurrente Finita", icon: Repeat, description: "Se repite N veces" },
+    { value: "habit" as FormTaskType, label: "Hábito", icon: Target, description: "Se repite cada X días" },
+    { value: "habit-plus" as FormTaskType, label: "Hábito +", icon: Target, description: "Hábito con opciones avanzadas" },
+    { value: "fixed-unique" as FormTaskType, label: "Fija Única", icon: Lock, description: "Evento en fecha y hora específica" },
+    { value: "fixed-repetitive" as FormTaskType, label: "Fija Repetitiva", icon: Lock, description: "Eventos fijos recurrentes" },
   ]
 
   return (
@@ -297,6 +371,159 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
             </div>
           )}
 
+          {/* Fixed Unique Task - Date and Times */}
+          {!editingTask && taskType === "fixed-unique" && (
+            <div className="space-y-3 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/30 p-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-blue-700 dark:text-blue-300">
+                <Lock className="h-4 w-4" />
+                Evento Fijo Único
+              </div>
+              <div>
+                <Label htmlFor="fixedDate" className="text-foreground">
+                  Fecha *
+                </Label>
+                <Input
+                  id="fixedDate"
+                  type="date"
+                  value={formData.fixedDate || ""}
+                  onChange={(e) => setFormData({ ...formData, fixedDate: e.target.value })}
+                  required
+                  className="mt-1.5"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="fixedStartTime" className="text-foreground">
+                    Hora de Inicio *
+                  </Label>
+                  <Input
+                    id="fixedStartTime"
+                    type="time"
+                    value={formData.fixedStartTime}
+                    onChange={(e) => setFormData({ ...formData, fixedStartTime: e.target.value })}
+                    required
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="fixedEndTime" className="text-foreground">
+                    Hora de Fin *
+                  </Label>
+                  <Input
+                    id="fixedEndTime"
+                    type="time"
+                    value={formData.fixedEndTime}
+                    onChange={(e) => setFormData({ ...formData, fixedEndTime: e.target.value })}
+                    required
+                    className="mt-1.5"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-blue-600 dark:text-blue-400">
+                Se creará un evento automáticamente en el calendario en la fecha y horario especificados
+              </p>
+            </div>
+          )}
+
+          {/* Fixed Repetitive Task - Days and Times */}
+          {!editingTask && taskType === "fixed-repetitive" && (
+            <div className="space-y-4 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/30 p-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-blue-700 dark:text-blue-300">
+                <Lock className="h-4 w-4" />
+                Eventos Fijos Repetitivos
+              </div>
+              
+              <div>
+                <Label className="text-foreground">Días de la Semana *</Label>
+                <div className="mt-2 flex gap-2">
+                  {daysOfWeek.map((day) => (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => toggleDayOfWeek(day)}
+                      className={`flex h-10 w-10 items-center justify-center rounded-full border text-sm font-medium transition-all ${
+                        formData.daysOfWeek.includes(day)
+                          ? "border-blue-500 bg-blue-500 text-white shadow-sm"
+                          : "border-border bg-background text-muted-foreground hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950"
+                      }`}
+                    >
+                      {dayLabels[day]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="daysOfMonth" className="text-foreground">
+                  Días del Mes (opcional, separados por coma)
+                </Label>
+                <Input
+                  id="daysOfMonth"
+                  value={formData.daysOfMonth.join(", ")}
+                  onChange={(e) => {
+                    const days = e.target.value
+                      .split(",")
+                      .map((d) => Number.parseInt(d.trim()))
+                      .filter((d) => !isNaN(d) && d >= 1 && d <= 31)
+                    setFormData({ ...formData, daysOfMonth: days })
+                  }}
+                  placeholder="Ej: 1, 15, 30"
+                  className="mt-1.5"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="fixedStartTime" className="text-foreground">
+                    Hora de Inicio *
+                  </Label>
+                  <Input
+                    id="fixedStartTime"
+                    type="time"
+                    value={formData.fixedStartTime}
+                    onChange={(e) => setFormData({ ...formData, fixedStartTime: e.target.value })}
+                    required
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="fixedEndTime" className="text-foreground">
+                    Hora de Fin *
+                  </Label>
+                  <Input
+                    id="fixedEndTime"
+                    type="time"
+                    value={formData.fixedEndTime}
+                    onChange={(e) => setFormData({ ...formData, fixedEndTime: e.target.value })}
+                    required
+                    className="mt-1.5"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="endDate" className="text-foreground">
+                  Fecha de Finalización <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={formData.endDate || ""}
+                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  required
+                  className="mt-1.5"
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Requerida para evitar generar eventos infinitamente
+                </p>
+              </div>
+
+              <p className="text-xs text-blue-600 dark:text-blue-400">
+                Se crearán eventos automáticamente en los días seleccionados con los horarios especificados
+              </p>
+            </div>
+          )}
+
           {/* Target and limit dates for unique/finite when creating */}
           {!editingTask && (taskType === "unique" || taskType === "finite") && (
             <div className="mt-4 grid grid-cols-2 gap-3">
@@ -329,7 +556,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
           )}
 
           {/* Recurrence Options */}
-          {!editingTask && taskType !== "unique" && (
+          {!editingTask && taskType !== "unique" && taskType !== "fixed-unique" && taskType !== "fixed-repetitive" && (
             <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
               <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <Info className="h-4 w-4 text-primary" />
@@ -338,22 +565,63 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
 
               {taskType === "finite" && (
                 <>
-                  {taskType === "finite" && (
-                    <div>
-                      <Label htmlFor="maxOccurrences" className="text-foreground">
-                        Número de Ocurrencias
-                      </Label>
-                      <Input
-                        id="maxOccurrences"
-                        type="number"
-                        min="1"
-                        value={formData.maxOccurrences || ""}
-                        onChange={(e) => setFormData({ ...formData, maxOccurrences: Number.parseInt(e.target.value) })}
-                        placeholder="Ej: 10"
-                        className="mt-1.5"
-                      />
+                  <div>
+                    <Label htmlFor="maxOccurrences" className="text-foreground">
+                      Número de Ocurrencias
+                    </Label>
+                    <Input
+                      id="maxOccurrences"
+                      type="number"
+                      min="1"
+                      value={formData.maxOccurrences || ""}
+                      onChange={(e) => setFormData({ ...formData, maxOccurrences: Number.parseInt(e.target.value) })}
+                      placeholder="Ej: 10"
+                      className="mt-1.5"
+                    />
+                  </div>
+
+                  {/* Days selection for finite tasks (optional) */}
+                  <div>
+                    <Label className="text-foreground">
+                      Días de la Semana (Opcional)
+                    </Label>
+                    <div className="mt-2 flex gap-2">
+                      {daysOfWeek.map((day) => (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => toggleDayOfWeek(day)}
+                          className={`flex h-10 w-10 items-center justify-center rounded-full border text-sm font-medium transition-all ${
+                            formData.daysOfWeek.includes(day)
+                              ? "border-primary bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                              : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:bg-muted"
+                          }`}
+                        >
+                          {dayLabels[day]}
+                        </button>
+                      ))}
                     </div>
-                  )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="daysOfMonth" className="text-foreground">
+                      Días del Mes (separados por coma, opcional)
+                    </Label>
+                    <Input
+                      id="daysOfMonth"
+                      value={formData.daysOfMonth.join(", ")}
+                      onChange={(e) => {
+                        const days = e.target.value
+                          .split(",")
+                          .map((d) => Number.parseInt(d.trim()))
+                          .filter((d) => !isNaN(d) && d >= 1 && d <= 31)
+                        setFormData({ ...formData, daysOfMonth: days })
+                      }}
+                      placeholder="Ej: 1, 15, 30"
+                      className="mt-1.5"
+                    />
+                  </div>
+
                   <div>
                     <Label htmlFor="endDate" className="text-foreground">
                       Fecha de Finalización (Opcional)

@@ -2,18 +2,33 @@
  * Task Type Helper - Centralized business logic for calculating task types
  */
 
-import type { TaskRecurrence, TaskType } from "../services/types";
+import type { TaskRecurrence, TaskType, Task } from "../services/types";
 
 /**
- * Calculate task type based on recurrence pattern
+ * Calculate task type based on recurrence pattern and fixed status
  * 
  * Business rules:
+ * - Fija Única: isFixed=true with maxOccurrences=1
+ * - Fija Repetitiva: isFixed=true with recurring pattern
  * - Única: No recurrence or maxOccurrences = 1
  * - Recurrente Finita: maxOccurrences > 1 without interval OR with interval and maxOccurrences > 1
  * - Hábito: Has interval, no specific days, infinite or single occurrence
  * - Hábito +: Has interval with specific days (daysOfWeek or daysOfMonth)
  */
-export function calculateTaskType(recurrence: TaskRecurrence | null | undefined): TaskType {
+export function calculateTaskType(
+  recurrence: TaskRecurrence | null | undefined,
+  task?: { isFixed?: boolean } | null
+): TaskType {
+  // Check if task is fixed first
+  if (task?.isFixed) {
+    // Fixed tasks with single occurrence
+    if (!recurrence || recurrence.maxOccurrences === 1) {
+      return "Fija Única";
+    }
+    // Fixed tasks with recurring pattern
+    return "Fija Repetitiva";
+  }
+
   // No recurrence = single task
   if (!recurrence) return "Única";
   

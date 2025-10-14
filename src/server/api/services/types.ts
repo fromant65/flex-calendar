@@ -6,7 +6,7 @@
 export type TaskOccurrenceStatus = 'Pending' | 'In Progress' | 'Completed' | 'Skipped';
 
 // Task Type (based on recurrence pattern)
-export type TaskType = 'Única' | 'Recurrente Finita' | 'Hábito' | 'Hábito +';
+export type TaskType = 'Única' | 'Recurrente Finita' | 'Hábito' | 'Hábito +' | 'Fija Única' | 'Fija Repetitiva';
 
 // Day of Week
 export type DayOfWeek = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
@@ -20,6 +20,9 @@ export interface Task {
   recurrenceId: number | null;
   importance: number;
   isActive: boolean;
+  isFixed: boolean;
+  fixedStartTime: string | null;
+  fixedEndTime: string | null;
   createdAt: Date;
   updatedAt: Date | null;
 }
@@ -74,6 +77,9 @@ export interface CreateTaskDTO {
   limitDate?: Date;
   targetTimeConsumption?: number;
   recurrence?: CreateRecurrenceDTO;
+  isFixed?: boolean;
+  fixedStartTime?: string; // Format: "HH:MM:SS" - Required if isFixed is true
+  fixedEndTime?: string; // Format: "HH:MM:SS" - Required if isFixed is true
 }
 
 export interface CreateRecurrenceDTO {
@@ -82,7 +88,7 @@ export interface CreateRecurrenceDTO {
   daysOfMonth?: number[];
   maxOccurrences?: number;
   lastPeriodStart?: Date;
-  endDate?: Date;
+  endDate?: Date; // REQUIRED for fixed repetitive tasks (isFixed=true with daysOfWeek/daysOfMonth)
 }
 
 export interface UpdateTaskDTO {
@@ -90,6 +96,9 @@ export interface UpdateTaskDTO {
   description?: string;
   importance?: number;
   isActive?: boolean;
+  isFixed?: boolean;
+  fixedStartTime?: string;
+  fixedEndTime?: string;
 }
 
 export interface CreateOccurrenceDTO {

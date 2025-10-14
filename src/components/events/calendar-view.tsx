@@ -1,6 +1,6 @@
 "use client"
 
-import type { CalendarView, EventWithDetails } from "~/lib/types"
+import type { CalendarView, EventWithDetails } from "~/types"
 import { getCurrentTimePosition, getWeekDays } from "~/lib/calendar-utils"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useEffect, useState } from "react"

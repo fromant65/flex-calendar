@@ -2,10 +2,14 @@
 
 import { useState } from "react"
 import { api } from "~/trpc/react"
-import { Plus, Pencil, Trash2, Calendar, Repeat, Target } from "lucide-react"
+import type { TaskWithRecurrence } from "~/types"
 import { TaskFormModal } from "~/components/tasks/tasks-form-modal"
 import { TaskDetailsModal } from "~/components/events/task-details-modal"
 import { LoadingPage } from "~/components/ui/loading-spinner"
+import { TaskCard } from "~/components/tasks/task-card"
+import { TaskStats } from "~/components/tasks/task-stats"
+import { TasksHeader } from "~/components/tasks/tasks-header"
+import { EmptyState } from "~/components/tasks/empty-state"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,27 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "~/components/ui/alert-dialog"
-import { Badge } from "~/components/ui/badge"
-
-type TaskType = "Única" | "Recurrente Finita" | "Hábito" | "Hábito +"
-
-type TaskWithRecurrence = {
-  id: number
-  name: string
-  description: string | null
-  importance: number
-  isActive: boolean
-  recurrenceId: number | null
-  taskType: TaskType
-  recurrence?: {
-    id: number
-    interval: number | null
-    daysOfWeek: string[] | null
-    daysOfMonth: number[] | null
-    maxOccurrences: number | null
-    endDate: Date | null
-  } | null
-}
+import { toast } from "sonner"
 
 export default function TasksPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -48,9 +32,17 @@ export default function TasksPage() {
   const { data: tasks = [], refetch, isLoading } = api.task.getMyTasks.useQuery()
   const deleteMutation = api.task.delete.useMutation({
     onSuccess: () => {
+      toast.success("Tarea eliminada", {
+        description: "La tarea y todos sus eventos asociados han sido eliminados",
+      })
       refetch()
       setDeleteDialogOpen(false)
       setTaskToDelete(null)
+    },
+    onError: (error) => {
+      toast.error("Error al eliminar tarea", {
+        description: error.message || "Hubo un problema al eliminar la tarea",
+      })
     },
   })
 
@@ -75,17 +67,13 @@ export default function TasksPage() {
     setEditingTask(null)
   }
 
-  const getTaskTypeLabel = (task: TaskWithRecurrence) => {
-    return task.taskType
-  }
+  // Calculate stats
+  const activeTasks = tasks.filter((t) => t.isActive).length
+  const fixedTasks = tasks.filter((t) => t.isFixed).length
 
-  const getTaskTypeIcon = (task: TaskWithRecurrence) => {
-    if (!task.recurrence || task.recurrence.maxOccurrences === 1) return <Calendar className="h-4 w-4" />
-    if (task.recurrence.maxOccurrences && task.recurrence.maxOccurrences > 1 && !task.recurrence.interval) {
-      return <Repeat className="h-4 w-4" />
-    }
-    return <Target className="h-4 w-4" />
-  }
+  // Separate active and inactive tasks
+  const activeTasksList = tasks.filter((t) => t.isActive)
+  const inactiveTasksList = tasks.filter((t) => !t.isActive)
 
   if (isLoading) {
     return <LoadingPage text="Cargando tareas..." />
@@ -94,105 +82,61 @@ export default function TasksPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Gestor de Tareas</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Crea y administra tus tareas y hábitos</p>
-            </div>
-            <button
-              onClick={() => setIsFormOpen(true)}
-              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20"
-            >
-              <Plus className="h-5 w-5" />
-              Nueva Tarea
-            </button>
-          </div>
-        </div>
-      </header>
+      <TasksHeader onCreateClick={() => setIsFormOpen(true)} />
 
-      {/* Tasks Grid */}
+      {/* Content */}
       <div className="container mx-auto px-6 py-8">
+        {tasks.length > 0 && <TaskStats totalTasks={tasks.length} activeTasks={activeTasks} fixedTasks={fixedTasks} />}
+
         {tasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-card/30 p-16 text-center backdrop-blur-sm">
-            <div className="mb-4 rounded-full bg-muted/50 p-6">
-              <Calendar className="h-12 w-12 text-muted-foreground" />
-            </div>
-            <h3 className="mb-2 text-xl font-semibold text-foreground">No hay tareas creadas</h3>
-            <p className="mb-6 text-sm text-muted-foreground">Comienza creando tu primera tarea o hábito</p>
-            <button
-              onClick={() => setIsFormOpen(true)}
-              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-semibold text-primary-foreground transition-all hover:bg-primary/90"
-            >
-              <Plus className="h-5 w-5" />
-              Crear Primera Tarea
-            </button>
-          </div>
+          <EmptyState onCreateClick={() => setIsFormOpen(true)} />
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {tasks.map((task) => (
-              <div
-                key={task.id}
-                onClick={() => setViewingTask(task)}
-                className="group cursor-pointer rounded-xl border border-border bg-card/50 p-5 backdrop-blur-sm transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg hover:shadow-primary/5"
-              >
-                <div className="mb-3 flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="rounded-lg bg-primary/10 p-2 text-primary">{getTaskTypeIcon(task)}</div>
-                    <Badge variant="outline" className="text-xs">
-                      {getTaskTypeLabel(task)}
-                    </Badge>
-                  </div>
-                  <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleEdit(task)
-                      }}
-                      className="rounded-lg border border-border bg-background p-2 text-foreground transition-colors hover:bg-muted"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDelete(task.id)
-                      }}
-                      className="rounded-lg border border-destructive/30 bg-destructive/10 p-2 text-destructive transition-colors hover:bg-destructive/20"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-
-                <h3 className="mb-2 font-semibold text-foreground line-clamp-1">{task.name}</h3>
-
-                {task.description && (
-                  <p className="mb-3 text-sm text-muted-foreground line-clamp-2">{task.description}</p>
-                )}
-
-                <div className="flex items-center gap-2">
-                  <div className="flex-1">
-                    <div className="mb-1 flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Importancia</span>
-                      <span className="font-semibold text-primary">{task.importance}/10</span>
-                    </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full rounded-full bg-primary transition-all"
-                        style={{ width: `${task.importance * 10}%` }}
-                      />
-                    </div>
-                  </div>
-                  {!task.isActive && (
-                    <Badge variant="destructive" className="text-xs">
-                      Inactiva
-                    </Badge>
-                  )}
+          <div className="space-y-8">
+            {/* Active Tasks Section */}
+            {activeTasksList.length > 0 && (
+              <div>
+                <h2 className="mb-4 text-2xl font-semibold text-foreground">
+                  Tareas Activas
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    ({activeTasksList.length})
+                  </span>
+                </h2>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {activeTasksList.map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onClick={setViewingTask}
+                    />
+                  ))}
                 </div>
               </div>
-            ))}
+            )}
+
+            {/* Inactive Tasks Section */}
+            {inactiveTasksList.length > 0 && (
+              <div>
+                <h2 className="mb-4 text-2xl font-semibold text-muted-foreground">
+                  Tareas Inactivas
+                  <span className="ml-2 text-sm font-normal">
+                    ({inactiveTasksList.length})
+                  </span>
+                </h2>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {inactiveTasksList.map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onClick={setViewingTask}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

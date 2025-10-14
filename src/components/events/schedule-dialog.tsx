@@ -1,6 +1,6 @@
 "use client"
 
-import type { EventWithDetails, OccurrenceWithTask } from "~/lib/types"
+import type { EventWithDetails, OccurrenceWithTask } from "~/types"
 import { useState, useEffect } from "react"
 import { Button } from "../ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog"

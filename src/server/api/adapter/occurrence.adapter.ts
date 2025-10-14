@@ -89,7 +89,7 @@ export class OccurrenceAdapter {
             ...occurrence,
             task: {
               ...occurrence.task,
-              taskType: calculateTaskType(recurrence),
+              taskType: calculateTaskType(recurrence, occurrence.task),
             },
           };
         }
@@ -121,7 +121,7 @@ export class OccurrenceAdapter {
             ...occurrence,
             task: {
               ...occurrence.task,
-              taskType: calculateTaskType(recurrence),
+              taskType: calculateTaskType(recurrence, occurrence.task),
             },
           };
         }

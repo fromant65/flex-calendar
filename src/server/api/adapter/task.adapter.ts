@@ -49,6 +49,9 @@ export class TaskAdapter {
       importance: data.importance ?? 5,
       recurrenceId,
       isActive: true,
+      isFixed: data.isFixed ?? false,
+      fixedStartTime: data.fixedStartTime ?? null,
+      fixedEndTime: data.fixedEndTime ?? null,
     });
 
     return task;
@@ -86,7 +89,7 @@ export class TaskAdapter {
     
     return {
       ...task,
-      taskType: calculateTaskType(task.recurrence),
+      taskType: calculateTaskType(task.recurrence, task),
     };
   }
 
@@ -113,7 +116,7 @@ export class TaskAdapter {
     // Add calculated taskType to each task
     return tasksWithRecurrence.map((task) => ({
       ...task,
-      taskType: calculateTaskType(task.recurrence),
+      taskType: calculateTaskType(task.recurrence, task),
     }));
   }
 

@@ -24,6 +24,9 @@ const createTaskSchema = z.object({
   limitDate: z.date().optional(),
   targetTimeConsumption: z.number().positive().optional(),
   recurrence: createRecurrenceSchema.optional(),
+  isFixed: z.boolean().optional(),
+  fixedStartTime: z.string().regex(/^\d{2}:\d{2}:\d{2}$/).optional(), // Format: "HH:MM:SS"
+  fixedEndTime: z.string().regex(/^\d{2}:\d{2}:\d{2}$/).optional(), // Format: "HH:MM:SS"
 });
 
 const updateTaskSchema = z.object({

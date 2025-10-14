@@ -7,7 +7,7 @@ import { DayWeekEvents } from "~/components/dashboard/events-list"
 import { TaskDetailsModal } from "~/components/events/task-details-modal"
 import { LoadingPage } from "~/components/ui/loading-spinner"
 import { useState } from "react"
-import type { OccurrenceWithTask, EventWithDetails } from "~/lib/types"
+import type { OccurrenceWithTask, EventWithDetails } from "~/types"
 
 interface DashboardClientProps {
   userName: string

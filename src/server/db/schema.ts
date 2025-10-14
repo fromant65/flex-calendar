@@ -143,6 +143,9 @@ export const tasks = createTable(
       .references(() => taskRecurrences.id),
     importance: d.integer().notNull().default(5), // 1-10 scale
     isActive: d.boolean().notNull().default(true),
+    isFixed: d.boolean().notNull().default(false), // Whether this task has fixed calendar times
+    fixedStartTime: d.time(), // Fixed start time (e.g., "09:00:00")
+    fixedEndTime: d.time(), // Fixed end time (e.g., "17:00:00")
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)

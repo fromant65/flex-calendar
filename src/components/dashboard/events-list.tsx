@@ -1,6 +1,6 @@
 "use client"
 
-import type { EventWithDetails } from "~/lib/types"
+import type { EventWithDetails } from "~/types"
 import { Calendar, Clock, CheckCircle2, AlertCircle } from "lucide-react"
 import { cn } from "~/lib/utils"
 

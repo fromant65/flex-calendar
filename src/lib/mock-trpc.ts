@@ -1,4 +1,4 @@
-import type { CalendarEvent, EventWithDetails, OccurrenceWithTask, Task, TaskOccurrence } from "./types"
+import type { CalendarEvent, EventWithDetails, OccurrenceWithTask, Task, TaskOccurrence } from "~/types"
 
 // Mock data
 const mockTasks: Task[] = [
@@ -10,6 +10,9 @@ const mockTasks: Task[] = [
     recurrenceId: null,
     importance: 9,
     isActive: true,
+    isFixed: false,
+    fixedStartTime: null,
+    fixedEndTime: null,
     createdAt: new Date("2025-01-01"),
     updatedAt: null,
   },
@@ -21,6 +24,9 @@ const mockTasks: Task[] = [
     recurrenceId: null,
     importance: 7,
     isActive: true,
+    isFixed: false,
+    fixedStartTime: null,
+    fixedEndTime: null,
     createdAt: new Date("2025-01-02"),
     updatedAt: null,
   },
@@ -32,6 +38,9 @@ const mockTasks: Task[] = [
     recurrenceId: null,
     importance: 5,
     isActive: true,
+    isFixed: false,
+    fixedStartTime: null,
+    fixedEndTime: null,
     createdAt: new Date("2025-01-03"),
     updatedAt: null,
   },
@@ -43,6 +52,9 @@ const mockTasks: Task[] = [
     recurrenceId: 1,
     importance: 6,
     isActive: true,
+    isFixed: false,
+    fixedStartTime: null,
+    fixedEndTime: null,
     createdAt: new Date("2025-01-04"),
     updatedAt: null,
   },
@@ -54,6 +66,9 @@ const mockTasks: Task[] = [
     recurrenceId: null,
     importance: 3,
     isActive: true,
+    isFixed: false,
+    fixedStartTime: null,
+    fixedEndTime: null,
     createdAt: new Date("2025-01-05"),
     updatedAt: null,
   },
@@ -65,6 +80,9 @@ const mockTasks: Task[] = [
     recurrenceId: null,
     importance: 10,
     isActive: true,
+    isFixed: false,
+    fixedStartTime: null,
+    fixedEndTime: null,
     createdAt: new Date("2025-01-06"),
     updatedAt: null,
   },
@@ -76,6 +94,9 @@ const mockTasks: Task[] = [
     recurrenceId: null,
     importance: 2,
     isActive: true,
+    isFixed: false,
+    fixedStartTime: null,
+    fixedEndTime: null,
     createdAt: new Date("2025-01-07"),
     updatedAt: null,
   },
@@ -87,6 +108,9 @@ const mockTasks: Task[] = [
     recurrenceId: null,
     importance: 8,
     isActive: true,
+    isFixed: false,
+    fixedStartTime: null,
+    fixedEndTime: null,
     createdAt: new Date("2025-01-08"),
     updatedAt: null,
   },
@@ -261,10 +285,14 @@ export const mockTrpc = {
         const eventsWithDetails: EventWithDetails[] = mockEventsState.map((event) => {
           const occurrence = mockOccurrences.find((o) => o.id === event.associatedOccurrenceId)
           const task = occurrence ? mockTasks.find((t) => t.id === occurrence.associatedTaskId) : undefined
+          
+          const occurrenceWithTask: OccurrenceWithTask | undefined = occurrence && task 
+            ? { ...occurrence, task } 
+            : undefined
+
           return {
             ...event,
-            occurrence,
-            task,
+            occurrence: occurrenceWithTask,
           }
         })
         return { data: eventsWithDetails, isLoading: false }

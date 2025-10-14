@@ -6,7 +6,7 @@ import { ScheduleDialog } from "~/components/events/schedule-dialog"
 import { TaskDetailsModal } from "~/components/events/task-details-modal"
 import { LoadingPage } from "~/components/ui/loading-spinner"
 import { api } from "~/trpc/react"
-import type { CalendarView, EventWithDetails, OccurrenceWithTask } from "~/lib/types"
+import type { CalendarView, EventWithDetails, OccurrenceWithTask } from "~/types"
 import { useState, useRef, useEffect } from "react"
 import { GripVertical } from "lucide-react"
 

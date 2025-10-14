@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import type { OccurrenceWithTask, QuadrantPosition } from "~/lib/types"
+import type { OccurrenceWithTask, QuadrantPosition } from "~/types"
 import { calculateQuadrant, getQuadrantLabel } from "~/lib/eisenhower-utils"
 import { getTaskTypeClassName } from "~/lib/task-type-colors"
 import { Clock, Flag, ArrowUpDown, Check, ArrowDownWideNarrow, ArrowUpNarrowWide } from "lucide-react"

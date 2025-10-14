@@ -1,6 +1,6 @@
 "use client"
 
-import type { EventWithDetails, OccurrenceWithTask } from "~/lib/types"
+import type { EventWithDetails, OccurrenceWithTask, TaskWithRecurrence } from "~/types"
 import { Calendar, Clock, Flag, Lock, Target, CheckCircle2, Edit2, Trash2, Save, X } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog"
 import {
@@ -20,19 +20,12 @@ import { Label } from "../ui/label"
 import { LoadingSpinner } from "../ui/loading-spinner"
 import { useState } from "react"
 import { api } from "~/trpc/react"
-
-
-type TaskLike = {
-  id?: number
-  name?: string
-  description?: string | null
-  importance?: number
-}
+import { toast } from "sonner"
 
 interface TaskDetailsModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  task?: TaskLike | null
+  task?: Partial<TaskWithRecurrence> | null
   occurrence?: OccurrenceWithTask | null
   event?: EventWithDetails | null
   onEventCompleted?: () => void
@@ -73,28 +66,49 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
 
   const updateEventMutation = api.calendarEvent.update.useMutation({
     onSuccess: async () => {
+      toast.success("Evento actualizado", {
+        description: "Los cambios han sido guardados correctamente",
+      })
       setIsEditing(false)
       // Invalidate queries to refresh the UI
       await utils.calendarEvent.getMyEventsWithDetails.invalidate()
       await utils.occurrence.invalidate() // Invalidate all occurrence queries
       if (onEventCompleted) onEventCompleted()
     },
-    onError: (err) => console.error("Error updating event", err),
+    onError: (error) => {
+      toast.error("Error al actualizar evento", {
+        description: error.message || "Hubo un problema al actualizar el evento",
+      })
+      console.error("Error updating event", error)
+    },
   })
 
   const deleteEventMutation = api.calendarEvent.delete.useMutation({
     onSuccess: async () => {
+      toast.success("Evento eliminado", {
+        description: "El evento ha sido eliminado de tu calendario",
+      })
       // Invalidate queries to refresh the UI
       await utils.calendarEvent.getMyEventsWithDetails.invalidate()
       await utils.occurrence.invalidate() // Invalidate all occurrence queries
       onOpenChange(false)
       if (onEventCompleted) onEventCompleted()
     },
-    onError: (err) => console.error("Error deleting event", err),
+    onError: (error) => {
+      toast.error("Error al eliminar evento", {
+        description: error.message || "Hubo un problema al eliminar el evento",
+      })
+      console.error("Error deleting event", error)
+    },
   })
 
   const completeEventMutation = api.calendarEvent.complete.useMutation({
     onSuccess: async () => {
+      toast.success("¡Evento completado!", {
+        description: dedicatedTime 
+          ? `Registraste ${dedicatedTime} hora(s) de dedicación` 
+          : "El evento ha sido marcado como completado",
+      })
       // Invalidate queries to refresh the UI
       await utils.calendarEvent.getMyEventsWithDetails.invalidate()
       await utils.occurrence.invalidate() // Invalidate all occurrence queries
@@ -106,6 +120,9 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
       }
     },
     onError: (error) => {
+      toast.error("Error al completar evento", {
+        description: error.message || "Hubo un problema al completar el evento",
+      })
       console.error("Error completing event:", error)
       setIsCompleting(false)
     }
@@ -113,13 +130,21 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
 
   const skipEventMutation = api.calendarEvent.update.useMutation({
     onSuccess: async () => {
+      toast.info("Evento omitido", {
+        description: "El evento ha sido marcado como omitido",
+      })
       // Invalidate queries to refresh the UI
       await utils.calendarEvent.getMyEventsWithDetails.invalidate()
       await utils.occurrence.invalidate() // Invalidate all occurrence queries
       onOpenChange(false)
       if (onEventCompleted) onEventCompleted()
     },
-    onError: (err) => console.error("Error skipping event", err),
+    onError: (error) => {
+      toast.error("Error al omitir evento", {
+        description: error.message || "Hubo un problema al omitir el evento",
+      })
+      console.error("Error skipping event", error)
+    },
   })
 
   const handleSaveEdit = () => {
@@ -157,60 +182,143 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
     })
   }
 
+  // Check if event has already started
+  const eventHasStarted = event ? new Date(event.start) <= new Date() : false
+
   if (!task && !event) return null
+
+  const taskWithRecurrence = task && 'recurrence' in task ? task : null
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">{task?.name || "Event Details"}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          {task?.description ? (
+          {task?.description && (
             <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-1">Description</h4>
+              <h4 className="text-sm font-medium text-muted-foreground mb-1">Descripción</h4>
               <p className="text-sm text-foreground">{task.description}</p>
             </div>
-          ) : null}
+          )}
+
+          {/* Task Type and Fixed Status */}
+          <div className="flex gap-2 flex-wrap">
+            {task?.taskType && (
+              <div className="rounded-md border border-border bg-muted/30 px-3 py-1">
+                <p className="text-xs text-muted-foreground">Tipo</p>
+                <p className="text-sm font-medium text-foreground">{task.taskType}</p>
+              </div>
+            )}
+            {task?.isFixed && (
+              <div className="rounded-md border border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950 px-3 py-1">
+                <p className="text-xs text-blue-600 dark:text-blue-400">Tarea Fija</p>
+                {task.fixedStartTime && task.fixedEndTime && (
+                  <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                    {task.fixedStartTime.substring(0, 5)} - {task.fixedEndTime.substring(0, 5)}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Recurrence Information */}
+          {taskWithRecurrence?.recurrence && (
+            <div className="rounded-lg border border-border bg-muted/20 p-3">
+              <h4 className="text-sm font-medium text-foreground mb-2">Patrón de Recurrencia</h4>
+              <div className="space-y-1 text-xs text-muted-foreground">
+                {taskWithRecurrence.recurrence.interval && (
+                  <p>Cada {taskWithRecurrence.recurrence.interval} días</p>
+                )}
+                {taskWithRecurrence.recurrence.daysOfWeek && taskWithRecurrence.recurrence.daysOfWeek.length > 0 && (
+                  <p>Días: {taskWithRecurrence.recurrence.daysOfWeek.join(", ")}</p>
+                )}
+                {taskWithRecurrence.recurrence.daysOfMonth && taskWithRecurrence.recurrence.daysOfMonth.length > 0 && (
+                  <p>Días del mes: {taskWithRecurrence.recurrence.daysOfMonth.join(", ")}</p>
+                )}
+                {taskWithRecurrence.recurrence.maxOccurrences && (
+                  <p>Máximo de ocurrencias: {taskWithRecurrence.recurrence.maxOccurrences}</p>
+                )}
+                {taskWithRecurrence.recurrence.endDate && (
+                  <p>Termina: {new Date(taskWithRecurrence.recurrence.endDate).toLocaleDateString()}</p>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
-            {task ? (
+            {task?.importance !== undefined && (
               <div className="flex items-center gap-2">
                 <Flag className="w-4 h-4 text-muted-foreground" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Importance</p>
+                  <p className="text-xs text-muted-foreground">Importancia</p>
                   <p className="text-sm font-medium text-foreground">{task.importance}/10</p>
                 </div>
               </div>
-            ) : "No task data available"}
+            )}
 
-            {displayOccurrence?.urgency ? (
+            {displayOccurrence?.urgency !== undefined && displayOccurrence?.urgency !== null && (
               <div className="flex items-center gap-2">
                 <Target className="w-4 h-4 text-muted-foreground" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Urgency</p>
-                  <p className="text-sm font-medium text-foreground">{displayOccurrence.urgency}/10</p>
+                  <p className="text-xs text-muted-foreground">Urgencia</p>
+                  <p className="text-sm font-medium text-foreground">{displayOccurrence.urgency.toFixed(1)}/10</p>
                 </div>
               </div>
-            ) : "No urgency data available"}
+            )}
 
             {displayOccurrence?.targetTimeConsumption && (
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-muted-foreground" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Target Duration</p>
+                  <p className="text-xs text-muted-foreground">Duración Objetivo</p>
                   <p className="text-sm font-medium text-foreground">{displayOccurrence.targetTimeConsumption} {displayOccurrence.targetTimeConsumption===1? "h":"hs"}</p>
+                </div>
+              </div>
+            )}
+
+            {displayOccurrence?.timeConsumed !== undefined && displayOccurrence?.timeConsumed !== null && (
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Tiempo Consumido</p>
+                  <p className="text-sm font-medium text-foreground">{displayOccurrence.timeConsumed.toFixed(1)} hs</p>
                 </div>
               </div>
             )}
 
             {displayOccurrence?.status && (
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4" />
+                <CheckCircle2 className="w-4 h-4 text-muted-foreground" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Status</p>
+                  <p className="text-xs text-muted-foreground">Estado</p>
                   <p className="text-sm font-medium text-foreground">{displayOccurrence.status}</p>
+                </div>
+              </div>
+            )}
+
+            {displayOccurrence?.targetDate && (
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Fecha Objetivo</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {new Date(displayOccurrence.targetDate).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {displayOccurrence?.limitDate && (
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-destructive" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Fecha Límite</p>
+                  <p className="text-sm font-medium text-destructive">
+                    {new Date(displayOccurrence.limitDate).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
             )}
@@ -219,8 +327,8 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
           {event && (
             <div className="border-t border-border pt-4 space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium text-foreground">Scheduled Time</h4>
-                {!event.isCompleted && !isEditing && (
+                <h4 className="text-sm font-medium text-foreground">Horario Programado</h4>
+                {!event.isCompleted && !isEditing && !event.isFixed && (
                   <Button variant="ghost" size="sm" onClick={startEditMode}>
                     <Edit2 className="h-4 w-4" />
                   </Button>
@@ -236,6 +344,15 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                   </div>
                 )}
               </div>
+
+              {event.isFixed && (
+                <div className="rounded-md bg-blue-50 dark:bg-blue-950/30 p-2 flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    Este evento tiene un horario fijo y no se puede modificar
+                  </p>
+                </div>
+              )}
 
               {!isEditing ? (
                 <>
@@ -358,8 +475,8 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
           )}
         </div>
 
-        {/* Delete Event Button - show for non-completed events */}
-        {event && !event.isCompleted && !isEditing && (
+        {/* Delete Event Button - show for non-completed events (not allowed for fixed tasks) */}
+        {event && !event.isCompleted && !event.isFixed && !isEditing && (
           <div className="border-t border-border pt-4">
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -396,10 +513,47 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
           </div>
         )}
 
+        {/* Info message for fixed tasks */}
+        {event && event.isFixed && !event.isCompleted && !isEditing && (
+          <div className="border-t border-border pt-4">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950 p-3">
+              <div className="flex items-start gap-2">
+                <Lock className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  Los eventos de tareas fijas no se pueden eliminar. Usa "Skip" si no lo realizaste o "Complete" cuando lo termines.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Complete Event Section - only show for events that are not completed */}
         {event && !event.isCompleted && !isEditing && (
           <DialogFooter className="border-t border-border pt-4">
             <div className="w-full space-y-3">
+              {/* Warning if event hasn't started yet */}
+              {!eventHasStarted && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950 p-3">
+                  <div className="flex items-start gap-2">
+                    <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                        Evento aún no ha comenzado
+                      </p>
+                      <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                        Solo puedes completar eventos que ya hayan iniciado. Este evento comienza el{" "}
+                        {new Date(event.start).toLocaleString("es", {
+                          day: "numeric",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="dedicatedTime" className="text-sm font-medium">
                   Dedicated Time (hours)
@@ -457,7 +611,11 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
 
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="default" className="flex-1" disabled={completeEventMutation.isPending}>
+                    <Button 
+                      variant="default" 
+                      className="flex-1" 
+                      disabled={completeEventMutation.isPending || !eventHasStarted}
+                    >
                       {completeEventMutation.isPending ? (
                         <>
                           <LoadingSpinner size="xs" />

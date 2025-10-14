@@ -35,6 +35,31 @@ export class TaskLifecycleService {
    * Create a new task
    */
   async createTask(userId: string, data: CreateTaskDTO) {
+    // Validate fixed task requirements
+    if (data.isFixed) {
+      // Fixed tasks must have start and end times
+      if (!data.fixedStartTime || !data.fixedEndTime) {
+        throw new Error("Fixed tasks must have fixedStartTime and fixedEndTime defined");
+      }
+
+      // Fixed unique tasks use targetDate, fixed repetitive tasks use daysOfWeek/daysOfMonth
+      const isFixedUnique = data.targetDate && (!data.recurrence?.daysOfWeek && !data.recurrence?.daysOfMonth);
+      const isFixedRepetitive = data.recurrence && (data.recurrence.daysOfWeek || data.recurrence.daysOfMonth);
+
+      if (!isFixedUnique && !isFixedRepetitive) {
+        throw new Error(
+          "Fixed tasks must either have a targetDate (fixed unique) or recurrence with daysOfWeek/daysOfMonth (fixed repetitive)"
+        );
+      }
+
+      // Fixed repetitive tasks MUST have an endDate to avoid infinite generation
+      if (isFixedRepetitive && !data.recurrence?.endDate) {
+        throw new Error(
+          "Fixed repetitive tasks must have an endDate to limit event generation"
+        );
+      }
+    }
+
     // Ensure all tasks have recurrence (even unique tasks with maxOccurrences=1)
     const recurrenceData = data.recurrence ?? {
       maxOccurrences: 1, // Default for unique tasks
@@ -47,13 +72,22 @@ export class TaskLifecycleService {
 
     const task = await this.taskAdapter.createTask(userId, taskData);
 
-    // Create the first occurrence (works for all task types)
-    // Pass the initial dates for unique tasks
-    await this.schedulerService.createNextOccurrence(task.id, {
-      targetDate: data.targetDate,
-      limitDate: data.limitDate,
-      targetTimeConsumption: data.targetTimeConsumption,
-    });
+    // For fixed tasks, create occurrences and calendar events automatically
+    if (data.isFixed) {
+      await this.schedulerService.createFixedTaskEvents(task.id, userId, {
+        fixedStartTime: data.fixedStartTime!,
+        fixedEndTime: data.fixedEndTime!,
+        recurrence: recurrenceData,
+      });
+    } else {
+      // For non-fixed tasks, create the first occurrence (works for all task types)
+      // Pass the initial dates for unique tasks
+      await this.schedulerService.createNextOccurrence(task.id, {
+        targetDate: data.targetDate,
+        limitDate: data.limitDate,
+        targetTimeConsumption: data.targetTimeConsumption,
+      });
+    }
 
     return task;
   }
@@ -357,6 +391,12 @@ export class TaskLifecycleService {
       throw new Error("Event not found");
     }
 
+    // Validate that the event has already started
+    const now = new Date();
+    if (eventDetails.start > now) {
+      throw new Error("Cannot complete an event that hasn't started yet");
+    }
+
     // Calculate dedicated time if not provided (from start to finish)
     const calculatedTime = dedicatedTime ?? 
       (eventDetails.finish.getTime() - eventDetails.start.getTime()) / (1000 * 60 * 60); // Convert to hours
@@ -428,6 +468,12 @@ export class TaskLifecycleService {
    */
   async deleteCalendarEvent(eventId: number) {
     const event = await this.eventAdapter.getEventById(eventId);
+    
+    // Prevent deletion of fixed task events
+    if (event?.isFixed) {
+      throw new Error("Cannot delete events from fixed tasks. Use skip or complete instead.");
+    }
+    
     const deleted = await this.eventAdapter.deleteEvent(eventId);
     
     // If event was associated with an occurrence, recalculate time consumed

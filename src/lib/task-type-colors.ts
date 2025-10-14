@@ -3,7 +3,7 @@
  * Maps task types to their corresponding color schemes
  */
 
-export type TaskType = "Única" | "Recurrente Finita" | "Hábito" | "Hábito +"
+import type { TaskType } from "~/types"
 
 interface TaskTypeColors {
   bg: string
@@ -19,6 +19,8 @@ interface TaskTypeColors {
  * - Recurrente Finita: Cyan (chart-5) - Flujo con final
  * - Hábito: Verde (chart-2) - Crecimiento y constancia
  * - Hábito +: Magenta (chart-4) - Hábitos avanzados
+ * - Fija Única: Naranja (chart-1) - Eventos fijos puntuales
+ * - Fija Repetitiva: Naranja oscuro (orange-600) - Eventos fijos recurrentes
  */
 export function getTaskTypeColors(taskType: TaskType | undefined | null): TaskTypeColors {
   switch (taskType) {
@@ -53,6 +55,22 @@ export function getTaskTypeColors(taskType: TaskType | undefined | null): TaskTy
         border: "border-chart-4",
         ring: "ring-chart-4",
         text: "text-chart-4",
+      }
+    case "Fija Única":
+      return {
+        bg: "bg-chart-1/20",
+        bgHover: "bg-chart-1/30",
+        border: "border-chart-1",
+        ring: "ring-chart-1",
+        text: "text-chart-1",
+      }
+    case "Fija Repetitiva":
+      return {
+        bg: "bg-orange-500/20",
+        bgHover: "bg-orange-500/30",
+        border: "border-orange-600",
+        ring: "ring-orange-600",
+        text: "text-orange-700 dark:text-orange-400",
       }
     default:
       // Fallback to neutral colors if taskType is not recognized

@@ -1,4 +1,4 @@
-import type { OccurrenceWithTask, QuadrantPosition } from "./types"
+import type { OccurrenceWithTask, QuadrantPosition } from "~/types"
 
 export function calculateQuadrant(occurrence: OccurrenceWithTask): QuadrantPosition {
   const importance = occurrence.task?.importance || 0
@@ -36,6 +36,8 @@ export function getQuadrantLabel(quadrant: QuadrantPosition["quadrant"]): string
       return "Delegate"
     case "not-urgent-not-important":
       return "Eliminate"
+    default:
+      return "Unknown"
   }
 }
 
@@ -48,6 +50,8 @@ export function getQuadrantColor(quadrant: QuadrantPosition["quadrant"]): string
     case "urgent-not-important":
       return "bg-yellow-500/10 border-yellow-500/30"
     case "not-urgent-not-important":
+      return "bg-muted border-border"
+    default:
       return "bg-muted border-border"
   }
 }

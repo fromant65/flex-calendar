@@ -2,20 +2,22 @@
  * Task Scheduler Service - handles recurrence logic and automatic occurrence creation
  */
 
-import { TaskAdapter, OccurrenceAdapter } from "../adapter";
+import { TaskAdapter, OccurrenceAdapter, CalendarEventAdapter } from "../adapter";
 import { TaskRecurrenceRepository } from "../repository";
-import type { CreateOccurrenceDTO, DayOfWeek, TaskRecurrence } from "./types";
+import type { CreateOccurrenceDTO, DayOfWeek, TaskRecurrence, CreateRecurrenceDTO } from "./types";
 import { TaskAnalyticsService } from "./task-analytics.service";
 
 export class TaskSchedulerService {
   private taskAdapter: TaskAdapter;
   private occurrenceAdapter: OccurrenceAdapter;
+  private eventAdapter: CalendarEventAdapter;
   private recurrenceRepo: TaskRecurrenceRepository;
   private analyticsService: TaskAnalyticsService;
 
   constructor() {
     this.taskAdapter = new TaskAdapter();
     this.occurrenceAdapter = new OccurrenceAdapter();
+    this.eventAdapter = new CalendarEventAdapter();
     this.recurrenceRepo = new TaskRecurrenceRepository();
     this.analyticsService = new TaskAnalyticsService();
   }
@@ -441,5 +443,142 @@ export class TaskSchedulerService {
         }
       }
     }
+  }
+
+  /**
+   * Create fixed task events automatically based on recurrence pattern
+   * This generates all occurrences and calendar events for fixed tasks
+   */
+  async createFixedTaskEvents(
+    taskId: number,
+    ownerId: string,
+    config: {
+      fixedStartTime: string;
+      fixedEndTime: string;
+      recurrence: CreateRecurrenceDTO;
+    }
+  ): Promise<void> {
+    const { fixedStartTime, fixedEndTime, recurrence } = config;
+
+    // Determine how many occurrences to create
+    let datesToCreate: Date[] = [];
+    const startDate = new Date();
+    
+    // Calculate period end
+    let periodEnd: Date;
+    if (recurrence.endDate) {
+      periodEnd = recurrence.endDate;
+    } else if (recurrence.interval) {
+      // If there's an interval, create for the next period
+      periodEnd = new Date(startDate);
+      periodEnd.setDate(periodEnd.getDate() + recurrence.interval);
+    } else {
+      // Default: create for next 30 days
+      periodEnd = new Date(startDate);
+      periodEnd.setDate(periodEnd.getDate() + 30);
+    }
+
+    // Generate all dates based on recurrence pattern
+    if (recurrence.daysOfWeek && recurrence.daysOfWeek.length > 0) {
+      datesToCreate = this.generateDatesForDaysOfWeek(
+        startDate,
+        periodEnd,
+        recurrence.daysOfWeek
+      );
+    } else if (recurrence.daysOfMonth && recurrence.daysOfMonth.length > 0) {
+      datesToCreate = this.generateDatesForDaysOfMonth(
+        startDate,
+        periodEnd,
+        recurrence.daysOfMonth
+      );
+    }
+
+    // Limit to maxOccurrences if specified
+    if (recurrence.maxOccurrences && datesToCreate.length > recurrence.maxOccurrences) {
+      datesToCreate = datesToCreate.slice(0, recurrence.maxOccurrences);
+    }
+
+    // Create occurrences and events for each date
+    for (const date of datesToCreate) {
+      // Create occurrence
+      const occurrence = await this.occurrenceAdapter.createOccurrence({
+        associatedTaskId: taskId,
+        startDate: date,
+        targetDate: date,
+        limitDate: date,
+      });
+
+      // Create calendar event with fixed times
+      const [startHours, startMinutes, startSeconds] = fixedStartTime.split(':').map(Number);
+      const [endHours, endMinutes, endSeconds] = fixedEndTime.split(':').map(Number);
+
+      const eventStart = new Date(date);
+      eventStart.setHours(startHours!, startMinutes!, startSeconds!);
+
+      const eventEnd = new Date(date);
+      eventEnd.setHours(endHours!, endMinutes!, endSeconds!);
+
+      await this.eventAdapter.createEvent(ownerId, {
+        associatedOccurrenceId: occurrence.id,
+        isFixed: true,
+        start: eventStart,
+        finish: eventEnd,
+      });
+    }
+  }
+
+  /**
+   * Generate dates for all occurrences of specified days of week in a date range
+   */
+  private generateDatesForDaysOfWeek(
+    startDate: Date,
+    endDate: Date,
+    daysOfWeek: DayOfWeek[]
+  ): Date[] {
+    const dayMap: Record<DayOfWeek, number> = {
+      Sun: 0,
+      Mon: 1,
+      Tue: 2,
+      Wed: 3,
+      Thu: 4,
+      Fri: 5,
+      Sat: 6,
+    };
+
+    const targetDays = daysOfWeek.map((day) => dayMap[day]);
+    const dates: Date[] = [];
+    const current = new Date(startDate);
+    current.setHours(0, 0, 0, 0);
+
+    while (current <= endDate) {
+      if (targetDays.includes(current.getDay())) {
+        dates.push(new Date(current));
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    return dates;
+  }
+
+  /**
+   * Generate dates for all occurrences of specified days of month in a date range
+   */
+  private generateDatesForDaysOfMonth(
+    startDate: Date,
+    endDate: Date,
+    daysOfMonth: number[]
+  ): Date[] {
+    const dates: Date[] = [];
+    const current = new Date(startDate);
+    current.setHours(0, 0, 0, 0);
+
+    while (current <= endDate) {
+      if (daysOfMonth.includes(current.getDate())) {
+        dates.push(new Date(current));
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    return dates;
   }
 }

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import type { EventWithDetails } from "~/lib/types"
+import type { EventWithDetails } from "~/types"
 import { formatTime, getHoursArray, isToday } from "~/lib/calendar-utils"
 import { getTaskTypeClassName } from "~/lib/task-type-colors"
 import { Clock } from "lucide-react"
