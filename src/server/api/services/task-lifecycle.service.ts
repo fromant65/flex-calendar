@@ -198,17 +198,56 @@ export class TaskLifecycleService {
       throw new Error("Occurrence not found");
     }
 
-    // Mark as completed
+    const task = await this.taskAdapter.getTaskWithRecurrence(occurrence.task.id);
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    // Mark all events associated with this occurrence as completed
+    // Instead of deleting them, we complete them with their completedAt timestamp
+    const events = await this.eventAdapter.getEventsByOccurrenceId(occurrenceId);
+    for (const event of events) {
+      if (!event.isCompleted) {
+        await this.eventAdapter.completeEvent(event.id);
+      }
+    }
+
+    // Mark occurrence as completed with completedAt timestamp
     await this.occurrenceAdapter.completeOccurrence(occurrenceId);
 
-    // If the task is recurring, increment counter and create the next occurrence
-    const task = await this.taskAdapter.getTaskWithRecurrence(occurrence.task.id);
-    if (task?.recurrence) {
+    // Handle task lifecycle based on recurrence
+    if (task.recurrence) {
+      const recurrence = task.recurrence;
+
       // Increment completed occurrences counter for the period
-      await this.schedulerService.incrementCompletedOccurrences(task.recurrence.id);
+      await this.schedulerService.incrementCompletedOccurrences(recurrence.id);
       
-      // Create next occurrence
-      await this.schedulerService.createNextOccurrence(task.id);
+      // Tarea Única: maxOccurrences = 1, no interval
+      if (recurrence.maxOccurrences === 1 && !recurrence.interval) {
+        // Mark task as completed
+        await this.taskAdapter.completeTask(task.id);
+      }
+      // Recurrente Finita: maxOccurrences > 1, no interval
+      else if (recurrence.maxOccurrences && recurrence.maxOccurrences > 1 && !recurrence.interval) {
+        const occurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(task.id);
+        const completedCount = occurrences.filter(o => o.status === "Completed").length;
+        
+        if (completedCount < recurrence.maxOccurrences) {
+          // Create next occurrence with same parameters as the completed one
+          await this.schedulerService.createNextOccurrence(task.id, {
+            targetTimeConsumption: occurrence.targetTimeConsumption ?? undefined,
+          });
+        } else {
+          // All occurrences completed, mark task as completed
+          await this.taskAdapter.completeTask(task.id);
+        }
+      }
+      // Hábito or Hábito+: has interval (infinite recurrence)
+      else if (recurrence.interval) {
+        // Create next occurrence based on recurrence pattern
+        await this.schedulerService.createNextOccurrence(task.id);
+        // Don't mark task as completed for infinite habits
+      }
     }
 
     return true;
@@ -221,6 +260,13 @@ export class TaskLifecycleService {
     const occurrence = await this.occurrenceAdapter.getOccurrenceWithTask(occurrenceId);
     if (!occurrence) {
       throw new Error("Occurrence not found");
+    }
+
+    // Delete all events associated with this occurrence
+    // Events should be removed when occurrence is completed/skipped
+    const events = await this.eventAdapter.getEventsByOccurrenceId(occurrenceId);
+    for (const event of events) {
+      await this.eventAdapter.deleteEvent(event.id);
     }
 
     // Mark as skipped
@@ -238,6 +284,35 @@ export class TaskLifecycleService {
 
     return true;
   }
+
+  /**
+   * Preview when the next occurrence would be generated for a task
+   * Useful for showing users when the next occurrence will be created
+   */
+  async previewNextOccurrence(taskId: number): Promise<Date | null> {
+    return await this.schedulerService.previewNextOccurrenceDate(taskId);
+  }
+
+  /**
+   * Get all occurrences for a user with task details
+   * Useful for the task-manager page to show all occurrences grouped by task
+   */
+  async getUserOccurrencesWithTask(userId: string) {
+    const occurrences = await this.occurrenceAdapter.getOccurrencesWithTaskByUserId(userId);
+    
+    // Enrich with urgency
+    return occurrences.map(occ => 
+      this.analyticsService.enrichOccurrenceWithUrgency(occ)
+    );
+  }
+
+  /**
+   * Get events for a specific occurrence
+   */
+  async getOccurrenceEvents(occurrenceId: number) {
+    return await this.eventAdapter.getEventsByOccurrenceId(occurrenceId);
+  }
+
 
   // ==================== CALENDAR EVENT OPERATIONS ====================
 
@@ -384,7 +459,7 @@ export class TaskLifecycleService {
   /**
    * Complete a calendar event and handle task lifecycle based on task type
    */
-  async completeCalendarEvent(eventId: number, dedicatedTime?: number) {
+  async completeCalendarEvent(eventId: number, dedicatedTime?: number, completeOccurrence?: boolean) {
     // Get event with full details
     const eventDetails = await this.eventAdapter.getEventWithDetails(eventId);
     if (!eventDetails) {
@@ -415,48 +490,77 @@ export class TaskLifecycleService {
       // Sync time consumed for the occurrence
       await this.eventAdapter.syncOccurrenceTimeFromEvents(eventDetails.associatedOccurrenceId);
 
-      // Mark occurrence as completed
-      await this.occurrenceAdapter.updateOccurrence(eventDetails.associatedOccurrenceId, {
-        status: "Completed"
-      });
+      // FIXED TASKS: Completing event completes the occurrence (always)
+      if (task?.isFixed) {
+        // Mark occurrence as completed
+        await this.occurrenceAdapter.updateOccurrence(eventDetails.associatedOccurrenceId, {
+          status: "Completed"
+        });
 
-      if (task && task.recurrenceId) {
-        const recurrence = await this.schedulerService.getRecurrence(task.recurrenceId);
-        
-        if (recurrence) {
-          // Increment completed occurrences counter
-          await this.schedulerService.incrementCompletedOccurrences(task.recurrenceId);
+        if (task.recurrenceId) {
+          const recurrence = await this.schedulerService.getRecurrence(task.recurrenceId);
+          
+          if (recurrence) {
+            // Increment completed occurrences counter
+            await this.schedulerService.incrementCompletedOccurrences(task.recurrenceId);
 
-          // Handle based on task type
-          // Type 1: Unique task (maxOccurrences = 1, no interval)
-          if (recurrence.maxOccurrences === 1 && !recurrence.interval) {
-            // Mark task as inactive
-            await this.taskAdapter.updateTask(task.id, { isActive: false });
-          }
-          // Type 2: Finite recurrence (maxOccurrences > 1, no interval)
-          else if (recurrence.maxOccurrences && recurrence.maxOccurrences > 1 && !recurrence.interval) {
-            // Create next occurrence if we haven't reached the max
-            const occurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(task.id);
-            const completedCount = occurrences.filter(o => o.status === "Completed").length;
-            
-            if (completedCount < recurrence.maxOccurrences) {
-              // Create next occurrence with same parameters
-              await this.schedulerService.createNextOccurrence(task.id, {
-                targetDate: occurrence.targetDate ?? undefined,
-                limitDate: occurrence.limitDate ?? undefined,
-                targetTimeConsumption: occurrence.targetTimeConsumption ?? undefined,
-              });
-            } else {
-              // All occurrences completed, mark task as inactive
+            // Fija Única: maxOccurrences = 1
+            if (recurrence.maxOccurrences === 1) {
+              // Deactivate task
               await this.taskAdapter.updateTask(task.id, { isActive: false });
             }
-          }
-          // Type 3 & 4: Habit or Habit+ (has interval)
-          else if (recurrence.interval) {
-            // Create next occurrence based on recurrence pattern
-            await this.schedulerService.createNextOccurrence(task.id);
+            // Fija Repetitiva: Check if all occurrences are completed
+            else {
+              const occurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(task.id);
+              const completedCount = occurrences.filter(o => o.status === "Completed").length;
+              const totalOccurrences = occurrences.length;
+              
+              // If all occurrences are completed, deactivate task
+              if (completedCount >= totalOccurrences) {
+                await this.taskAdapter.updateTask(task.id, { isActive: false });
+              }
+            }
           }
         }
+      }
+      // NON-FIXED TASKS: Completing event can optionally complete the occurrence
+      else if (completeOccurrence && occurrence) {
+        // Complete the occurrence using the existing method
+        await this.completeOccurrence(eventDetails.associatedOccurrenceId);
+      }
+      // Otherwise, only update timeConsumed (already synced above)
+    }
+    
+    return event;
+  }
+
+  /**
+   * Skip a calendar event (mark event as skipped and optionally skip the occurrence)
+   */
+  async skipCalendarEvent(eventId: number, skipOccurrence?: boolean) {
+    // Get event with full details
+    const eventDetails = await this.eventAdapter.getEventWithDetails(eventId);
+    if (!eventDetails) {
+      throw new Error("Event not found");
+    }
+
+    // Mark event as completed=false (skipped)
+    const event = await this.eventAdapter.updateEvent(eventId, {
+      isCompleted: false,
+    });
+
+    // If event is associated with an occurrence and skipOccurrence is true
+    if (eventDetails.associatedOccurrenceId && skipOccurrence) {
+      const occurrence = eventDetails.occurrence;
+      const task = occurrence?.task;
+
+      // For FIXED tasks, always skip the occurrence
+      if (task?.isFixed) {
+        await this.skipOccurrence(eventDetails.associatedOccurrenceId);
+      }
+      // For NON-FIXED tasks, skip only if requested
+      else {
+        await this.skipOccurrence(eventDetails.associatedOccurrenceId);
       }
     }
     

@@ -1,0 +1,29 @@
+/**
+ * Timeline Router - tRPC router for timeline data operations
+ */
+
+import { z } from "zod";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { TimelineService } from "../services";
+
+export const timelineRouter = createTRPCRouter({
+  /**
+   * Get timeline data for a user within a date range
+   * Returns tasks, occurrences, and events that have been completed
+   */
+  getTimelineData: protectedProcedure
+    .input(
+      z.object({
+        startDate: z.date(),
+        endDate: z.date(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const service = new TimelineService();
+      return await service.getTimelineData(
+        ctx.session.user.id,
+        input.startDate,
+        input.endDate
+      );
+    }),
+});

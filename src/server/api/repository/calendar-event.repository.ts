@@ -122,4 +122,34 @@ export class CalendarEventRepository extends BaseRepository<typeof calendarEvent
       )
       .orderBy(calendarEvents.start);
   }
+
+  /**
+   * Find completed events for specific occurrence IDs with full details
+   */
+  async findCompletedByOccurrenceIds(occurrenceIds: number[]) {
+    if (occurrenceIds.length === 0) return [];
+    
+    return await db.query.calendarEvents.findMany({
+      where: and(
+        eq(calendarEvents.isCompleted, true),
+        eq(calendarEvents.associatedOccurrenceId, calendarEvents.associatedOccurrenceId),
+      ),
+      with: {
+        occurrence: {
+          with: {
+            task: {
+              with: {
+                recurrence: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: [calendarEvents.start],
+    }).then(results => 
+      results.filter(event => 
+        event.associatedOccurrenceId && occurrenceIds.includes(event.associatedOccurrenceId)
+      )
+    );
+  }
 }

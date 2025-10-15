@@ -35,13 +35,17 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-screen bg-background text-foreground">
+      <body className="h-screen overflow-hidden bg-background text-foreground">
         <Providers>
           <TRPCReactProvider>
-            <Navbar />
-            <main>
-              {children}
-            </main>
+            <div className="flex h-full flex-col">
+              <div className="shrink-0">
+                <Navbar />
+              </div>
+              <main className="flex-1 overflow-scroll min-h-0">
+                {children}
+              </main>
+            </div>
           </TRPCReactProvider>
         </Providers>
       </body>

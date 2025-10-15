@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, CheckSquare, Calendar, Moon, Sun, Sparkles, LogOut } from "lucide-react"
+import { Home, CheckSquare, Calendar, Moon, Sun, Sparkles, LogOut, BookmarkCheck } from "lucide-react"
 import { useEffect, useState } from "react"
 import { signOut, useSession } from "next-auth/react"
 import { Button } from "~/components/ui/button"
@@ -10,7 +10,9 @@ import { Button } from "~/components/ui/button"
 const navItems = [
   { href: "/dashboard", label: "Inicio", icon: Home },
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
+  { href: "/task-manager", label: "Gestor de Tareas", icon: BookmarkCheck },
   { href: "/events", label: "Calendario", icon: Calendar },
+  { href: "/timeline", label: "Línea de Tiempo", icon: Sparkles },
 ]
 
 export function Navbar() {

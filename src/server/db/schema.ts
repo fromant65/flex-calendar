@@ -146,6 +146,7 @@ export const tasks = createTable(
     isFixed: d.boolean().notNull().default(false), // Whether this task has fixed calendar times
     fixedStartTime: d.time(), // Fixed start time (e.g., "09:00:00")
     fixedEndTime: d.time(), // Fixed end time (e.g., "17:00:00")
+    completedAt: d.timestamp({ withTimezone: true }), // When the task was completed
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
@@ -176,6 +177,7 @@ export const taskOccurrences = createTable(
       .notNull()
       .default("Pending"), // 'Pending' | 'In Progress' | 'Completed' | 'Skipped'
     urgency: d.real().default(0), // Calculated urgency value
+    completedAt: d.timestamp({ withTimezone: true }), // When the occurrence was completed
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
@@ -206,6 +208,7 @@ export const calendarEvents = createTable(
     finish: d.timestamp({ withTimezone: true }).notNull(),
     isCompleted: d.boolean().notNull().default(false),
     dedicatedTime: d.real().default(0), // Hours
+    completedAt: d.timestamp({ withTimezone: true }), // When the event was completed
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)

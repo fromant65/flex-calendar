@@ -128,6 +128,16 @@ export class TaskAdapter {
   }
 
   /**
+   * Mark task as completed
+   */
+  async completeTask(taskId: number): Promise<Task | undefined> {
+    return await this.taskRepo.updateById(taskId, { 
+      isActive: false,
+      completedAt: new Date(),
+    });
+  }
+
+  /**
    * Delete a task (soft delete by setting isActive to false)
    */
   async deleteTask(taskId: number): Promise<Task | undefined> {

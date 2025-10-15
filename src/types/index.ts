@@ -31,6 +31,7 @@ export interface Task {
   isFixed: boolean
   fixedStartTime: string | null
   fixedEndTime: string | null
+  completedAt: Date | null
   createdAt: Date
   updatedAt: Date | null
 }
@@ -57,6 +58,7 @@ export interface TaskOccurrence {
   timeConsumed: number | null
   status: TaskOccurrenceStatus
   urgency: number | null
+  completedAt: Date | null
   createdAt: Date
   updatedAt: Date | null
 }
@@ -71,6 +73,7 @@ export interface CalendarEvent {
   finish: Date
   isCompleted: boolean
   dedicatedTime: number
+  completedAt: Date | null
   createdAt: Date
   updatedAt: Date | null
 }

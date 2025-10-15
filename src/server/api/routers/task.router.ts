@@ -131,4 +131,15 @@ export const taskRouter = createTRPCRouter({
     const service = new TaskAnalyticsService();
     return await service.getOccurrencesByImportance(ctx.session.user.id);
   }),
+
+  /**
+   * Preview when the next occurrence would be generated for a task
+   * Returns null if task has no next occurrence (e.g., única task or last occurrence of finite)
+   */
+  previewNextOccurrence: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const service = new TaskLifecycleService();
+      return await service.previewNextOccurrence(input.id);
+    }),
 });

@@ -429,6 +429,67 @@ export class TaskSchedulerService {
   }
 
   /**
+   * Preview when the next occurrence would be generated if the current one is completed
+   * This is for UI preview purposes only, does not create the occurrence
+   */
+  async previewNextOccurrenceDate(taskId: number): Promise<Date | null> {
+    const task = await this.taskAdapter.getTaskWithRecurrence(taskId);
+    if (!task || !task.recurrence) {
+      return null;
+    }
+
+    const recurrence = task.recurrence;
+    const latestOccurrence = await this.occurrenceAdapter.getLatestOccurrenceByTaskId(taskId);
+
+    // Tarea Única: No next occurrence
+    if (recurrence.maxOccurrences === 1 && !recurrence.interval) {
+      return null;
+    }
+
+    // Recurrente Finita: Check if we've reached the limit
+    if (recurrence.maxOccurrences && recurrence.maxOccurrences > 1 && !recurrence.interval) {
+      const occurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
+      const completedCount = occurrences.filter(o => o.status === "Completed").length;
+      
+      if (completedCount >= recurrence.maxOccurrences - 1) {
+        // This is the last occurrence, no next one
+        return null;
+      }
+      
+      // Next occurrence would be created immediately after completing current
+      return new Date();
+    }
+
+    // Hábito or Hábito+: Calculate based on recurrence pattern
+    if (recurrence.interval) {
+      if (!latestOccurrence) {
+        return new Date(); // First occurrence
+      }
+
+      // Check if we need to wait for a new period
+      const currentDate = new Date();
+      if (this.shouldStartNewPeriod(recurrence.lastPeriodStart, recurrence.interval, currentDate)) {
+        // Next period
+        const nextPeriodStart = recurrence.lastPeriodStart
+          ? this.getNextPeriodStart(recurrence.lastPeriodStart, recurrence.interval)
+          : currentDate;
+        return nextPeriodStart;
+      } else if (this.hasReachedPeriodLimit(recurrence)) {
+        // Reached period limit, wait for next period
+        const nextPeriodStart = recurrence.lastPeriodStart
+          ? this.getNextPeriodStart(recurrence.lastPeriodStart, recurrence.interval)
+          : currentDate;
+        return nextPeriodStart;
+      } else {
+        // Calculate next occurrence date based on pattern
+        return this.calculateNextOccurrenceDate(latestOccurrence.startDate, recurrence);
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Process all active recurring tasks and create next occurrences
    */
   async processRecurringTasks(userId: string): Promise<void> {

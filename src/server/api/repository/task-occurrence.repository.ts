@@ -124,4 +124,26 @@ export class TaskOccurrenceRepository extends BaseRepository<typeof taskOccurren
       .limit(1);
     return result;
   }
+
+  /**
+   * Find completed occurrences within a date range for a specific user
+   */
+  async findCompletedByOwnerIdInDateRange(ownerId: string, startDate: Date, endDate: Date) {
+    return await db.query.taskOccurrences.findMany({
+      where: and(
+        eq(taskOccurrences.status, "Completed"),
+        gte(taskOccurrences.startDate, startDate),
+        lte(taskOccurrences.completedAt, endDate),
+      ),
+      with: {
+        task: {
+          with: {
+            recurrence: true,
+          },
+        },
+      },
+    }).then(results => 
+      results.filter(occ => occ.task?.ownerId === ownerId)
+    );
+  }
 }

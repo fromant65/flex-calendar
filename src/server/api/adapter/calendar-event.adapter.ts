@@ -166,6 +166,7 @@ export class CalendarEventAdapter {
     return await this.eventRepo.updateById(eventId, {
       isCompleted: true,
       dedicatedTime,
+      completedAt: new Date(),
     });
   }
 

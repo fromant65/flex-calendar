@@ -145,4 +145,23 @@ export const occurrenceRouter = createTRPCRouter({
       const service = new TaskLifecycleService();
       return await service.skipOccurrence(input.id);
     }),
+
+  /**
+   * Get all occurrences for the current user with task details
+   * Useful for task-manager page to show all occurrences grouped by task
+   */
+  getMyOccurrencesWithTask: protectedProcedure.query(async ({ ctx }) => {
+    const service = new TaskLifecycleService();
+    return await service.getUserOccurrencesWithTask(ctx.session.user.id);
+  }),
+
+  /**
+   * Get all events associated with a specific occurrence
+   */
+  getOccurrenceEvents: protectedProcedure
+    .input(z.object({ occurrenceId: z.number() }))
+    .query(async ({ input }) => {
+      const service = new TaskLifecycleService();
+      return await service.getOccurrenceEvents(input.occurrenceId);
+    }),
 });

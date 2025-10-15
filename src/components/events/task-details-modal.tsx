@@ -17,6 +17,7 @@ import {
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
+import { Checkbox } from "../ui/checkbox"
 import { LoadingSpinner } from "../ui/loading-spinner"
 import { useState } from "react"
 import { api } from "~/trpc/react"
@@ -39,6 +40,8 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
   const [dedicatedTime, setDedicatedTime] = useState<string>("")
   const [isCompleting, setIsCompleting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [completeOccurrence, setCompleteOccurrence] = useState(false)
+  const [skipOccurrence, setSkipOccurrence] = useState(false)
   
   // Edit mode states
   const [editDate, setEditDate] = useState<string>("")
@@ -114,6 +117,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
       await utils.occurrence.invalidate() // Invalidate all occurrence queries
       onOpenChange(false)
       setDedicatedTime("")
+      setCompleteOccurrence(false)
       setIsCompleting(false)
       if (onEventCompleted) {
         onEventCompleted()
@@ -128,7 +132,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
     }
   })
 
-  const skipEventMutation = api.calendarEvent.update.useMutation({
+  const skipEventMutation = api.calendarEvent.skip.useMutation({
     onSuccess: async () => {
       toast.info("Evento omitido", {
         description: "El evento ha sido marcado como omitido",
@@ -137,6 +141,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
       await utils.calendarEvent.getMyEventsWithDetails.invalidate()
       await utils.occurrence.invalidate() // Invalidate all occurrence queries
       onOpenChange(false)
+      setSkipOccurrence(false)
       if (onEventCompleted) onEventCompleted()
     },
     onError: (error) => {
@@ -178,7 +183,16 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
 
     completeEventMutation.mutate({
       id: event.id,
-      dedicatedTime: timeInHours
+      dedicatedTime: timeInHours,
+      completeOccurrence: completeOccurrence
+    })
+  }
+
+  const handleSkipEvent = () => {
+    if (!event?.id) return
+    skipEventMutation.mutate({ 
+      id: event.id,
+      skipOccurrence: skipOccurrence
     })
   }
 
@@ -589,21 +603,30 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Skip event?</AlertDialogTitle>
+                      <AlertDialogTitle>Saltar evento</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to skip this scheduled event? The occurrence will be marked as Skipped.
+                        ¿Estás seguro de que deseas saltar este evento programado?
                       </AlertDialogDescription>
                     </AlertDialogHeader>
+                    {event?.associatedOccurrenceId && !event.isFixed && (
+                      <div className="flex items-center space-x-2 px-6">
+                        <Checkbox
+                          id="skipOccurrence"
+                          checked={skipOccurrence}
+                          onCheckedChange={(checked) => setSkipOccurrence(checked === true)}
+                        />
+                        <label
+                          htmlFor="skipOccurrence"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          También saltar la ocurrencia asociada
+                        </label>
+                      </div>
+                    )}
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => {
-                          if (!event?.id) return
-                          // mark event as skipped and associated occurrence as Skipped
-                          skipEventMutation.mutate({ id: event.id, data: { isCompleted: false } })
-                        }}
-                      >
-                        Skip
+                      <AlertDialogCancel onClick={() => setSkipOccurrence(false)}>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleSkipEvent}>
+                        Saltar
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -624,22 +647,37 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                       ) : (
                         <>
                           <CheckCircle2 className="h-4 w-4" />
-                          <span className="ml-2">Mark as Completed</span>
+                          <span className="ml-2">Marcar como Completado</span>
                         </>
                       )}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Complete event?</AlertDialogTitle>
+                      <AlertDialogTitle>Completar evento</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to mark this event as completed? This will update the occurrence and task lifecycle.
+                        ¿Estás seguro de que deseas marcar este evento como completado?
                       </AlertDialogDescription>
                     </AlertDialogHeader>
+                    {event?.associatedOccurrenceId && !event.isFixed && (
+                      <div className="flex items-center space-x-2 px-6">
+                        <Checkbox
+                          id="completeOccurrence"
+                          checked={completeOccurrence}
+                          onCheckedChange={(checked) => setCompleteOccurrence(checked === true)}
+                        />
+                        <label
+                          htmlFor="completeOccurrence"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          También completar la ocurrencia asociada
+                        </label>
+                      </div>
+                    )}
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleCompleteEvent()}>
-                        Complete
+                      <AlertDialogCancel onClick={() => setCompleteOccurrence(false)}>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleCompleteEvent}>
+                        Completar
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

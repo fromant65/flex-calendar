@@ -172,6 +172,7 @@ export class OccurrenceAdapter {
   async completeOccurrence(occurrenceId: number) {
     return await this.occurrenceRepo.updateById(occurrenceId, {
       status: "Completed",
+      completedAt: new Date(),
     });
   }
 

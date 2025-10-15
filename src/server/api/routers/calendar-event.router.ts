@@ -125,11 +125,25 @@ export const calendarEventRouter = createTRPCRouter({
   complete: protectedProcedure
     .input(z.object({ 
       id: z.number(),
-      dedicatedTime: z.number().optional() // Time in hours
+      dedicatedTime: z.number().optional(), // Time in hours
+      completeOccurrence: z.boolean().optional() // Also complete the associated occurrence
     }))
     .mutation(async ({ input }) => {
       const service = new TaskLifecycleService();
-      return await service.completeCalendarEvent(input.id, input.dedicatedTime);
+      return await service.completeCalendarEvent(input.id, input.dedicatedTime, input.completeOccurrence);
+    }),
+
+  /**
+   * Skip a calendar event
+   */
+  skip: protectedProcedure
+    .input(z.object({ 
+      id: z.number(),
+      skipOccurrence: z.boolean().optional() // Also skip the associated occurrence
+    }))
+    .mutation(async ({ input }) => {
+      const service = new TaskLifecycleService();
+      return await service.skipCalendarEvent(input.id, input.skipOccurrence);
     }),
 
   /**
