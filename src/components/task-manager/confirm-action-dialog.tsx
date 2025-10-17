@@ -48,9 +48,12 @@ export function ConfirmActionDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel className="cursor-pointer" disabled={isLoading}>
+            Cancelar
+          </AlertDialogCancel>
           <AlertDialogAction
             disabled={isLoading}
+            className="cursor-pointer"
             onClick={() => {
               if (action) {
                 onConfirm(action.type, action.occurrenceId);

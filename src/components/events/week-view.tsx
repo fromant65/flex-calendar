@@ -109,7 +109,7 @@ export function WeekView({
                     draggable={!event.isFixed}
                     onDragStart={() => onEventDragStart(event)}
                     className={`absolute left-1 right-1 rounded p-1 transition-colors overflow-hidden ${taskTypeClassName} ${
-                      event.isFixed ? "cursor-default" : "cursor-move"
+                      event.isFixed ? "cursor-pointer" : "cursor-move"
                     }`}
                     style={{
                       top: `${startHour * 4}rem`,

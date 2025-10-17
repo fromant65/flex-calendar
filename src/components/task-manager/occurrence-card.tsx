@@ -171,6 +171,7 @@ export function OccurrenceCard({
               <Button
                 size="sm"
                 variant="outline"
+                className="cursor-pointer"
                 onClick={() => onEdit(occurrence.id, occurrence.timeConsumed)}
               >
                 <Edit className="mr-1 h-4 w-4" />
@@ -179,6 +180,7 @@ export function OccurrenceCard({
               <Button
                 size="sm"
                 variant="default"
+                className="cursor-pointer"
                 onClick={() => onComplete(occurrence.id, taskName)}
                 disabled={isCompleting}
               >
@@ -188,6 +190,7 @@ export function OccurrenceCard({
               <Button
                 size="sm"
                 variant="outline"
+                className="cursor-pointer"
                 onClick={() => onSkip(occurrence.id, taskName)}
                 disabled={isSkipping}
               >

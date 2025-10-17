@@ -129,7 +129,7 @@ export function DayWeekEvents({ todayEvents, weekEvents, onEventClick }: DayWeek
         <button
           onClick={() => setActiveTab("day")}
           className={cn(
-            "px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px",
+            "px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px cursor-pointer",
             activeTab === "day"
               ? "border-primary text-primary"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -140,7 +140,7 @@ export function DayWeekEvents({ todayEvents, weekEvents, onEventClick }: DayWeek
         <button
           onClick={() => setActiveTab("week")}
           className={cn(
-            "px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px",
+            "px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px cursor-pointer",
             activeTab === "week"
               ? "border-primary text-primary"
               : "border-transparent text-muted-foreground hover:text-foreground"

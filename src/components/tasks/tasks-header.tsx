@@ -17,7 +17,7 @@ export function TasksHeader({ onCreateClick }: TasksHeaderProps) {
           </div>
           <button
             onClick={onCreateClick}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20"
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 cursor-pointer"
           >
             <Plus className="h-5 w-5" />
             Nueva Tarea

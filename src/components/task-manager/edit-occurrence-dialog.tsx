@@ -64,7 +64,7 @@ export function EditOccurrenceDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onCancel} disabled={isLoading}>
+          <Button variant="outline" className="cursor-pointer" onClick={onCancel} disabled={isLoading}>
             Cancelar
           </Button>
           <Button
@@ -74,6 +74,7 @@ export function EditOccurrenceDialog({
               }
             }}
             disabled={isLoading}
+            className="cursor-pointer"
           >
             Guardar
           </Button>

@@ -99,7 +99,7 @@ export function DayView({
                 draggable={!event.isFixed}
                 onDragStart={() => onEventDragStart(event)}
                 className={`absolute left-2 right-2 border-l-4 rounded p-2 transition-colors ${taskTypeClassName} ${
-                  event.isFixed ? "cursor-default" : "cursor-move"
+                  event.isFixed ? "cursor-pointer" : "cursor-move"
                 }`}
                 style={{
                   top: `${startHour * 4}rem`,

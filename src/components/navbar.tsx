@@ -71,7 +71,7 @@ export function Navbar() {
                   <Link key={item.href} href={item.href}>
                     <Button
                       variant={isActive ? "default" : "ghost"}
-                      className="gap-2 transition-all"
+                      className="gap-2 transition-all cursor-pointer"
                       size="default"
                     >
                       <Icon className="h-4 w-4" />
@@ -113,7 +113,7 @@ export function Navbar() {
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              className="h-9 w-9 transition-all hover:rotate-12"
+              className="h-9 w-9 transition-all hover:rotate-12 cursor-pointer"
               aria-label="Toggle theme"
               disabled={!mounted}
             >
@@ -130,7 +130,7 @@ export function Navbar() {
                 variant="ghost"
                 size="icon"
                 onClick={handleSignOut}
-                className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                 aria-label="Cerrar sesión"
                 title="Cerrar sesión"
               >

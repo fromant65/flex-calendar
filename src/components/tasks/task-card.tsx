@@ -50,7 +50,7 @@ export function TaskCard({ task, onEdit, onDelete, onClick }: TaskCardProps) {
               e.stopPropagation()
               onEdit(task)
             }}
-            className="rounded-lg border border-border bg-background p-2 text-foreground transition-colors hover:bg-muted"
+            className="rounded-lg border border-border bg-background p-2 text-foreground transition-colors hover:bg-muted cursor-pointer"
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
@@ -59,7 +59,7 @@ export function TaskCard({ task, onEdit, onDelete, onClick }: TaskCardProps) {
               e.stopPropagation()
               onDelete(task.id)
             }}
-            className="rounded-lg border border-destructive/30 bg-destructive/10 p-2 text-destructive transition-colors hover:bg-destructive/20"
+            className="rounded-lg border border-destructive/30 bg-destructive/10 p-2 text-destructive transition-colors hover:bg-destructive/20 cursor-pointer"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>

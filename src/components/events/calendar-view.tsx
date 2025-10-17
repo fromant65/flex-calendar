@@ -95,13 +95,13 @@ export function CalendarViewComponent({
         <div className="flex items-center gap-4">
           <h2 className="text-lg font-semibold text-foreground">Calendario</h2>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={navigatePrevious}>
+            <Button variant="outline" className="cursor-pointer" size="sm" onClick={navigatePrevious}>
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <Button variant="outline" size="sm" onClick={goToToday}>
+            <Button variant="outline" className="cursor-pointer" size="sm" onClick={goToToday}>
               Hoy
             </Button>
-            <Button variant="outline" size="sm" onClick={navigateNext}>
+            <Button variant="outline" className="cursor-pointer" size="sm" onClick={navigateNext}>
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
@@ -109,13 +109,13 @@ export function CalendarViewComponent({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant={view === "day" ? "default" : "outline"} size="sm" onClick={() => onViewChange("day")}>
+          <Button variant={view === "day" ? "default" : "outline"} className="cursor-pointer" size="sm" onClick={() => onViewChange("day")}>
             Día
           </Button>
-          <Button variant={view === "week" ? "default" : "outline"} size="sm" onClick={() => onViewChange("week")}>
+          <Button variant={view === "week" ? "default" : "outline"} className="cursor-pointer" size="sm" onClick={() => onViewChange("week")}>
             Semana
           </Button>
-          <Button variant={view === "month" ? "default" : "outline"} size="sm" onClick={() => onViewChange("month")}>
+          <Button variant={view === "month" ? "default" : "outline"} className="cursor-pointer" size="sm" onClick={() => onViewChange("month")}>
             Mes
           </Button>
         </div>
