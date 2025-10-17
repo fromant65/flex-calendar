@@ -117,7 +117,7 @@ export function ScheduleDialog({
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="bg-background"
+                  className="bg-background [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </div>
 
@@ -128,7 +128,7 @@ export function ScheduleDialog({
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="bg-background"
+                  className="bg-background [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </div>
             </div>

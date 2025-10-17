@@ -412,7 +412,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                       type="date"
                       value={editDate}
                       onChange={(e) => setEditDate(e.target.value)}
-                      className="bg-input/5 dark:bg-input/30 text-foreground"
+                      className="bg-input/5 dark:bg-input/30 text-foreground [color-scheme:light] dark:[color-scheme:dark]"
                     />
                   </div>
 
@@ -424,7 +424,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                         type="time"
                         value={editStartTime}
                         onChange={(e) => setEditStartTime(e.target.value)}
-                        className="bg-input/5 dark:bg-input/30 text-foreground"
+                        className="bg-input/5 dark:bg-input/30 text-foreground [color-scheme:light] dark:[color-scheme:dark]"
                       />
                     </div>
                     <div className="space-y-2">
@@ -434,7 +434,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                         type="time"
                         value={editEndTime}
                         onChange={(e) => setEditEndTime(e.target.value)}
-                        className="bg-input/5 dark:bg-input/30 text-foreground"
+                        className="bg-input/5 dark:bg-input/30 text-foreground [color-scheme:light] dark:[color-scheme:dark]"
                       />
                     </div>
                   </div>

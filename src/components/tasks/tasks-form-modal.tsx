@@ -388,7 +388,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
                   value={formData.fixedDate || ""}
                   onChange={(e) => setFormData({ ...formData, fixedDate: e.target.value })}
                   required
-                  className="mt-1.5"
+                  className="mt-1.5 [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -402,7 +402,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
                     value={formData.fixedStartTime}
                     onChange={(e) => setFormData({ ...formData, fixedStartTime: e.target.value })}
                     required
-                    className="mt-1.5"
+                    className="mt-1.5 [color-scheme:light] dark:[color-scheme:dark]"
                   />
                 </div>
                 <div>
@@ -415,7 +415,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
                     value={formData.fixedEndTime}
                     onChange={(e) => setFormData({ ...formData, fixedEndTime: e.target.value })}
                     required
-                    className="mt-1.5"
+                    className="mt-1.5 [color-scheme:light] dark:[color-scheme:dark]"
                   />
                 </div>
               </div>
@@ -483,7 +483,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
                     value={formData.fixedStartTime}
                     onChange={(e) => setFormData({ ...formData, fixedStartTime: e.target.value })}
                     required
-                    className="mt-1.5"
+                    className="mt-1.5 [color-scheme:light] dark:[color-scheme:dark]"
                   />
                 </div>
                 <div>
@@ -496,7 +496,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
                     value={formData.fixedEndTime}
                     onChange={(e) => setFormData({ ...formData, fixedEndTime: e.target.value })}
                     required
-                    className="mt-1.5"
+                    className="mt-1.5 [color-scheme:light] dark:[color-scheme:dark]"
                   />
                 </div>
               </div>
@@ -511,7 +511,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
                   value={formData.endDate || ""}
                   onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                   required
-                  className="mt-1.5"
+                  className="mt-1.5 [color-scheme:light] dark:[color-scheme:dark]"
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
                   Requerida para evitar generar eventos infinitamente
@@ -536,7 +536,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
                   type="date"
                   value={formData.targetDate || ""}
                   onChange={(e) => setFormData({ ...formData, targetDate: e.target.value })}
-                  className="mt-1.5"
+                  className="mt-1.5 [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </div>
 
@@ -549,7 +549,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
                   type="date"
                   value={formData.limitDate || ""}
                   onChange={(e) => setFormData({ ...formData, limitDate: e.target.value })}
-                  className="mt-1.5"
+                  className="mt-1.5 [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </div>
             </div>
@@ -631,7 +631,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
                       type="date"
                       value={formData.endDate || ""}
                       onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                      className="mt-1.5"
+                      className="mt-1.5 [color-scheme:light] dark:[color-scheme:dark]"
                     />
                   </div>
                 </>
@@ -734,7 +734,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
                               type="date"
                               value={formData.endDate || ""}
                               onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                              className="mt-1.5"
+                              className="mt-1.5 [color-scheme:light] dark:[color-scheme:dark]"
                             />
                           </div>
                         </div>
