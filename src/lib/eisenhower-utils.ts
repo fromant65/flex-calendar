@@ -29,15 +29,15 @@ export function calculateQuadrant(occurrence: OccurrenceWithTask): QuadrantPosit
 export function getQuadrantLabel(quadrant: QuadrantPosition["quadrant"]): string {
   switch (quadrant) {
     case "urgent-important":
-      return "Do First"
+      return "Críticas"
     case "not-urgent-important":
-      return "Schedule"
+      return "Programar"
     case "urgent-not-important":
-      return "Delegate"
+      return "Delegar"
     case "not-urgent-not-important":
-      return "Eliminate"
+      return "Eliminar"
     default:
-      return "Unknown"
+      return "Desconocido"
   }
 }
 

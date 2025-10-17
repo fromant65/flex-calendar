@@ -45,7 +45,7 @@ export function WeekView({
         <div className="w-20 flex-shrink-0 border-r border-border" />
         {weekDays.map((day) => (
           <div key={day.toISOString()} className="flex-1 p-2 text-center border-r border-border last:border-r-0">
-            <div className="text-xs text-muted-foreground">{day.toLocaleDateString("en-US", { weekday: "short" })}</div>
+            <div className="text-xs text-muted-foreground">{day.toLocaleDateString("es-ES", { weekday: "short" })}</div>
             <div className={`text-sm font-medium ${isToday(day) ? "text-primary" : "text-foreground"}`}>
               {day.getDate()}
             </div>

@@ -12,7 +12,7 @@ export function TimelineHeader({ dateRange }: TimelineHeaderProps) {
   return (
     <div className="flex pb-2 pt-1 border-b border-border/30">
       <div className="w-48 shrink-0 px-4">
-        <span className="text-sm font-medium text-muted-foreground">Tasks</span>
+        <span className="text-sm font-medium text-muted-foreground">Tareas</span>
       </div>
       <div className="relative flex flex-1">
         {dateRange.map((date, index) => (

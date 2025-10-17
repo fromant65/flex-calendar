@@ -108,12 +108,12 @@ export const getItemStyle = (
  * Format date for display
  */
 export const formatDate = (date: Date): string => {
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+  return date.toLocaleDateString("es-ES", { month: "short", day: "numeric" })
 }
 
 /**
  * Format day of week
  */
 export const formatDayOfWeek = (date: Date): string => {
-  return date.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase()
+  return date.toLocaleDateString("es-ES", { weekday: "short" }).toUpperCase()
 }

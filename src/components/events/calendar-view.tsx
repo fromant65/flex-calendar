@@ -69,7 +69,7 @@ export function CalendarViewComponent({
 
   const getDateRangeLabel = () => {
     if (view === "day") {
-      return currentDate.toLocaleDateString("en-US", {
+      return currentDate.toLocaleDateString("es-ES", {
         weekday: "long",
         year: "numeric",
         month: "long",
@@ -79,12 +79,12 @@ export function CalendarViewComponent({
       const weekDays = getWeekDays(currentDate)
       const start = weekDays[0]
       const end = weekDays[6]
-      return `${start?.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${end?.toLocaleDateString(
-        "en-US",
+      return `${start?.toLocaleDateString("es-ES", { month: "short", day: "numeric" })} - ${end?.toLocaleDateString(
+        "es-ES",
         { month: "short", day: "numeric", year: "numeric" },
       )}`
     } else {
-      return currentDate.toLocaleDateString("en-US", { year: "numeric", month: "long" })
+      return currentDate.toLocaleDateString("es-ES", { year: "numeric", month: "long" })
     }
   }
 
@@ -93,13 +93,13 @@ export function CalendarViewComponent({
       {/* Header */}
       <div className="p-4 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h2 className="text-lg font-semibold text-foreground">Calendar</h2>
+          <h2 className="text-lg font-semibold text-foreground">Calendario</h2>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={navigatePrevious}>
               <ChevronLeft className="w-4 h-4" />
             </Button>
             <Button variant="outline" size="sm" onClick={goToToday}>
-              Today
+              Hoy
             </Button>
             <Button variant="outline" size="sm" onClick={navigateNext}>
               <ChevronRight className="w-4 h-4" />
@@ -110,13 +110,13 @@ export function CalendarViewComponent({
 
         <div className="flex items-center gap-2">
           <Button variant={view === "day" ? "default" : "outline"} size="sm" onClick={() => onViewChange("day")}>
-            Day
+            Día
           </Button>
           <Button variant={view === "week" ? "default" : "outline"} size="sm" onClick={() => onViewChange("week")}>
-            Week
+            Semana
           </Button>
           <Button variant={view === "month" ? "default" : "outline"} size="sm" onClick={() => onViewChange("month")}>
-            Month
+            Mes
           </Button>
         </div>
       </div>

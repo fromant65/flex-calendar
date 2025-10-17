@@ -69,7 +69,7 @@ export function ScheduleDialog({
 
     // Validate that end time is after start time
     if (finish <= start) {
-      alert("End time must be after start time")
+      alert("La hora de fin debe ser posterior a la hora de inicio")
       return
     }
 
@@ -83,9 +83,9 @@ export function ScheduleDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{event ? "Reschedule Event" : "Schedule Task"}</DialogTitle>
+          <DialogTitle>{event ? "Reprogramar Evento" : "Programar Tarea"}</DialogTitle>
           <DialogDescription>
-            {event ? "Update the time for this event" : "Set the time range for this task"}
+            {event ? "Actualiza el horario de este evento" : "Establece el rango de tiempo para esta tarea"}
           </DialogDescription>
         </DialogHeader>
 
@@ -99,7 +99,7 @@ export function ScheduleDialog({
             {selectedDate && (
               <div className="text-sm text-muted-foreground mb-4">
                 <p className="font-medium text-foreground">
-                  {selectedDate.toLocaleDateString("en-US", {
+                  {selectedDate.toLocaleDateString("es-ES", {
                     weekday: "long",
                     year: "numeric",
                     month: "long",
@@ -111,7 +111,7 @@ export function ScheduleDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="start-time">Start Time</Label>
+                <Label htmlFor="start-time">Hora de Inicio</Label>
                 <Input
                   id="start-time"
                   type="time"
@@ -122,7 +122,7 @@ export function ScheduleDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="end-time">End Time</Label>
+                <Label htmlFor="end-time">Hora de Fin</Label>
                 <Input
                   id="end-time"
                   type="time"
@@ -144,7 +144,7 @@ export function ScheduleDialog({
                   return (
                     <div className="text-sm text-muted-foreground">
                       <p>
-                        Duration: {Math.floor(durationMinutes / 60)}h {durationMinutes % 60}m
+                        Duración: {Math.floor(durationMinutes / 60)}h {durationMinutes % 60}m
                       </p>
                     </div>
                   )
@@ -156,9 +156,9 @@ export function ScheduleDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            Cancelar
           </Button>
-          <Button onClick={handleSchedule}>{event ? "Update" : "Schedule"}</Button>
+          <Button onClick={handleSchedule}>{event ? "Actualizar" : "Programar"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

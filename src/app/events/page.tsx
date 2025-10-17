@@ -199,8 +199,8 @@ export default function TaskCalendarPage() {
       {/* Header */}
       <header className="border-b border-border bg-card flex-shrink-0">
         <div className="px-6 py-4">
-          <h1 className="text-2xl font-bold text-foreground">Task Planner</h1>
-          <p className="text-sm text-muted-foreground">Organize and schedule your tasks efficiently</p>
+          <h1 className="text-2xl font-bold text-foreground">Planificador de Tareas</h1>
+          <p className="text-sm text-muted-foreground">Organiza y programa tus tareas de manera eficiente</p>
         </div>
       </header>
 

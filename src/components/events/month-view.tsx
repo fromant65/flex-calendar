@@ -16,7 +16,7 @@ interface MonthViewProps {
 
 export function MonthView({ date, events, onTimeSlotClick, onEventClick, onDrop }: MonthViewProps) {
   const monthDays = getMonthDays(date)
-  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+  const weekDays = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -85,12 +85,12 @@ export function MonthView({ date, events, onTimeSlotClick, onEventClick, onDrop 
                         onEventClick(event)
                       }}
                     >
-                      {event.occurrence?.task?.name || "Untitled"}
+                      {event.occurrence?.task?.name || "Sin título"}
                     </div>
                   )
                 })}
                 {dayEvents.length > 3 && (
-                  <div className="text-xs text-muted-foreground">+{dayEvents.length - 3} more</div>
+                  <div className="text-xs text-muted-foreground">+{dayEvents.length - 3} más</div>
                 )}
               </div>
             </div>

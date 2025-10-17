@@ -207,7 +207,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl">{task?.name || "Event Details"}</DialogTitle>
+          <DialogTitle className="text-xl">{task?.name || "Detalles del Evento"}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -373,9 +373,9 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
                     <div>
-                      <p className="text-xs text-muted-foreground">Date</p>
+                      <p className="text-xs text-muted-foreground">Fecha</p>
                       <p className="text-sm font-medium text-foreground">
-                        {new Date(event.start).toLocaleDateString("en-US", {
+                        {new Date(event.start).toLocaleDateString("es-ES", {
                           weekday: "long",
                           year: "numeric",
                           month: "long",
@@ -388,14 +388,14 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-foreground" />
                     <div>
-                      <p className="text-xs text-muted-foreground">Time</p>
+                      <p className="text-xs text-muted-foreground">Horario</p>
                       <p className="text-sm font-medium text-foreground">
-                        {new Date(event.start).toLocaleTimeString("en-US", {
+                        {new Date(event.start).toLocaleTimeString("es-ES", {
                           hour: "numeric",
                           minute: "2-digit",
                         })}{" "}
                         -{" "}
-                        {new Date(event.finish).toLocaleTimeString("en-US", {
+                        {new Date(event.finish).toLocaleTimeString("es-ES", {
                           hour: "numeric",
                           minute: "2-digit",
                         })}
@@ -406,7 +406,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
               ) : (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="editDate">Date</Label>
+                    <Label htmlFor="editDate">Fecha</Label>
                     <Input
                       id="editDate"
                       type="date"
@@ -418,7 +418,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label htmlFor="editStartTime">Start Time</Label>
+                      <Label htmlFor="editStartTime">Hora de Inicio</Label>
                       <Input
                         id="editStartTime"
                         type="time"
@@ -428,7 +428,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="editEndTime">End Time</Label>
+                      <Label htmlFor="editEndTime">Hora de Fin</Label>
                       <Input
                         id="editEndTime"
                         type="time"
@@ -444,7 +444,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
               {event.isFixed && !isEditing && (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Lock className="w-4 h-4" />
-                  <p className="text-sm">This event is fixed and cannot be rescheduled</p>
+                  <p className="text-sm">Este evento es fijo y no se puede reprogramar</p>
                 </div>
               )}
             </div>
@@ -452,15 +452,15 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
 
           {displayOccurrence && !event && (
             <div className="border-t border-border pt-4 space-y-3">
-              <h4 className="text-sm font-medium text-foreground">Occurrence Details</h4>
+              <h4 className="text-sm font-medium text-foreground">Detalles de la Ocurrencia</h4>
 
               {displayOccurrence.targetDate && (
                 <div className="flex items-center gap-2">
                   <Target className="w-4 h-4 text-muted-foreground" />
                   <div>
-                    <p className="text-xs text-muted-foreground">Target Date</p>
+                    <p className="text-xs text-muted-foreground">Fecha Objetivo</p>
                     <p className="text-sm font-medium text-foreground">
-                      {new Date(displayOccurrence.targetDate).toLocaleDateString("en-US", {
+                      {new Date(displayOccurrence.targetDate).toLocaleDateString("es-ES", {
                         year: "numeric",
                         month: "long",
                         day: "numeric",
@@ -474,9 +474,9 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-muted-foreground" />
                   <div>
-                    <p className="text-xs text-muted-foreground">Limit Date</p>
+                    <p className="text-xs text-muted-foreground">Fecha Límite</p>
                     <p className="text-sm font-medium text-foreground">
-                      {new Date(displayOccurrence.limitDate).toLocaleDateString("en-US", {
+                      {new Date(displayOccurrence.limitDate).toLocaleDateString("es-ES", {
                         year: "numeric",
                         month: "long",
                         day: "numeric",
@@ -503,23 +503,23 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                   ) : (
                     <>
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Delete Event
+                      Eliminar Evento
                     </>
                   )}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete event?</AlertDialogTitle>
+                  <AlertDialogTitle>¿Eliminar evento?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to delete this event? This action cannot be undone. 
-                    {event.associatedOccurrenceId && " The associated occurrence will be recovered and available for rescheduling."}
+                    ¿Estás seguro de que quieres eliminar este evento? Esta acción no se puede deshacer.
+                    {event.associatedOccurrenceId && " La ocurrencia asociada será recuperada y estará disponible para reprogramación."}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction onClick={handleDeleteEvent}>
-                    Delete
+                    Eliminar
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -570,21 +570,21 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
 
               <div className="space-y-2">
                 <Label htmlFor="dedicatedTime" className="text-sm font-medium">
-                  Dedicated Time (hours)
+                  Tiempo Dedicado (horas)
                 </Label>
                 <Input
                   id="dedicatedTime"
                   type="number"
                   step="0.5"
                   min="0"
-                  placeholder="e.g., 2.5"
+                  placeholder="ej., 2.5"
                   value={dedicatedTime}
                   onChange={(e) => setDedicatedTime(e.target.value)}
                   className="w-full"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Leave empty to use scheduled duration (
-                  {((event.finish.getTime() - event.start.getTime()) / (1000 * 60 * 60)).toFixed(2)} hours)
+                  Deja vacío para usar la duración programada (
+                  {((event.finish.getTime() - event.start.getTime()) / (1000 * 60 * 60)).toFixed(2)} horas)
                 </p>
               </div>
               <div className="flex gap-2">
@@ -597,7 +597,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                           <span className="ml-2">Saltando...</span>
                         </>
                       ) : (
-                        "Skip"
+                        "Saltar"
                       )}
                     </Button>
                   </AlertDialogTrigger>
@@ -691,11 +691,11 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
           <div className="border-t border-border pt-4">
             <div className="flex items-center gap-2 text-[color:var(--success)] dark:text-[color:var(--success-foreground)]">
               <CheckCircle2 className="h-5 w-5" />
-              <p className="text-sm font-medium">This event has been completed</p>
+              <p className="text-sm font-medium">Este evento ha sido completado</p>
             </div>
             {event.dedicatedTime && (
               <p className="text-xs text-muted-foreground mt-1">
-                Time dedicated: {event.dedicatedTime.toFixed(2)} hours
+                Tiempo dedicado: {event.dedicatedTime.toFixed(2)} horas
               </p>
             )}
           </div>

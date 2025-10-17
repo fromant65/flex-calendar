@@ -85,7 +85,7 @@ export function TimelineTaskRow({
         {/* Task Name Column */}
         <div className="w-48 shrink-0 px-4 py-1">
           <div className="text-sm font-medium">{task.name}</div>
-          <div className="text-xs text-muted-foreground">Importance: {task.importance}/10</div>
+          <div className="text-xs text-muted-foreground">Importancia: {task.importance}/10</div>
         </div>
 
         {/* Timeline Area */}

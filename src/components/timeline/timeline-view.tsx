@@ -186,11 +186,11 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
           >
             {isLoading && !useMockData ? (
               <div className="flex h-32 items-center justify-center text-muted-foreground">
-                Loading timeline data...
+                Cargando datos de la línea de tiempo...
               </div>
             ) : currentData.tasks.length === 0 ? (
               <div className="flex h-32 items-center justify-center text-muted-foreground">
-                No completed tasks in this date range
+                No hay tareas completadas en este rango de fechas
               </div>
             ) : (
               currentData.tasks.map((task) => {
@@ -221,15 +221,15 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
       <div className="flex items-center gap-6 text-sm">
         <div className="flex items-center gap-2">
           <div className="h-4 w-8 rounded bg-primary/20" />
-          <span className="text-muted-foreground">Occurrence</span>
+          <span className="text-muted-foreground">Ocurrencia</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="h-4 w-8 rounded border border-yellow-500 bg-yellow-500/60" />
-          <span className="text-muted-foreground">Active Event</span>
+          <span className="text-muted-foreground">Evento Activo</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="h-4 w-8 rounded border border-accent bg-accent/60" />
-          <span className="text-muted-foreground">Completed Event</span>
+          <span className="text-muted-foreground">Evento Completado</span>
         </div>
       </div>
 

@@ -49,16 +49,11 @@ export function EisenhowerMatrix({
 
     return (
         <div className="h-full flex flex-col">
-            <div className="p-4 border-b border-border">
-                <h2 className="text-lg font-semibold text-foreground">Task Matrix</h2>
-                <p className="text-sm text-muted-foreground">Eisenhower Priority System</p>
-            </div>
-
             <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-px bg-border p-px overflow-hidden">
                 {/* Top Left: Not Urgent but Important */}
                 <QuadrantPanel
                     title={getQuadrantLabel("not-urgent-important")}
-                    subtitle="Important, Not Urgent"
+                    subtitle="Importante, No Urgente"
                     tasks={quadrants["not-urgent-important"]}
                     quadrant="not-urgent-important"
                     onTaskSelect={onTaskSelect}
@@ -70,7 +65,7 @@ export function EisenhowerMatrix({
                 {/* Top Right: Urgent and Important */}
                 <QuadrantPanel
                     title={getQuadrantLabel("urgent-important")}
-                    subtitle="Important & Urgent"
+                    subtitle="Importante y Urgente"
                     tasks={quadrants["urgent-important"]}
                     quadrant="urgent-important"
                     onTaskSelect={onTaskSelect}
@@ -82,7 +77,7 @@ export function EisenhowerMatrix({
                 {/* Bottom Left: Not Urgent, Not Important */}
                 <QuadrantPanel
                     title={getQuadrantLabel("not-urgent-not-important")}
-                    subtitle="Not Important, Not Urgent"
+                    subtitle="No Importante, No Urgente"
                     tasks={quadrants["not-urgent-not-important"]}
                     quadrant="not-urgent-not-important"
                     onTaskSelect={onTaskSelect}
@@ -94,7 +89,7 @@ export function EisenhowerMatrix({
                 {/* Bottom Right: Urgent but Not Important */}
                 <QuadrantPanel
                     title={getQuadrantLabel("urgent-not-important")}
-                    subtitle="Not Important, Urgent"
+                    subtitle="No Importante, Urgente"
                     tasks={quadrants["urgent-not-important"]}
                     quadrant="urgent-not-important"
                     onTaskSelect={onTaskSelect}
@@ -177,30 +172,30 @@ function QuadrantPanel({
                             <DropdownMenuItem onClick={() => setSortBy("importance")}>
                                 {sortBy === "importance" && <Check className="h-4 w-4 mr-2" />}
                                 {sortBy !== "importance" && <span className="w-4 mr-2" />}
-                                Importance
+                                Importancia
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setSortBy("urgency")}>
                                 {sortBy === "urgency" && <Check className="h-4 w-4 mr-2" />}
                                 {sortBy !== "urgency" && <span className="w-4 mr-2" />}
-                                Urgency
+                                Urgencia
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setSortBy("duration")}>
                                 {sortBy === "duration" && <Check className="h-4 w-4 mr-2" />}
                                 {sortBy !== "duration" && <span className="w-4 mr-2" />}
-                                Duration
+                                Duración
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => setSortOrder("desc")}>
                                 {sortOrder === "desc" && <Check className="h-4 w-4 mr-2" />}
                                 {sortOrder !== "desc" && <span className="w-4 mr-2" />}
                                 <ArrowDownWideNarrow className="h-4 w-4 mr-2" />
-                                High to Low
+                                Mayor a Menor
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setSortOrder("asc")}>
                                 {sortOrder === "asc" && <Check className="h-4 w-4 mr-2" />}
                                 {sortOrder !== "asc" && <span className="w-4 mr-2" />}
                                 <ArrowUpNarrowWide className="h-4 w-4 mr-2" />
-                                Low to High
+                                Menor a Mayor
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -220,7 +215,7 @@ function QuadrantPanel({
                     />
                 ))}
                 {tasks.length === 0 && (
-                    <div className="flex items-center justify-center h-24 text-muted-foreground text-sm">No tasks</div>
+                    <div className="flex items-center justify-center h-24 text-muted-foreground text-sm">Sin tareas</div>
                 )}
             </div>
         </div>

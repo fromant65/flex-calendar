@@ -26,25 +26,25 @@ export function TimelineModals({
           {selectedOccurrence && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-xl font-bold mb-2">Occurrence Details</h2>
+                <h2 className="text-xl font-bold mb-2">Detalles de la Ocurrencia</h2>
                 <div className="grid gap-2 text-sm">
                   <div>
                     <span className="font-medium">ID:</span> {selectedOccurrence.id}
                   </div>
                   <div>
-                    <span className="font-medium">Task:</span> {selectedOccurrence.task.name}
+                    <span className="font-medium">Tarea:</span> {selectedOccurrence.task.name}
                   </div>
                   <div>
-                    <span className="font-medium">Start Date:</span>{" "}
-                    {new Date(selectedOccurrence.startDate).toLocaleString()}
+                    <span className="font-medium">Fecha de Inicio:</span>{" "}
+                    {new Date(selectedOccurrence.startDate).toLocaleString("es-ES")}
                   </div>
                   <div>
-                    <span className="font-medium">Status:</span> {selectedOccurrence.status}
+                    <span className="font-medium">Estado:</span> {selectedOccurrence.status}
                   </div>
                   {selectedOccurrence.completedAt && (
                     <div>
-                      <span className="font-medium">Completed At:</span>{" "}
-                      {new Date(selectedOccurrence.completedAt).toLocaleString()}
+                      <span className="font-medium">Completada el:</span>{" "}
+                      {new Date(selectedOccurrence.completedAt).toLocaleString("es-ES")}
                     </div>
                   )}
                 </div>
@@ -60,40 +60,40 @@ export function TimelineModals({
           {selectedEvent && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-xl font-bold mb-2">Event Details</h2>
+                <h2 className="text-xl font-bold mb-2">Detalles del Evento</h2>
                 <div className="grid gap-2 text-sm">
                   <div>
                     <span className="font-medium">ID:</span> {selectedEvent.id}
                   </div>
                   <div>
-                    <span className="font-medium">Context:</span> {selectedEvent.context || "N/A"}
+                    <span className="font-medium">Contexto:</span> {selectedEvent.context || "N/A"}
                   </div>
                   <div>
-                    <span className="font-medium">Start:</span>{" "}
-                    {new Date(selectedEvent.start).toLocaleString()}
+                    <span className="font-medium">Inicio:</span>{" "}
+                    {new Date(selectedEvent.start).toLocaleString("es-ES")}
                   </div>
                   <div>
-                    <span className="font-medium">Finish:</span>{" "}
-                    {new Date(selectedEvent.finish).toLocaleString()}
+                    <span className="font-medium">Fin:</span>{" "}
+                    {new Date(selectedEvent.finish).toLocaleString("es-ES")}
                   </div>
                   <div>
-                    <span className="font-medium">Is Completed:</span>{" "}
-                    {selectedEvent.isCompleted ? "Yes" : "No"}
+                    <span className="font-medium">Completado:</span>{" "}
+                    {selectedEvent.isCompleted ? "Sí" : "No"}
                   </div>
                   {selectedEvent.completedAt && (
                     <div>
-                      <span className="font-medium">Completed At:</span>{" "}
-                      {new Date(selectedEvent.completedAt).toLocaleString()}
+                      <span className="font-medium">Completado el:</span>{" "}
+                      {new Date(selectedEvent.completedAt).toLocaleString("es-ES")}
                     </div>
                   )}
                   {selectedEvent.occurrence && (
                     <div className="border-t pt-2 mt-2">
-                      <div className="font-medium mb-1">Associated Occurrence:</div>
+                      <div className="font-medium mb-1">Ocurrencia Asociada:</div>
                       <div className="text-xs space-y-1 pl-2">
                         <div>ID: {selectedEvent.occurrence.id}</div>
-                        <div>Task: {selectedEvent.occurrence.task.name}</div>
+                        <div>Tarea: {selectedEvent.occurrence.task.name}</div>
                         <div>
-                          Start: {new Date(selectedEvent.occurrence.startDate).toLocaleString()}
+                          Inicio: {new Date(selectedEvent.occurrence.startDate).toLocaleString("es-ES")}
                         </div>
                       </div>
                     </div>
