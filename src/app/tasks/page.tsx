@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { api } from "~/trpc/react"
-import type { TaskWithRecurrence } from "~/types"
+import type { TaskGetMyTasksOutput } from "~/server/api/routers/derived-endpoint-types"
 import { TaskFormModal } from "~/components/tasks/tasks-form-modal"
 import { TaskDetailsModal } from "~/components/events/task-details-modal"
 import { LoadingPage } from "~/components/ui/loading-spinner"
@@ -22,10 +22,12 @@ import {
 } from "~/components/ui/alert-dialog"
 import { toast } from "sonner"
 
+type TaskFromList = TaskGetMyTasksOutput[number]
+
 export default function TasksPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingTask, setEditingTask] = useState<TaskWithRecurrence | null>(null)
-  const [viewingTask, setViewingTask] = useState<TaskWithRecurrence | null>(null)
+  const [editingTask, setEditingTask] = useState<TaskFromList | null>(null)
+  const [viewingTask, setViewingTask] = useState<TaskFromList | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState<number | null>(null)
 
@@ -46,7 +48,7 @@ export default function TasksPage() {
     },
   })
 
-  const handleEdit = (task: TaskWithRecurrence) => {
+  const handleEdit = (task: TaskFromList) => {
     setEditingTask(task)
     setIsFormOpen(true)
   }

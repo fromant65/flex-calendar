@@ -2,13 +2,15 @@
 
 import { Pencil, Trash2, Calendar, Repeat, Target, Clock } from "lucide-react"
 import { Badge } from "~/components/ui/badge"
-import type { TaskWithRecurrence } from "~/types"
+import type { TaskGetMyTasksOutput } from "~/server/api/routers/derived-endpoint-types"
+
+type TaskFromList = TaskGetMyTasksOutput[number]
 
 interface TaskCardProps {
-  task: TaskWithRecurrence
-  onEdit: (task: TaskWithRecurrence) => void
+  task: TaskFromList
+  onEdit: (task: TaskFromList) => void
   onDelete: (id: number) => void
-  onClick: (task: TaskWithRecurrence) => void
+  onClick: (task: TaskFromList) => void
 }
 
 export function TaskCard({ task, onEdit, onDelete, onClick }: TaskCardProps) {
