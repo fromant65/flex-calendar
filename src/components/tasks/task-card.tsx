@@ -46,7 +46,7 @@ export function TaskCard({ task, onEdit, onDelete, onClick }: TaskCardProps) {
             </Badge>
           )}
         </div>
-        <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="flex gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
           <button
             onClick={(e) => {
               e.stopPropagation()

@@ -6,26 +6,26 @@ interface DaySelectorProps {
 
 const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 const dayLabels: Record<string, string> = {
-  Mon: "L",
-  Tue: "M",
-  Wed: "X",
-  Thu: "J",
-  Fri: "V",
-  Sat: "S",
-  Sun: "D",
+  Mon: "Lu",
+  Tue: "Ma",
+  Wed: "Mi",
+  Thu: "Ju",
+  Fri: "Vi",
+  Sat: "Sa",
+  Sun: "Do",
 }
 
 export function DaySelector({ selectedDays, onToggleDay, variant = "default" }: DaySelectorProps) {
   const isBlue = variant === "blue"
 
   return (
-    <div className="flex gap-2">
+    <div className="flex w-full gap-1 sm:gap-2">
       {daysOfWeek.map((day) => (
         <button
           key={day}
           type="button"
           onClick={() => onToggleDay(day)}
-          className={`flex h-10 w-10 items-center justify-center rounded-full border text-sm font-medium transition-all ${
+          className={`flex h-9 flex-1 items-center justify-center rounded-full border text-xs font-medium transition-all sm:h-10 sm:w-10 sm:flex-none sm:text-sm ${
             selectedDays.includes(day)
               ? isBlue
                 ? "border-blue-500 bg-blue-500 text-white shadow-sm"

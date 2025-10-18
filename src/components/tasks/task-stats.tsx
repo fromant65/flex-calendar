@@ -10,7 +10,7 @@ interface TaskStatsProps {
 
 export function TaskStats({ totalTasks, activeTasks, fixedTasks }: TaskStatsProps) {
   return (
-    <div className="mb-6 grid gap-4 sm:grid-cols-3">
+    <div className="mb-6 hidden gap-4 sm:grid sm:grid-cols-3">
       <div className="rounded-lg border border-border bg-card/30 p-4 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <div>
