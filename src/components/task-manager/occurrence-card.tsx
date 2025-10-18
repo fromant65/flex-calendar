@@ -1,7 +1,7 @@
 import { Card, CardContent } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { CheckCircle2, Edit, AlertCircle } from "lucide-react";
+import { CheckCircle2, Edit, AlertCircle, SkipForward } from "lucide-react";
 
 interface OccurrenceCardProps {
   occurrence: any;
@@ -102,7 +102,7 @@ export function OccurrenceCard({
   return (
     <Card className="bg-card">
       <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex-1 space-y-3">
             {/* Status and urgency badges */}
             <div className="flex items-center gap-2 flex-wrap">
@@ -167,34 +167,36 @@ export function OccurrenceCard({
 
           {/* Actions */}
           {isActive && (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-row flex-wrap gap-2 sm:flex-col">
               <Button
                 size="sm"
                 variant="outline"
-                className="cursor-pointer"
+                className="cursor-pointer flex-1 sm:flex-none"
                 onClick={() => onEdit(occurrence.id, occurrence.timeConsumed)}
               >
                 <Edit className="mr-1 h-4 w-4" />
                 Editar
               </Button>
+              
+              <Button
+                size="sm"
+                variant="outline"
+                className="cursor-pointer flex-1 sm:flex-none"
+                onClick={() => onSkip(occurrence.id, taskName)}
+                disabled={isSkipping}
+              >
+                <SkipForward className="mr-1 h-4 w-4" />
+                Saltar
+              </Button>
               <Button
                 size="sm"
                 variant="default"
-                className="cursor-pointer"
+                className="cursor-pointer flex-1 sm:flex-none"
                 onClick={() => onComplete(occurrence.id, taskName)}
                 disabled={isCompleting}
               >
                 <CheckCircle2 className="mr-1 h-4 w-4" />
                 Completar
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="cursor-pointer"
-                onClick={() => onSkip(occurrence.id, taskName)}
-                disabled={isSkipping}
-              >
-                Saltar
               </Button>
             </div>
           )}

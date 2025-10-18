@@ -90,10 +90,10 @@ export function TaskCard({
               </Badge>
             </div>
             {task.description && (
-              <CardDescription className="mt-2 ml-7">{task.description}</CardDescription>
+              <CardDescription className="mt-2 ml-2 sm:ml-7">{task.description}</CardDescription>
             )}
 
-            <div className="mt-4 ml-7 flex flex-wrap gap-4 text-sm">
+            <div className="mt-4 ml-2 flex flex-wrap gap-4 text-sm sm:ml-7">
               <div className="flex items-center gap-1">
                 <TrendingUp className="h-4 w-4 text-blue-500 dark:text-blue-400" />
                 <span>Importancia: {task.importance}/10</span>
@@ -121,12 +121,14 @@ export function TaskCard({
             {/* Next occurrence preview */}
             {nextOccurrenceDate && (
               <div className="rounded-lg bg-blue-50 dark:bg-blue-950 p-4 mb-4">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  <span className="font-semibold text-blue-900 dark:text-blue-100">
-                    Próxima ocurrencia al completar la actual:
-                  </span>
-                  <span className="text-blue-700 dark:text-blue-300">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    <span className="font-semibold text-blue-900 dark:text-blue-100">
+                      Próxima ocurrencia al completar la actual:
+                    </span>
+                  </div>
+                  <span className="text-blue-700 dark:text-blue-300 sm:ml-0">
                     {formatDate(nextOccurrenceDate)}
                   </span>
                 </div>
