@@ -1,32 +1,50 @@
 "use client"
 
-import { CalendarViewComponent } from "~/components/events/calendar-view"
-import { EisenhowerMatrix } from "~/components/events/eisenhower-matrix"
 import { ScheduleDialog } from "~/components/events/schedule-dialog"
 import { TaskDetailsModal } from "~/components/events/task-details-modal"
+import { ConfirmScheduleDialog } from "~/components/events/confirm-schedule-dialog"
+import { EventsProvider, useEventsContext } from "~/components/events/events-context"
+import { EventsPageHeader } from "~/components/events/events-page-header"
+import { DesktopLayout } from "~/components/events/desktop-layout"
+import { MobileLayout } from "~/components/events/mobile-layout"
 import { LoadingPage } from "~/components/ui/loading-spinner"
 import { api } from "~/trpc/react"
-import type { CalendarView, EventWithDetails, OccurrenceWithTask } from "~/types"
-import { useState, useRef, useEffect } from "react"
-import { GripVertical } from "lucide-react"
+import type { EventWithDetails, OccurrenceWithTask } from "~/types"
 
-export default function TaskCalendarPage() {
-  const [calendarView, setCalendarView] = useState<CalendarView>("week")
-  const [selectedTask, setSelectedTask] = useState<OccurrenceWithTask | null>(null)
-  const [draggedTask, setDraggedTask] = useState<OccurrenceWithTask | null>(null)
-  const [draggedEvent, setDraggedEvent] = useState<EventWithDetails | null>(null)
-  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [selectedHour, setSelectedHour] = useState<number | undefined>(undefined)
-  const [detailsModalOpen, setDetailsModalOpen] = useState(false)
-  const [detailsOccurrence, setDetailsOccurrence] = useState<OccurrenceWithTask | null>(null)
-  const [detailsEvent, setDetailsEvent] = useState<EventWithDetails | null>(null)
-  const [eventToReschedule, setEventToReschedule] = useState<EventWithDetails | null>(null)
-  
-  // Resizable panel state - 40% for matrix (2/5), 60% for calendar (3/5)
-  const [leftWidth, setLeftWidth] = useState(40)
-  const [isDragging, setIsDragging] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
+// TODO: Modularized events page
+// Main responsibilities:
+// - Data fetching (events and occurrences)
+// - Event handlers (task selection, scheduling, drag-and-drop)
+// - Rendering layout components (header, desktop/mobile layouts, dialogs)
+
+function EventsPageContent() {
+  const {
+    selectedTask,
+    setSelectedTask,
+    draggedTask,
+    setDraggedTask,
+    draggedEvent,
+    setDraggedEvent,
+    scheduleDialogOpen,
+    setScheduleDialogOpen,
+    selectedDate,
+    setSelectedDate,
+    selectedHour,
+    setSelectedHour,
+    detailsModalOpen,
+    setDetailsModalOpen,
+    detailsOccurrence,
+    setDetailsOccurrence,
+    detailsEvent,
+    setDetailsEvent,
+    eventToReschedule,
+    setEventToReschedule,
+    setMobileView,
+    confirmScheduleDialogOpen,
+    setConfirmScheduleDialogOpen,
+    pendingScheduleTask,
+    setPendingScheduleTask,
+  } = useEventsContext()
 
   // Get utils for query invalidation
   const utils = api.useUtils()
@@ -81,43 +99,29 @@ export default function TaskCalendarPage() {
     return !hasActiveEvent
   })
 
-  // Handle resizable divider
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging || !containerRef.current) return
-      
-      const containerRect = containerRef.current.getBoundingClientRect()
-      const newLeftWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100
-      
-      // Constrain between 20% and 80%
-      const constrainedWidth = Math.min(Math.max(newLeftWidth, 20), 80)
-      setLeftWidth(constrainedWidth)
-    }
-
-    const handleMouseUp = () => {
-      setIsDragging(false)
-    }
-
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('mouseup', handleMouseUp)
-      document.body.style.cursor = 'col-resize'
-      document.body.style.userSelect = 'none'
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-    }
-  }, [isDragging])
-
-  //console.log("All Occurrences:", occurrences)
-  //console.log("Available Occurrences:", availableOccurrences)
-
+  // Event handlers
   const handleTaskSelect = (occurrence: OccurrenceWithTask) => {
     setSelectedTask(occurrence)
+  }
+
+  const handleTaskSelectMobile = (occurrence: OccurrenceWithTask) => {
+    // On mobile, show confirmation dialog
+    setPendingScheduleTask(occurrence)
+    setConfirmScheduleDialogOpen(true)
+  }
+
+  const handleConfirmSchedule = () => {
+    if (pendingScheduleTask) {
+      setSelectedTask(pendingScheduleTask)
+      setMobileView("calendar")
+      setPendingScheduleTask(null)
+      setConfirmScheduleDialogOpen(false)
+    }
+  }
+
+  const handleCancelSchedule = () => {
+    setPendingScheduleTask(null)
+    setConfirmScheduleDialogOpen(false)
   }
 
   const handleTaskDragStart = (occurrence: OccurrenceWithTask) => {
@@ -176,7 +180,7 @@ export default function TaskCalendarPage() {
         data: {
           start,
           finish,
-        }
+        },
       })
     } else if (selectedTask) {
       // Create new event
@@ -187,66 +191,44 @@ export default function TaskCalendarPage() {
         finish,
       })
     }
-    // State cleanup is now handled in mutation onSuccess callbacks
   }
 
-  if(eventsLoading || occurrencesLoading) {
+  if (eventsLoading || occurrencesLoading) {
     return <LoadingPage text="Cargando eventos y tareas..." />
   }
 
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card flex-shrink-0">
-        <div className="px-6 py-4">
-          <h1 className="text-2xl font-bold text-foreground">Planificador de Tareas</h1>
-          <p className="text-sm text-muted-foreground">Organiza y programa tus tareas de manera eficiente</p>
-        </div>
-      </header>
+      <EventsPageHeader />
 
       {/* Main Content */}
-      <div ref={containerRef} className="flex-1 flex overflow-hidden relative">
-        {/* Left Panel: Eisenhower Matrix */}
-        <div 
-          className="border-r border-border bg-card overflow-hidden flex-shrink-0"
-          style={{ width: `${leftWidth}%` }}
-        >
-          <EisenhowerMatrix
-            occurrences={availableOccurrences}
-            onTaskSelect={handleTaskSelect}
-            onTaskDragStart={handleTaskDragStart}
-            onTaskClick={handleOccurrenceClick}
-            selectedTaskId={selectedTask?.id}
-          />
-        </div>
+      <div className="flex-1 flex overflow-hidden relative">
+        <DesktopLayout
+          availableOccurrences={availableOccurrences}
+          events={events}
+          onTaskSelect={handleTaskSelect}
+          onTaskDragStart={handleTaskDragStart}
+          onOccurrenceClick={handleOccurrenceClick}
+          onTimeSlotClick={handleTimeSlotClick}
+          onEventClick={handleEventClick}
+          onCalendarDrop={handleCalendarDrop}
+          onEventDragStart={handleEventDragStart}
+        />
 
-        {/* Resizable Divider */}
-        <div
-          className="w-1 bg-border hover:bg-primary/50 cursor-col-resize flex-shrink-0 relative group transition-colors"
-          onMouseDown={() => setIsDragging(true)}
-        >
-          <div className="absolute inset-y-0 -left-1 -right-1 flex items-center justify-center">
-            <div className="bg-border group-hover:bg-primary/50 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <GripVertical className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
-            </div>
-          </div>
-        </div>
-
-        {/* Right Panel: Calendar */}
-        <div className="flex-1 bg-background overflow-hidden">
-          <CalendarViewComponent
-            events={events}
-            view={calendarView}
-            onViewChange={setCalendarView}
-            onTimeSlotClick={handleTimeSlotClick}
-            onEventClick={handleEventClick}
-            onDrop={handleCalendarDrop}
-            onEventDragStart={handleEventDragStart}
-          />
-        </div>
+        <MobileLayout
+          availableOccurrences={availableOccurrences}
+          events={events}
+          onTaskSelectMobile={handleTaskSelectMobile}
+          onTaskDragStart={handleTaskDragStart}
+          onOccurrenceClick={handleOccurrenceClick}
+          onTimeSlotClick={handleTimeSlotClick}
+          onEventClick={handleEventClick}
+          onCalendarDrop={handleCalendarDrop}
+          onEventDragStart={handleEventDragStart}
+        />
       </div>
 
-      {/* Schedule Dialog */}
+      {/* Dialogs */}
       <ScheduleDialog
         open={scheduleDialogOpen}
         onOpenChange={setScheduleDialogOpen}
@@ -257,17 +239,33 @@ export default function TaskCalendarPage() {
         onSchedule={handleSchedule}
       />
 
+      <ConfirmScheduleDialog
+        open={confirmScheduleDialogOpen}
+        onOpenChange={setConfirmScheduleDialogOpen}
+        occurrence={pendingScheduleTask}
+        onConfirm={handleConfirmSchedule}
+        onCancel={handleCancelSchedule}
+      />
+
       <TaskDetailsModal
         open={detailsModalOpen}
         onOpenChange={setDetailsModalOpen}
         occurrence={detailsOccurrence}
         event={detailsEvent}
         onEventCompleted={async () => {
-          // Refetch data after completing event using the utils instance
           await utils.calendarEvent.getMyEventsWithDetails.invalidate()
           await utils.occurrence.invalidate()
         }}
       />
     </div>
+  )
+}
+
+// Wrap the content in the provider
+export default function TaskCalendarPage() {
+  return (
+    <EventsProvider>
+      <EventsPageContent />
+    </EventsProvider>
   )
 }

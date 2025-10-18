@@ -2,12 +2,11 @@
 
 import type { CalendarView, EventWithDetails } from "~/types"
 import { getCurrentTimePosition, getWeekDays } from "~/lib/calendar-utils"
-import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useEffect, useState } from "react"
-import { Button } from "../ui/button"
 import { DayView } from "./day-view"
 import { WeekView } from "./week-view"
 import { MonthView } from "./month-view"
+import { CalendarHeader } from "./calendar-header"
 
 interface CalendarViewProps {
   events: EventWithDetails[]
@@ -90,39 +89,18 @@ export function CalendarViewComponent({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="p-4 border-b border-border flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h2 className="text-lg font-semibold text-foreground">Calendario</h2>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" className="cursor-pointer" size="sm" onClick={navigatePrevious}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" className="cursor-pointer" size="sm" onClick={goToToday}>
-              Hoy
-            </Button>
-            <Button variant="outline" className="cursor-pointer" size="sm" onClick={navigateNext}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-          <span className="text-sm text-muted-foreground">{getDateRangeLabel()}</span>
-        </div>
+      <CalendarHeader
+        currentDate={currentDate}
+        view={view}
+        onViewChange={onViewChange}
+        onNavigatePrevious={navigatePrevious}
+        onNavigateNext={navigateNext}
+        onGoToToday={goToToday}
+        getDateRangeLabel={getDateRangeLabel}
+      />
 
-        <div className="flex items-center gap-2">
-          <Button variant={view === "day" ? "default" : "outline"} className="cursor-pointer" size="sm" onClick={() => onViewChange("day")}>
-            Día
-          </Button>
-          <Button variant={view === "week" ? "default" : "outline"} className="cursor-pointer" size="sm" onClick={() => onViewChange("week")}>
-            Semana
-          </Button>
-          <Button variant={view === "month" ? "default" : "outline"} className="cursor-pointer" size="sm" onClick={() => onViewChange("month")}>
-            Mes
-          </Button>
-        </div>
-      </div>
-
-  {/* Calendar Content */}
-  <div className="flex-1 overflow-auto scrollbar-themed">
+      {/* Calendar Content */}
+      <div className="flex-1 overflow-auto scrollbar-themed">
         {view === "day" && (
           <DayView
             date={currentDate}

@@ -39,14 +39,14 @@ export function WeekView({
   }
 
   return (
-    <div className="relative">
+    <div className="relative min-w-0">
       {/* Header with day names */}
-      <div className="flex border-b border-border sticky top-0 bg-background z-20">
-        <div className="w-20 flex-shrink-0 border-r border-border" />
+      <div className="flex border-b border-border sticky top-0 bg-background z-20 min-w-0">
+        <div className="w-12 lg:w-20 flex-shrink-0 border-r border-border" />
         {weekDays.map((day) => (
-          <div key={day.toISOString()} className="flex-1 p-2 text-center border-r border-border last:border-r-0">
-            <div className="text-xs text-muted-foreground">{day.toLocaleDateString("es-ES", { weekday: "short" })}</div>
-            <div className={`text-sm font-medium ${isToday(day) ? "text-primary" : "text-foreground"}`}>
+          <div key={day.toISOString()} className="flex-1 min-w-0 p-1 lg:p-2 text-center border-r border-border last:border-r-0">
+            <div className="text-[10px] lg:text-xs text-muted-foreground truncate">{day.toLocaleDateString("es-ES", { weekday: "short" })}</div>
+            <div className={`text-xs lg:text-sm font-medium ${isToday(day) ? "text-primary" : "text-foreground"}`}>
               {day.getDate()}
             </div>
           </div>
@@ -54,12 +54,12 @@ export function WeekView({
       </div>
 
       {/* Time grid */}
-      <div className="flex">
+      <div className="flex min-w-0">
         {/* Time column */}
-        <div className="w-20 flex-shrink-0 border-r border-border">
+        <div className="w-12 lg:w-20 flex-shrink-0 border-r border-border">
           {hours.map((hour) => (
-            <div key={hour} className="h-16 border-b border-border flex items-start justify-end pr-2 pt-1">
-              <span className="text-xs text-muted-foreground">{formatTime(hour)}</span>
+            <div key={hour} className="h-12 lg:h-16 border-b border-border flex items-start justify-end pr-1 lg:pr-2 pt-1">
+              <span className="text-[10px] lg:text-xs text-muted-foreground">{formatTime(hour)}</span>
             </div>
           ))}
         </div>
@@ -70,11 +70,11 @@ export function WeekView({
           const showCurrentTime = isToday(day)
 
           return (
-            <div key={day.toISOString()} className="flex-1 relative border-r border-border last:border-r-0">
+            <div key={day.toISOString()} className="flex-1 min-w-0 relative border-r border-border last:border-r-0">
               {hours.map((hour) => (
                 <div
                   key={hour}
-                  className="h-16 border-b border-border hover:bg-accent/50 cursor-pointer transition-colors"
+                  className="h-12 lg:h-16 border-b border-border hover:bg-accent/50 cursor-pointer transition-colors"
                   onClick={() => onTimeSlotClick(day, hour)}
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, day, hour)}
@@ -85,9 +85,9 @@ export function WeekView({
               {showCurrentTime && (
                 <div
                   className="absolute left-0 right-0 flex items-center pointer-events-none z-10"
-                  style={{ top: `${currentTime * 4}rem` }}
+                  style={{ top: `${currentTime * 3}rem` }}
                 >
-                  <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
+                  <div className="w-1.5 lg:w-2 h-1.5 lg:h-2 rounded-full bg-primary flex-shrink-0" />
                   <div className="flex-1 h-px bg-primary" />
                 </div>
               )}
@@ -108,21 +108,21 @@ export function WeekView({
                     key={event.id}
                     draggable={!event.isFixed}
                     onDragStart={() => onEventDragStart(event)}
-                    className={`absolute left-1 right-1 rounded p-1 transition-colors overflow-hidden ${taskTypeClassName} ${
+                    className={`absolute left-0.5 lg:left-1 right-0.5 lg:right-1 rounded p-0.5 lg:p-1 transition-colors overflow-hidden ${taskTypeClassName} ${
                       event.isFixed ? "cursor-pointer" : "cursor-move"
                     }`}
                     style={{
-                      top: `${startHour * 4}rem`,
-                      height: `${duration * 4}rem`,
+                      top: `${startHour * 3}rem`,
+                      height: `${duration * 3}rem`,
                     }}
                     onClick={() => onEventClick(event)}
                   >
-                    <div className="text-xs font-medium text-foreground line-clamp-1">
+                    <div className="text-[10px] lg:text-xs font-medium text-foreground line-clamp-1">
                       {event.occurrence?.task?.name ?? "Untitled"}
                       {event.isFixed && " 🔒"}
                     </div>
                     {duration >= 0.5 && (
-                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                      <div className="hidden lg:flex text-xs text-muted-foreground items-center gap-1">
                         <Clock className="w-2 h-2" />
                         <span className="text-[10px]">
                           {start.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}

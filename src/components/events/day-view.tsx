@@ -48,23 +48,23 @@ export function DayView({
   }
 
   return (
-    <div className="relative">
+    <div className="relative min-w-0">
       {/* Time column */}
-      <div className="flex">
-        <div className="w-20 flex-shrink-0 border-r border-border">
+      <div className="flex min-w-0">
+        <div className="w-12 lg:w-20 flex-shrink-0 border-r border-border">
           {hours.map((hour) => (
-            <div key={hour} className="h-16 border-b border-border flex items-start justify-end pr-2 pt-1">
-              <span className="text-xs text-muted-foreground">{formatTime(hour)}</span>
+            <div key={hour} className="h-12 lg:h-16 border-b border-border flex items-start justify-end pr-1 lg:pr-2 pt-1">
+              <span className="text-[10px] lg:text-xs text-muted-foreground">{formatTime(hour)}</span>
             </div>
           ))}
         </div>
 
         {/* Day column */}
-        <div className="flex-1 relative">
+        <div className="flex-1 min-w-0 relative">
           {hours.map((hour) => (
             <div
               key={hour}
-              className="h-16 border-b border-border hover:bg-accent/50 cursor-pointer transition-colors"
+              className="h-12 lg:h-16 border-b border-border hover:bg-accent/50 cursor-pointer transition-colors"
               onClick={() => onTimeSlotClick(date, hour)}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, hour)}
@@ -75,9 +75,9 @@ export function DayView({
           {showCurrentTime && (
             <div
               className="absolute left-0 right-0 flex items-center pointer-events-none z-10"
-              style={{ top: `${currentTime * 4}rem` }}
+              style={{ top: `${currentTime * 3}rem` }}
             >
-              <div className="w-3 h-3 rounded-full bg-primary flex-shrink-0" />
+              <div className="w-2 lg:w-3 h-2 lg:h-3 rounded-full bg-primary flex-shrink-0" />
               <div className="flex-1 h-px bg-primary" />
             </div>
           )}
@@ -98,22 +98,22 @@ export function DayView({
                 key={event.id}
                 draggable={!event.isFixed}
                 onDragStart={() => onEventDragStart(event)}
-                className={`absolute left-2 right-2 border-l-4 rounded p-2 transition-colors ${taskTypeClassName} ${
+                className={`absolute left-1 lg:left-2 right-1 lg:right-2 border-l-2 lg:border-l-4 rounded p-1 lg:p-2 transition-colors ${taskTypeClassName} ${
                   event.isFixed ? "cursor-pointer" : "cursor-move"
                 }`}
                 style={{
-                  top: `${startHour * 4}rem`,
-                  height: `${duration * 4}rem`,
+                  top: `${startHour * 3}rem`,
+                  height: `${duration * 3}rem`,
                 }}
                 onClick={() => onEventClick(event)}
               >
-                <div className="text-xs font-medium text-foreground line-clamp-1">
+                <div className="text-[10px] lg:text-xs font-medium text-foreground line-clamp-1">
                   {event.occurrence?.task?.name || "Untitled Event"}
                   {event.isFixed && " 🔒"}
                 </div>
-                <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                  <Clock className="w-3 h-3" />
-                  <span>
+                <div className="text-[10px] lg:text-xs text-muted-foreground flex items-center gap-1 mt-0.5 lg:mt-1">
+                  <Clock className="w-2 lg:w-3 h-2 lg:h-3" />
+                  <span className="truncate">
                     {start.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })} -{" "}
                     {finish.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                   </span>
