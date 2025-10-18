@@ -3,6 +3,7 @@ import { occurrenceRouter } from "~/server/api/routers/occurrence.router";
 import { calendarEventRouter } from "~/server/api/routers/calendar-event.router";
 import { authRouter } from "~/server/api/routers/auth.router";
 import { timelineRouter } from "~/server/api/routers/timeline.router";
+import { statsRouter } from "~/server/api/routers/stats.router";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -16,6 +17,7 @@ export const appRouter = createTRPCRouter({
   occurrence: occurrenceRouter,
   calendarEvent: calendarEventRouter,
   timeline: timelineRouter,
+  stats: statsRouter,
 });
 
 // export type definition of API

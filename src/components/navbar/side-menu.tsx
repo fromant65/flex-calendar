@@ -1,7 +1,7 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, X, GanttChart, Home, CheckSquare, BookmarkCheck, Calendar } from "lucide-react"
+import { Menu, X, GanttChart, Home, CheckSquare, BookmarkCheck, Calendar, BarChart3 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { Button } from "~/components/ui/button"
@@ -15,6 +15,7 @@ const menuItems = [
   { href: "/task-manager", label: "Gestor de Tareas", icon: BookmarkCheck },
   { href: "/events", label: "Calendario", icon: Calendar },
   { href: "/timeline", label: "Línea de Tiempo", icon: GanttChart },
+  { href: "/stats", label: "Estadísticas", icon: BarChart3 },
 ]
 
 export function SideMenu() {

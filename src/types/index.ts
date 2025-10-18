@@ -207,3 +207,153 @@ export interface UrgencyCalculationResult {
   daysUntilTarget?: number
   daysUntilLimit?: number
 }
+
+// ============================================================================
+// STATISTICS PAGE TYPES
+// ============================================================================
+
+// Task Statistics
+export interface TaskStatsData {
+  averageCompletionTime: number | null // Average time from creation to completion in hours
+  importanceDistribution: ImportanceDistribution[]
+  fixedVsFlexible: {
+    fixed: number
+    flexible: number
+  }
+  recurringVsUnique: {
+    recurring: number
+    unique: number
+  }
+}
+
+export interface ImportanceDistribution {
+  importance: number
+  completionRate: number // Percentage (0-100)
+  totalOccurrences: number
+  completedOccurrences: number
+}
+
+// Recurrence Statistics
+export interface RecurrenceStatsData {
+  habitCompliance: HabitCompliancePoint[]
+  maxStreak: number
+  currentStreak: number
+  frequentDays: DayFrequency[]
+}
+
+export interface HabitCompliancePoint {
+  date: Date
+  completionRate: number // Percentage (0-100)
+  completedOccurrences: number
+  totalOccurrences: number
+}
+
+export interface DayFrequency {
+  day: DayOfWeek
+  completionCount: number
+  completionRate: number
+}
+
+// Occurrence Statistics
+export interface OccurrenceStatsData {
+  occurrencesByPeriod: OccurrencesPeriod[]
+  statusDistribution: {
+    pending: number
+    inProgress: number
+    completed: number
+    skipped: number
+  }
+  averageTimeDeviation: number | null // Average difference between planned and actual time in hours
+  averageUrgency: number | null
+  averageResolutionTime: number | null // Average time from startDate to completedAt in hours
+}
+
+export interface OccurrencesPeriod {
+  period: string // Date string for grouping (e.g., "2024-W01", "2024-01", "2024")
+  count: number
+}
+
+// Calendar Statistics
+export interface CalendarStatsData {
+  completedVsIncomplete: {
+    completed: number
+    incomplete: number
+  }
+  hourlyDistribution: HourlyDistribution[]
+  complianceRate: number // Percentage (0-100)
+}
+
+export interface HourlyDistribution {
+  hour: number // 0-23
+  count: number
+  completionRate: number
+}
+
+// Global KPIs
+export interface GlobalKPIs {
+  completionRate: number // Percentage (0-100)
+  totalTimeInvested: number // Total hours
+  planningEfficiency: number | null // Ratio of dedicated time to consumed time
+  averageWorkload: WorkloadData
+  importanceBalance: ImportanceBalance
+  urgencyBalance: UrgencyBalance
+}
+
+export interface WorkloadData {
+  hoursPerDay: number
+  hoursPerWeek: number
+}
+
+export interface ImportanceBalance {
+  lowImportanceCompletionRate: number // Importance 1-3
+  mediumImportanceCompletionRate: number // Importance 4-7
+  highImportanceCompletionRate: number // Importance 8-10
+}
+
+export interface UrgencyBalance {
+  earlyCompletionRate: number // Completed with > 50% time remaining
+  onTimeCompletionRate: number // Completed with 10-50% time remaining
+  lateCompletionRate: number // Completed with < 10% time remaining
+}
+
+// Advanced Insights
+export interface AdvancedInsights {
+  lowComplianceHabits: LowComplianceHabit[]
+  completionTrend: TrendPoint[]
+  recurringVsUniqueComparison: {
+    recurringCompletionRate: number
+    uniqueCompletionRate: number
+  }
+  bottlenecks: Bottleneck[]
+}
+
+export interface LowComplianceHabit {
+  taskId: number
+  taskName: string
+  completionRate: number
+  totalOccurrences: number
+  completedOccurrences: number
+}
+
+export interface TrendPoint {
+  period: string
+  completionRate: number
+}
+
+export interface Bottleneck {
+  taskId: number
+  taskName: string
+  pendingCount: number
+  skippedCount: number
+  totalCount: number
+}
+
+// Combined Statistics Response
+export interface AllStatistics {
+  taskStats: TaskStatsData
+  recurrenceStats: RecurrenceStatsData
+  occurrenceStats: OccurrenceStatsData
+  calendarStats: CalendarStatsData
+  globalKPIs: GlobalKPIs
+  insights: AdvancedInsights
+}

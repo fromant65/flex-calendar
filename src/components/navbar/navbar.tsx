@@ -8,7 +8,7 @@ import { useSession } from "next-auth/react"
 import { Button } from "~/components/ui/button"
 import { MobileNav } from "./mobile-nav"
 import { SideMenu } from "./side-menu"
-import { DesktopNav } from "./desktop-nav"
+import { AdaptiveDesktopNav } from "./adaptive-desktop-nav"
 import { LogoutButton } from "./logout-button"
 import { FlexCalendarIcon } from "~/components/ui/flex-calendar-icon"
 
@@ -56,7 +56,7 @@ export function Navbar() {
           {/* Desktop Navigation (≥sm) - Only when logged in */}
           {status === "authenticated" && (
             <div className="hidden sm:flex items-center gap-1 flex-1 justify-center">
-              <DesktopNav />
+              <AdaptiveDesktopNav />
             </div>
           )}
 
@@ -69,12 +69,12 @@ export function Navbar() {
 
           {/* Right side controls */}
           <div className="flex items-center gap-2">
-            {/* Theme Toggle */}
+            {/* Theme Toggle - sm to lg: before menu, lg+: before menu */}
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              className="h-9 w-9 transition-all hover:rotate-12 cursor-pointer"
+              className="h-9 w-9 transition-all hover:rotate-12 cursor-pointer sm:order-1 lg:order-1"
               aria-label="Toggle theme"
               disabled={!mounted}
             >
@@ -85,15 +85,14 @@ export function Navbar() {
               )}
             </Button>
 
-            {/* Sign Out Button - Desktop only (≥sm) and when logged in */}
+            {/* Side Menu - sm and up when logged in */}
             {status === "authenticated" && (
-              <LogoutButton
-                className="hidden sm:flex h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
-                variant="icon"
-              />
+              <div className="hidden sm:block sm:order-2 lg:order-2">
+                <SideMenu />
+              </div>
             )}
 
-            {/* Side Menu - Mobile only (<sm) and when logged in */}
+            {/* Side Menu - Mobile (<sm) - when logged in */}
             {status === "authenticated" && (
               <div className="sm:hidden">
                 <SideMenu />
