@@ -5,7 +5,7 @@
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react"
 import { Button } from "../ui/button"
 
-export type NavigationInterval = "day" | "week" | "month" | "year"
+export type NavigationInterval = "3hours" | "day" | "week" | "month" | "year"
 
 interface TimelineControlsProps {
   navigationInterval: NavigationInterval
@@ -47,6 +47,7 @@ export function TimelineControls({
             onChange={(e) => setNavigationInterval(e.target.value as NavigationInterval)}
             className="rounded-md border border-border bg-background px-2 py-1 text-xs"
           >
+            <option value="3hours">3 Horas</option>
             <option value="day">Día</option>
             <option value="week">Semana</option>
             <option value="month">Mes</option>

@@ -1,107 +1,167 @@
 /**
- * Timeline utility functions for overlap detection and level assignment
+ * Timeline utility functions
  */
+
+import type { TaskWithRecurrence, OccurrenceWithTask, EventWithDetails } from "~/types"
+import type { TimelineCellData } from "./timeline-cell"
 
 export interface TimeRange {
   start: Date
   end: Date
 }
 
-export interface ItemWithRange<T> {
-  item: T
+export type SegmentType = "hours" | "days" | "weeks" | "months"
+
+export interface TimeSegment {
   start: Date
   end: Date
+  type: SegmentType
+  label: string
 }
 
 /**
- * Check if two time ranges overlap
+ * Determine segment type based on days to show
  */
-export const doTimeRangesOverlap = (range1: TimeRange, range2: TimeRange): boolean => {
-  return range1.start < range2.end && range2.start < range1.end
+export const getSegmentType = (daysToShow: number): SegmentType => {
+  if (daysToShow <= 3) return "hours"
+  if (daysToShow >= 150) return "months" // 6 months and 1 year use monthly segments
+  if (daysToShow >= 30) return "weeks"
+  return "days"
 }
 
 /**
- * Assign vertical levels to blocks that overlap
- * Each block represents an occurrence with all its events
+ * Get segment duration in hours
  */
-export const assignBlockLevels = <T>(blocks: Array<{ range: TimeRange; item: T }>): Map<T, number> => {
-  const levels = new Map<T, number>()
-  const sortedBlocks = [...blocks].sort((a, b) => a.range.start.getTime() - b.range.start.getTime())
-  
-  sortedBlocks.forEach(({ range, item }) => {
-    // Find the first available level (starting from 0)
-    let level = 0
-    let levelOccupied = true
+export const getSegmentDuration = (type: SegmentType): number => {
+  switch (type) {
+    case "hours":
+      return 3 // 3 hours
+    case "days":
+      return 24 // 1 day
+    case "weeks":
+      return 24 * 7 // 7 days
+    case "months":
+      return 24 * 30 // ~30 days
+  }
+}
+
+/**
+ * Generate time segments for the timeline based on current date and days to show
+ */
+export const generateTimeSegments = (
+  currentDate: Date,
+  daysToShow: number
+): TimeSegment[] => {
+  const segments: TimeSegment[] = []
+  const segmentType = getSegmentType(daysToShow)
+
+  if (segmentType === "hours") {
+    // For 1-3 days view: 3-hour segments
+    // Start from the current hour (rounded down to nearest 3-hour block)
+    const startHour = Math.floor(currentDate.getHours() / 3) * 3
+    const segmentStart = new Date(currentDate)
+    segmentStart.setHours(startHour, 0, 0, 0)
     
-    while (levelOccupied) {
-      levelOccupied = false
+    const totalSegments = Math.ceil((daysToShow * 24) / 3)
+    
+    for (let i = 0; i < totalSegments; i++) {
+      const start = new Date(segmentStart)
+      start.setHours(start.getHours() + i * 3)
       
-      // Check if any block at this level overlaps with current block
-      for (const [otherItem, otherLevel] of levels.entries()) {
-        if (otherLevel === level) {
-          // Find the other block's range
-          const otherBlock = sortedBlocks.find(b => b.item === otherItem)
-          if (otherBlock && doTimeRangesOverlap(range, otherBlock.range)) {
-            levelOccupied = true
-            break
-          }
-        }
-      }
+      const end = new Date(start)
+      end.setHours(end.getHours() + 3)
+      end.setMilliseconds(-1)
       
-      if (levelOccupied) {
-        level++
-      }
+      const hour = start.getHours()
+      const dateLabel = `${start.getDate().toString().padStart(2, '0')}/${(start.getMonth() + 1).toString().padStart(2, '0')}`
+      
+      segments.push({
+        start: start,
+        end: end,
+        type: "hours",
+        label: `${hour}:00 ${dateLabel}`,
+      })
     }
+  } else if (segmentType === "months") {
+    // For 6 months and 1 year view: 1-month segments
+    const startOfMonth = new Date(currentDate)
+    startOfMonth.setDate(1)
+    startOfMonth.setHours(0, 0, 0, 0)
     
-    levels.set(item, level)
-  })
-  
-  return levels
-}
-
-/**
- * Calculate position and width for timeline items with minimum width for visibility
- */
-export const getItemStyle = (
-  start: Date,
-  end: Date,
-  dateRange: Date[],
-  verticalOffset: number = 0
-): React.CSSProperties => {
-  if (dateRange.length === 0) {
-    console.warn('getItemStyle: dateRange is empty')
-    return { left: "0%", width: "100%" }
+    // Calculate number of months based on daysToShow
+    const totalMonths = Math.ceil(daysToShow / 30)
+    
+    for (let i = 0; i < totalMonths; i++) {
+      const segmentStart = new Date(startOfMonth)
+      segmentStart.setMonth(segmentStart.getMonth() + i)
+      
+      const segmentEnd = new Date(segmentStart)
+      segmentEnd.setMonth(segmentEnd.getMonth() + 1)
+      segmentEnd.setMilliseconds(-1)
+      
+      const startDay = segmentStart.getDate().toString().padStart(2, '0')
+      const startMonth = (segmentStart.getMonth() + 1).toString().padStart(2, '0')
+      const endDate = new Date(segmentEnd)
+      const endDay = endDate.getDate().toString().padStart(2, '0')
+      const endMonth = (endDate.getMonth() + 1).toString().padStart(2, '0')
+      
+      segments.push({
+        start: segmentStart,
+        end: segmentEnd,
+        type: "months",
+        label: `${startDay}/${startMonth} - ${endDay}/${endMonth}`,
+      })
+    }
+  } else if (segmentType === "weeks") {
+    // For 30-364 days view: 1-week segments
+    const startOfWeek = new Date(currentDate)
+    const day = startOfWeek.getDay()
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1)
+    startOfWeek.setDate(diff)
+    startOfWeek.setHours(0, 0, 0, 0)
+    
+    const totalWeeks = Math.ceil(daysToShow / 7)
+    
+    for (let i = 0; i < totalWeeks; i++) {
+      const segmentStart = new Date(startOfWeek)
+      segmentStart.setDate(segmentStart.getDate() + i * 7)
+      
+      const segmentEnd = new Date(segmentStart)
+      segmentEnd.setDate(segmentEnd.getDate() + 6)
+      segmentEnd.setHours(23, 59, 59, 999)
+      
+      const startDay = segmentStart.getDate().toString().padStart(2, '0')
+      const startMonth = (segmentStart.getMonth() + 1).toString().padStart(2, '0')
+      const endDay = segmentEnd.getDate().toString().padStart(2, '0')
+      const endMonth = (segmentEnd.getMonth() + 1).toString().padStart(2, '0')
+      
+      segments.push({
+        start: segmentStart,
+        end: segmentEnd,
+        type: "weeks",
+        label: `${startDay}/${startMonth} - ${endDay}/${endMonth}`,
+      })
+    }
+  } else {
+    // For 7-14 days view: daily segments
+    for (let i = 0; i < daysToShow; i++) {
+      const segmentStart = new Date(currentDate)
+      segmentStart.setDate(segmentStart.getDate() + i)
+      segmentStart.setHours(0, 0, 0, 0)
+      
+      const segmentEnd = new Date(segmentStart)
+      segmentEnd.setHours(23, 59, 59, 999)
+      
+      segments.push({
+        start: segmentStart,
+        end: segmentEnd,
+        type: "days",
+        label: formatDate(segmentStart),
+      })
+    }
   }
 
-  // Ensure we're working with Date objects
-  const itemStart = start instanceof Date ? start : new Date(start)
-  const itemEnd = end instanceof Date ? end : new Date(end)
-  
-  const itemStartTime = itemStart.getTime()
-  const itemEndTime = itemEnd.getTime()
-  
-  const rangeStart = dateRange[0]!.getTime()
-  const rangeEnd = new Date(dateRange[dateRange.length - 1]!)
-  rangeEnd.setHours(23, 59, 59, 999)
-  const rangeEndTime = rangeEnd.getTime()
-  const totalRange = rangeEndTime - rangeStart
-  
-  if (totalRange <= 0) {
-    console.error('getItemStyle: Invalid time range')
-    return { left: "0%", width: "100%" }
-  }
-
-  const left = ((itemStartTime - rangeStart) / totalRange) * 100
-  const width = ((itemEndTime - itemStartTime) / totalRange) * 100
-
-  // Set minimum width of 1.5% for very short events to make them visible
-  const finalWidth = Math.max(width, 1.5)
-
-  return {
-    left: `${Math.max(0, left)}%`,
-    width: `${Math.min(100 - Math.max(0, left), finalWidth)}%`,
-    minWidth: "20px",
-  }
+  return segments
 }
 
 /**
@@ -116,4 +176,162 @@ export const formatDate = (date: Date): string => {
  */
 export const formatDayOfWeek = (date: Date): string => {
   return date.toLocaleDateString("es-ES", { weekday: "short" }).toUpperCase()
+}
+
+/**
+ * Check if two dates are on the same day
+ */
+export const isSameDay = (date1: Date, date2: Date): boolean => {
+  return (
+    date1.getFullYear() === date2.getFullYear() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate()
+  )
+}
+
+/**
+ * Check if a date/time falls within a time segment
+ */
+export const isInSegment = (date: Date, segment: TimeSegment): boolean => {
+  const dateTime = date.getTime()
+  return dateTime >= segment.start.getTime() && dateTime <= segment.end.getTime()
+}
+
+/**
+ * Get segment key for mapping
+ */
+export const getSegmentKey = (segment: TimeSegment): string => {
+  return `${segment.start.getTime()}-${segment.end.getTime()}`
+}
+
+/**
+ * Build cell data map for a task across the time segments
+ * Returns a map of segment keys to cell data
+ */
+export const buildCellDataForTask = (
+  task: TaskWithRecurrence,
+  occurrences: OccurrenceWithTask[],
+  events: EventWithDetails[],
+  segments: TimeSegment[]
+): Map<string, TimelineCellData> => {
+  const cellDataMap = new Map<string, TimelineCellData>()
+
+  // Filter occurrences for this task - ONLY Completed and Skipped
+  const taskOccurrences = occurrences.filter(
+    (occ) => occ.associatedTaskId === task.id && 
+    (occ.status === "Completed" || occ.status === "Skipped")
+  )
+
+  // For each segment
+  segments.forEach((segment) => {
+    const segmentKey = getSegmentKey(segment)
+
+    // Find occurrences that fall within this segment
+    const segmentOccurrences = taskOccurrences.filter((occ) => {
+      const occDate = new Date(occ.startDate)
+      return isInSegment(occDate, segment)
+    })
+
+    if (segmentOccurrences.length === 0) {
+      return // No data for this segment
+    }
+
+    // Find events for these occurrences that fall within this segment
+    const segmentEvents = events.filter((event) => {
+      if (!segmentOccurrences.some((occ) => occ.id === event.associatedOccurrenceId)) {
+        return false
+      }
+      const eventStart = new Date(event.start)
+      return isInSegment(eventStart, segment)
+    })
+
+    // Calculate total time spent across all occurrences/events in segment
+    let totalTimeSpent = 0
+    segmentEvents.forEach((event) => {
+      if (event.dedicatedTime) {
+        totalTimeSpent += event.dedicatedTime
+      }
+    })
+
+    // If no events but occurrences have time consumed, sum them
+    if (segmentEvents.length === 0) {
+      segmentOccurrences.forEach((occ) => {
+        if (occ.timeConsumed) {
+          totalTimeSpent += occ.timeConsumed
+        }
+      })
+    }
+
+    // Determine status (if any completed, show completed)
+    let status: TimelineCellData["status"] = "empty"
+    const hasCompleted = segmentOccurrences.some((occ) => occ.status === "Completed")
+    const hasSkipped = segmentOccurrences.some((occ) => occ.status === "Skipped")
+    const hasNotCompleted = segmentOccurrences.some(
+      (occ) => occ.status !== "Completed" && occ.status !== "Skipped"
+    )
+
+    if (hasCompleted) {
+      status = "completed"
+    } else if (hasSkipped) {
+      status = "skipped"
+    } else if (hasNotCompleted) {
+      status = "not-completed"
+    }
+
+    // Get the latest completion date in the segment
+    const completedOccurrences = segmentOccurrences.filter((occ) => occ.status === "Completed")
+    const completedAt = completedOccurrences.length > 0
+      ? completedOccurrences.reduce((latest, occ) => {
+          if (!occ.completedAt) return latest
+          if (!latest) return occ.completedAt
+          return new Date(occ.completedAt) > new Date(latest) ? occ.completedAt : latest
+        }, null as Date | null)
+      : undefined
+
+    cellDataMap.set(segmentKey, {
+      status,
+      timeSpent: totalTimeSpent > 0 ? totalTimeSpent : undefined,
+      occurrenceIds: segmentOccurrences.map(occ => occ.id), // Store all occurrence IDs
+      eventIds: segmentEvents.map((e) => e.id),
+      completedAt: completedAt || undefined,
+      isMultipleEvents: segmentEvents.length > 1,
+      occurrenceCount: segmentOccurrences.length, // Track count for badge
+    })
+  })
+
+  return cellDataMap
+}
+
+/**
+ * Get tasks that have activity in the segment range
+ */
+export const getTasksWithActivityInRange = (
+  allTasks: TaskWithRecurrence[],
+  allOccurrences: OccurrenceWithTask[],
+  segments: TimeSegment[]
+): TaskWithRecurrence[] => {
+  if (segments.length === 0) return []
+
+  const firstSegment = segments[0]!
+  const lastSegment = segments[segments.length - 1]!
+
+  // Get occurrence IDs that fall in the segment range - ONLY Completed and Skipped
+  const activeOccurrenceTaskIds = new Set<number>()
+
+  allOccurrences.forEach((occ) => {
+    // Only consider completed or skipped occurrences
+    if (occ.status !== "Completed" && occ.status !== "Skipped") {
+      return
+    }
+    
+    const occDate = new Date(occ.startDate)
+    // Check if occurrence falls within any segment
+    const inRange = segments.some((segment) => isInSegment(occDate, segment))
+    if (inRange) {
+      activeOccurrenceTaskIds.add(occ.associatedTaskId)
+    }
+  })
+
+  // Filter tasks that have activity
+  return allTasks.filter((task) => activeOccurrenceTaskIds.has(task.id))
 }

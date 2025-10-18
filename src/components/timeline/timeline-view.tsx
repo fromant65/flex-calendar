@@ -1,15 +1,28 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { motion, AnimatePresence } from "motion/react"
+import { motion } from "motion/react"
 import { mockTimelineApi, type TimelineData } from "~/lib/mock-timeline-data"
 import type { OccurrenceWithTask, EventWithDetails } from "~/types"
 import { api } from "~/trpc/react"
 import { TimelineControls, type NavigationInterval } from "./timeline-controls"
 import { TimelineHeader } from "./timeline-header"
 import { TimelineTaskRow } from "./timeline-task-row"
-import { TimelineModals } from "./timeline-modals"
-import { formatDate, formatDayOfWeek } from "./timeline-utils"
+import { TimelineModals, type DayCellDetails } from "./timeline-modals"
+import { TimelineFooter } from "./timeline-footer"
+import { 
+  useIsMobile,
+  useTimelineSegments,
+  useTaskCellData,
+  useActiveTasks
+} from "./timeline-hooks"
+import { 
+  buildCellDataForTask, 
+  getSegmentKey,
+  isInSegment,
+  type TimeSegment
+} from "./timeline-utils"
+import type { TimelineCellData } from "./timeline-cell"
 
 interface TimelineViewProps {
   initialDays?: number
@@ -21,23 +34,13 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
   const [daysToShow, setDaysToShow] = useState(initialDays)
   const [dataCache, setDataCache] = useState<Map<string, TimelineData>>(new Map())
   const [navigationInterval, setNavigationInterval] = useState<NavigationInterval>("day")
-  const [selectedOccurrence, setSelectedOccurrence] = useState<OccurrenceWithTask | null>(null)
-  const [selectedEvent, setSelectedEvent] = useState<EventWithDetails | null>(null)
+  const [selectedDayCell, setSelectedDayCell] = useState<DayCellDetails | null>(null)
   const [direction, setDirection] = useState<"forward" | "backward">("forward")
 
-  // Calculate date range
-  const dateRange = useMemo(() => {
-    const dates: Date[] = []
-    for (let i = 0; i < daysToShow; i++) {
-      const date = new Date(currentDate)
-      date.setDate(date.getDate() + i)
-      dates.push(date)
-    }
-    return dates
-  }, [currentDate, daysToShow])
-
-  const startDate = dateRange[0]
-  const endDate = dateRange[dateRange.length - 1]
+  // Custom hooks
+  const isMobile = useIsMobile()
+  const { timeSegments, visibleSegments, isCompactView, startDate, endDate } = 
+    useTimelineSegments(currentDate, daysToShow, isMobile)
 
   // Fetch real data using tRPC
   const { data: realData, isLoading } = api.timeline.getTimelineData.useQuery(
@@ -53,13 +56,11 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
   // Fetch data with caching for mock data
   useEffect(() => {
     if (!useMockData) return
-    
+
     const cacheKey = `${startDate?.toISOString()}-${endDate?.toISOString()}`
 
     if (!dataCache.has(cacheKey)) {
-      console.log("Loading mock data for", startDate, "to", endDate)
       const data = mockTimelineApi.getTimelineData(startDate!, endDate!)
-      console.log("Mock data loaded:", data)
       setDataCache((prev) => new Map(prev).set(cacheKey, data))
     }
   }, [startDate, endDate, useMockData, dataCache])
@@ -67,25 +68,29 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
   // Get current data from cache or real data
   const currentData = useMemo(() => {
     if (!useMockData && realData) {
-      console.log("Using real data:", realData)
       return realData
     }
-    
+
     if (useMockData) {
       const cacheKey = `${startDate!.toISOString()}-${endDate!.toISOString()}`
       const data = dataCache.get(cacheKey) || { tasks: [], occurrences: [], events: [] }
-      console.log("Using mock data from cache:", data)
       return data
     }
-    
+
     return { tasks: [], occurrences: [], events: [] }
   }, [startDate, endDate, dataCache, useMockData, realData])
+
+  // Filter tasks to only show those with activity in the segment range
+  const activeTasks = useActiveTasks(currentData.tasks, currentData.occurrences, timeSegments)
 
   // Navigate timeline based on selected interval
   const goToPrevious = () => {
     setDirection("backward")
     const newDate = new Date(currentDate)
     switch (navigationInterval) {
+      case "3hours":
+        newDate.setHours(newDate.getHours() - 3)
+        break
       case "day":
         newDate.setDate(newDate.getDate() - 1)
         break
@@ -106,6 +111,9 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
     setDirection("forward")
     const newDate = new Date(currentDate)
     switch (navigationInterval) {
+      case "3hours":
+        newDate.setHours(newDate.getHours() + 3)
+        break
       case "day":
         newDate.setDate(newDate.getDate() + 1)
         break
@@ -127,22 +135,53 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
     setCurrentDate(new Date())
   }
 
-  // Get occurrence end date (completedAt or last completed event)
-  const getOccurrenceEndDate = (occurrence: OccurrenceWithTask): Date => {
-    if (occurrence.completedAt) {
-      return new Date(occurrence.completedAt)
-    }
-
-    const occurrenceEvents = currentData.events.filter(
-      (e) => e.associatedOccurrenceId === occurrence.id && e.isCompleted && e.completedAt,
+  // Handle cell click
+  const handleCellClick = (
+    task: typeof activeTasks[number],
+    segment: TimeSegment,
+    cellData: TimelineCellData
+  ) => {
+    // Find all occurrences for this segment
+    const segmentOccurrences = currentData.occurrences.filter((occ) => 
+      cellData.occurrenceIds?.includes(occ.id)
     )
+    
+    const segmentEvents = currentData.events.filter((event) => {
+      if (!cellData.eventIds?.includes(event.id)) return false
+      const eventStart = new Date(event.start)
+      return isInSegment(eventStart, segment)
+    })
 
-    if (occurrenceEvents.length > 0) {
-      const lastEventDate = Math.max(...occurrenceEvents.map((e) => new Date(e.completedAt!).getTime()))
-      return new Date(lastEventDate)
+    // Calculate total time spent
+    let totalTimeSpent = 0
+    segmentEvents.forEach((event) => {
+      if (event.dedicatedTime) {
+        totalTimeSpent += event.dedicatedTime
+      }
+    })
+
+    // If no events, sum occurrence time
+    if (totalTimeSpent === 0) {
+      segmentOccurrences.forEach((occ) => {
+        if (occ.timeConsumed) {
+          totalTimeSpent += occ.timeConsumed
+        }
+      })
     }
 
-    return new Date(occurrence.startDate)
+    setSelectedDayCell({
+      date: segment.start, // Use segment start as the reference date
+      task: {
+        id: task.id,
+        name: task.name,
+        description: task.description,
+        importance: task.importance,
+      },
+      occurrences: segmentOccurrences, // Pass all occurrences
+      events: segmentEvents,
+      totalTimeSpent,
+      status: cellData.status as "completed" | "skipped" | "not-completed",
+    })
   }
 
   return (
@@ -159,25 +198,19 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
       />
 
       {/* Timeline Container */}
-      <div className="flex-1 overflow-auto rounded-lg bg-card">
-        <div className="min-w-[800px] relative">
+      <div className="flex-1 overflow-auto rounded-lg border border-border bg-card shadow-sm">
+        <div className="min-w-0">
           {/* Date Header - Sticky */}
           <div className="sticky top-0 z-20 bg-card">
-            <TimelineHeader dateRange={dateRange} />
-          </div>
-
-          {/* Vertical day separator lines - extends through entire content */}
-          <div className="pointer-events-none absolute left-0 right-0 top-0 h-full flex z-0" style={{ paddingLeft: '12rem' }}>
-            {dateRange.map((date, index) => (
-              <div key={index} className="flex-1 relative">
-                <div className="absolute left-0 top-0 h-full w-px bg-border/50" />
-              </div>
-            ))}
+            <TimelineHeader 
+              segments={timeSegments} 
+              isCompact={isCompactView}
+              visibleSegments={isMobile ? visibleSegments : undefined}
+            />
           </div>
 
           {/* Timeline Rows */}
-          <motion.div 
-            className="relative z-10 min-h-0"
+          <motion.div
             key={currentDate.toISOString()}
             initial={{ opacity: 0, x: direction === "forward" ? 20 : -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -188,27 +221,29 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
               <div className="flex h-32 items-center justify-center text-muted-foreground">
                 Cargando datos de la línea de tiempo...
               </div>
-            ) : currentData.tasks.length === 0 ? (
+            ) : activeTasks.length === 0 ? (
               <div className="flex h-32 items-center justify-center text-muted-foreground">
-                No hay tareas completadas en este rango de fechas
+                No hay tareas con actividad en este rango de fechas
               </div>
             ) : (
-              currentData.tasks.map((task) => {
-                const taskOccurrences = currentData.occurrences.filter((occ) => occ.associatedTaskId === task.id)
-                const taskEvents = currentData.events.filter((e) => 
-                  e.associatedOccurrenceId && taskOccurrences.some(occ => occ.id === e.associatedOccurrenceId)
+              activeTasks.map((task) => {
+                // Build cell data for this task
+                const cellDataBySegment = buildCellDataForTask(
+                  task,
+                  currentData.occurrences,
+                  currentData.events,
+                  timeSegments
                 )
 
                 return (
                   <TimelineTaskRow
                     key={task.id}
                     task={task}
-                    occurrences={taskOccurrences}
-                    events={taskEvents}
-                    dateRange={dateRange}
-                    onOccurrenceClick={setSelectedOccurrence}
-                    onEventClick={setSelectedEvent}
-                    getOccurrenceEndDate={getOccurrenceEndDate}
+                    segments={timeSegments}
+                    cellDataBySegment={cellDataBySegment}
+                    onCellClick={(segment, cellData) => handleCellClick(task, segment, cellData)}
+                    isCompact={isCompactView}
+                    visibleSegments={isMobile ? visibleSegments : undefined}
                   />
                 )
               })
@@ -217,29 +252,11 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex items-center gap-6 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="h-4 w-8 rounded bg-primary/20" />
-          <span className="text-muted-foreground">Ocurrencia</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="h-4 w-8 rounded border border-yellow-500 bg-yellow-500/60" />
-          <span className="text-muted-foreground">Evento Activo</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="h-4 w-8 rounded border border-accent bg-accent/60" />
-          <span className="text-muted-foreground">Evento Completado</span>
-        </div>
-      </div>
+      {/* Footer: Legend and Period Indicator */}
+      <TimelineFooter currentDate={currentDate} daysToShow={daysToShow} />
 
-      {/* Modals */}
-      <TimelineModals
-        selectedOccurrence={selectedOccurrence}
-        selectedEvent={selectedEvent}
-        onOccurrenceClose={() => setSelectedOccurrence(null)}
-        onEventClose={() => setSelectedEvent(null)}
-      />
+      {/* Modal */}
+      <TimelineModals selectedDayCell={selectedDayCell} onClose={() => setSelectedDayCell(null)} />
     </div>
   )
 }

@@ -1,9 +1,10 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Sparkles, Zap } from "lucide-react"
+import { Zap } from "lucide-react"
 import { Button } from "~/components/ui/button"
 import { SparkleCalendarBg } from "./sparkle-calendar-bg"
+import { FlexCalendarIcon } from "~/components/ui/flex-calendar-icon"
 
 interface HeroSectionProps {
   onLoginClick: () => void
@@ -28,7 +29,7 @@ export function HeroSection({ onLoginClick, onRegisterClick }: HeroSectionProps)
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <Sparkles className="h-4 w-4" />
+            <FlexCalendarIcon className="h-4 w-4" />
             Sistema Inteligente de Gestión del Tiempo
           </motion.div>
 

@@ -1,9 +1,10 @@
 "use client"
 
-import { Moon, Sun, Sparkles } from "lucide-react"
+import { Moon, Sun } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Button } from "~/components/ui/button"
 import { motion } from "framer-motion"
+import { FlexCalendarIcon } from "~/components/ui/flex-calendar-icon"
 
 interface LandingNavbarProps {
   onLoginClick: () => void
@@ -50,7 +51,7 @@ export function LandingNavbar({ onLoginClick, onRegisterClick }: LandingNavbarPr
             transition={{ delay: 0.2 }}
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-md hidden sm:flex">
-              <Sparkles className="h-5 w-5" />
+              <FlexCalendarIcon className="h-5 w-5" />
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent hidden sm:flex">
               Flex Calendar

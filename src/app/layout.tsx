@@ -10,7 +10,7 @@ import { Providers } from "~/components/providers";
 export const metadata: Metadata = {
   title: "Flex Calendar",
   description: "A flexible calendar application to manage your time and tasks.",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  icons: [{ rel: "icon", url: "/flex-calendar-icon.svg" }],
 };
 
 const geist = Geist({

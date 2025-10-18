@@ -6,8 +6,10 @@ import {
   Clock, 
   LayoutGrid, 
   Repeat, 
-  Sparkles,
-  Target
+  Target,
+  Palette,
+  BarChart3,
+  Zap
 } from "lucide-react"
 import { FeatureCard } from "./feature-card"
 import { SparkleCalendarBgSubtle } from "./sparkle-calendar-bg-subtle"
@@ -65,22 +67,22 @@ export function FeaturesSection() {
             index={4}
           />
           <FeatureCard
-            icon={Sparkles}
+            icon={Palette}
             title="Interfaz Intuitiva"
             description="Diseño moderno y responsive que se adapta a todos tus dispositivos con tema claro y oscuro."
             index={5}
           />
           <FeatureCard
-            icon={Sparkles}
+            icon={BarChart3}
             title="Estadisticas Detalladas"
             description="Visualiza el rendimiento de tu tiempo con informes detallados y gráficos."
             index={6}
           />
           <FeatureCard
-            icon={Sparkles}
+            icon={Zap}
             title="Cálculo automático de urgencia"
             description="El sistema ajusta automáticamente la urgencia de tus tareas basándose en fechas objetivo y límite."
-            index={6}
+            index={7}
           />
         </div>
       </div>

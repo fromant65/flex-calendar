@@ -1,8 +1,8 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Sparkles } from "lucide-react"
 import { Button } from "~/components/ui/button"
+import { FlexCalendarIcon } from "~/components/ui/flex-calendar-icon"
 
 interface CTASectionProps {
   onLoginClick: () => void
@@ -69,7 +69,7 @@ export function CTASection({ onLoginClick, onRegisterClick }: CTASectionProps) {
               onClick={onRegisterClick}
               className="w-full sm:w-auto rounded-xl text-base font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg cursor-pointer"
             >
-              <Sparkles className="mr-2 h-5 w-5" />
+              <FlexCalendarIcon className="mr-2 h-5 w-5" />
               Crear Cuenta Gratis
             </Button>
             <Button

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, CheckSquare, Calendar, Sparkles, BookmarkCheck } from "lucide-react"
+import { Home, CheckSquare, Calendar, GanttChart, BookmarkCheck } from "lucide-react"
 import { Button } from "~/components/ui/button"
 
 const navItems = [
@@ -10,7 +10,7 @@ const navItems = [
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/task-manager", label: "Gestor de Tareas", icon: BookmarkCheck },
   { href: "/events", label: "Calendario", icon: Calendar },
-  { href: "/timeline", label: "Línea de Tiempo", icon: Sparkles },
+  { href: "/timeline", label: "Línea de Tiempo", icon: GanttChart },
 ]
 
 export function DesktopNav() {

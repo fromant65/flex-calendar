@@ -182,6 +182,9 @@ const generateOccurrences = (): OccurrenceWithTask[] => {
       allDates.forEach((date) => {
         const dayOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][date.getDay()]
         if (task.recurrence?.daysOfWeek?.includes(dayOfWeek as any)) {
+          // Randomly skip some occurrences (10% chance)
+          const shouldSkip = Math.random() < 0.1
+          
           occurrences.push({
             id: occId++,
             associatedTaskId: task.id,
@@ -189,10 +192,10 @@ const generateOccurrences = (): OccurrenceWithTask[] => {
             limitDate: null,
             targetDate: new Date(date),
             targetTimeConsumption: 30,
-            timeConsumed: Math.floor(Math.random() * 45) + 15,
-            status: "Completed",
+            timeConsumed: shouldSkip ? 0 : Math.floor(Math.random() * 45) + 15,
+            status: shouldSkip ? "Skipped" : "Completed",
             urgency: task.importance - Math.floor(Math.random() * 3),
-            completedAt: new Date(date.getTime() + Math.random() * 8 * 60 * 60 * 1000),
+            completedAt: shouldSkip ? null : new Date(date.getTime() + Math.random() * 8 * 60 * 60 * 1000),
             createdAt: new Date(date),
             updatedAt: new Date(date),
             task: task,
@@ -203,6 +206,9 @@ const generateOccurrences = (): OccurrenceWithTask[] => {
       // Monthly recurring tasks
       for (let month = 0; month < 12; month++) {
         const date = new Date(2025, month, task.recurrence.daysOfMonth[0]!)
+        // Randomly skip some monthly tasks (5% chance)
+        const shouldSkip = Math.random() < 0.05
+        
         occurrences.push({
           id: occId++,
           associatedTaskId: task.id,
@@ -210,10 +216,10 @@ const generateOccurrences = (): OccurrenceWithTask[] => {
           limitDate: null,
           targetDate: date,
           targetTimeConsumption: 120,
-          timeConsumed: Math.floor(Math.random() * 150) + 60,
-          status: "Completed",
+          timeConsumed: shouldSkip ? 0 : Math.floor(Math.random() * 150) + 60,
+          status: shouldSkip ? "Skipped" : "Completed",
           urgency: task.importance,
-          completedAt: new Date(date.getTime() + Math.random() * 6 * 60 * 60 * 1000),
+          completedAt: shouldSkip ? null : new Date(date.getTime() + Math.random() * 6 * 60 * 60 * 1000),
           createdAt: date,
           updatedAt: date,
           task: task,

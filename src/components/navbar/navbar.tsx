@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Moon, Sun, Sparkles } from "lucide-react"
+import { Moon, Sun } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { Button } from "~/components/ui/button"
@@ -10,6 +10,7 @@ import { MobileNav } from "./mobile-nav"
 import { SideMenu } from "./side-menu"
 import { DesktopNav } from "./desktop-nav"
 import { LogoutButton } from "./logout-button"
+import { FlexCalendarIcon } from "~/components/ui/flex-calendar-icon"
 
 export function Navbar() {
   const pathname = usePathname()
@@ -47,7 +48,7 @@ export function Navbar() {
           {/* Logo - Hidden on mobile */}
           <Link href="/dashboard" className="hidden sm:flex items-center gap-2 transition-opacity hover:opacity-80">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-md">
-              <Sparkles className="h-5 w-5" />
+              <FlexCalendarIcon className="h-5 w-5" />
             </div>
             <span className="text-lg font-semibold text-foreground">Flex Calendar</span>
           </Link>

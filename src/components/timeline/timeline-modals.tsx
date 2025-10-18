@@ -2,108 +2,137 @@
  * Timeline Modals Component
  */
 
-import { Dialog, DialogContent } from "~/components/ui/dialog"
+import { useState } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "~/components/ui/dialog"
 import type { OccurrenceWithTask, EventWithDetails } from "~/types"
+import { StatusBadge } from "./status-badge"
+import { TaskInfo } from "./task-info"
+import { TotalTimeDisplay } from "./total-time-display"
+import { OccurrenceAccordion } from "./occurrence-accordion"
 
-interface TimelineModalsProps {
-  selectedOccurrence: OccurrenceWithTask | null
-  selectedEvent: EventWithDetails | null
-  onOccurrenceClose: () => void
-  onEventClose: () => void
+export interface DayCellDetails {
+  date: Date
+  task: {
+    id: number
+    name: string
+    description: string | null
+    importance: number
+  }
+  occurrences: OccurrenceWithTask[] // Support multiple occurrences
+  events: EventWithDetails[]
+  totalTimeSpent: number
+  status: "completed" | "skipped" | "not-completed"
 }
 
-export function TimelineModals({
-  selectedOccurrence,
-  selectedEvent,
-  onOccurrenceClose,
-  onEventClose,
-}: TimelineModalsProps) {
-  return (
-    <>
-      {/* Occurrence Details Modal */}
-      <Dialog open={!!selectedOccurrence} onOpenChange={(open) => !open && onOccurrenceClose()}>
-        <DialogContent className="max-w-md">
-          {selectedOccurrence && (
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-xl font-bold mb-2">Detalles de la Ocurrencia</h2>
-                <div className="grid gap-2 text-sm">
-                  <div>
-                    <span className="font-medium">ID:</span> {selectedOccurrence.id}
-                  </div>
-                  <div>
-                    <span className="font-medium">Tarea:</span> {selectedOccurrence.task.name}
-                  </div>
-                  <div>
-                    <span className="font-medium">Fecha de Inicio:</span>{" "}
-                    {new Date(selectedOccurrence.startDate).toLocaleString("es-ES")}
-                  </div>
-                  <div>
-                    <span className="font-medium">Estado:</span> {selectedOccurrence.status}
-                  </div>
-                  {selectedOccurrence.completedAt && (
-                    <div>
-                      <span className="font-medium">Completada el:</span>{" "}
-                      {new Date(selectedOccurrence.completedAt).toLocaleString("es-ES")}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+interface TimelineModalsProps {
+  selectedDayCell: DayCellDetails | null
+  onClose: () => void
+}
 
-      {/* Event Details Modal */}
-      <Dialog open={!!selectedEvent} onOpenChange={(open) => !open && onEventClose()}>
-        <DialogContent className="max-w-md">
-          {selectedEvent && (
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-xl font-bold mb-2">Detalles del Evento</h2>
-                <div className="grid gap-2 text-sm">
-                  <div>
-                    <span className="font-medium">ID:</span> {selectedEvent.id}
-                  </div>
-                  <div>
-                    <span className="font-medium">Contexto:</span> {selectedEvent.context || "N/A"}
-                  </div>
-                  <div>
-                    <span className="font-medium">Inicio:</span>{" "}
-                    {new Date(selectedEvent.start).toLocaleString("es-ES")}
-                  </div>
-                  <div>
-                    <span className="font-medium">Fin:</span>{" "}
-                    {new Date(selectedEvent.finish).toLocaleString("es-ES")}
-                  </div>
-                  <div>
-                    <span className="font-medium">Completado:</span>{" "}
-                    {selectedEvent.isCompleted ? "Sí" : "No"}
-                  </div>
-                  {selectedEvent.completedAt && (
-                    <div>
-                      <span className="font-medium">Completado el:</span>{" "}
-                      {new Date(selectedEvent.completedAt).toLocaleString("es-ES")}
-                    </div>
-                  )}
-                  {selectedEvent.occurrence && (
-                    <div className="border-t pt-2 mt-2">
-                      <div className="font-medium mb-1">Ocurrencia Asociada:</div>
-                      <div className="text-xs space-y-1 pl-2">
-                        <div>ID: {selectedEvent.occurrence.id}</div>
-                        <div>Tarea: {selectedEvent.occurrence.task.name}</div>
-                        <div>
-                          Inicio: {new Date(selectedEvent.occurrence.startDate).toLocaleString("es-ES")}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+export function TimelineModals({ selectedDayCell, onClose }: TimelineModalsProps) {
+  if (!selectedDayCell) return null
+
+  // State for accordion - track which occurrences are open
+  const [openOccurrences, setOpenOccurrences] = useState<Set<number>>(
+    new Set(selectedDayCell.occurrences.map((_, index) => index))
+  )
+
+  const toggleOccurrence = (index: number) => {
+    setOpenOccurrences((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(index)) {
+        newSet.delete(index)
+      } else {
+        newSet.add(index)
+      }
+      return newSet
+    })
+  }
+
+  const formatTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+    if (hours > 0) {
+      return `${hours}h ${mins}m`
+    }
+    return `${mins}m`
+  }
+
+  const formatDateTime = (date: Date | string) => {
+    return new Date(date).toLocaleString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
+  const formatDateOnly = (date: Date | string) => {
+    return new Date(date).toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }
+
+  return (
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+            {selectedDayCell.task.name}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Status Badge */}
+          <div className="flex items-center justify-between">
+            <StatusBadge status={selectedDayCell.status} />
+            <div className="text-sm text-muted-foreground">
+              {formatDateOnly(selectedDayCell.date)}
+            </div>
+          </div>
+
+          {/* Task Information */}
+          <TaskInfo task={selectedDayCell.task} />
+
+          {/* Time Information */}
+          <TotalTimeDisplay 
+            totalMinutes={selectedDayCell.totalTimeSpent} 
+            formatTime={formatTime} 
+          />
+
+          {/* Occurrences Details - Accordion style */}
+          {selectedDayCell.occurrences.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="font-semibold text-sm uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                Ocurrencias ({selectedDayCell.occurrences.length})
+              </h3>
+              
+              {selectedDayCell.occurrences.map((occurrence, index) => {
+                // Find events associated with this occurrence
+                const occurrenceEvents = selectedDayCell.events.filter(
+                  event => event.associatedOccurrenceId === occurrence.id
+                )
+                
+                return (
+                  <OccurrenceAccordion
+                    key={occurrence.id}
+                    occurrence={occurrence}
+                    index={index}
+                    events={occurrenceEvents}
+                    formatTime={formatTime}
+                    formatDateTime={formatDateTime}
+                    isOpen={openOccurrences.has(index)}
+                    onToggle={() => toggleOccurrence(index)}
+                  />
+                )
+              })}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-    </>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
