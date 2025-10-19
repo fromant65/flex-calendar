@@ -3,6 +3,7 @@
  */
 
 import type { HabitCompliancePoint } from "~/types";
+import type { StatsTask, StatsRecurrence } from "./stats-types";
 
 export class StatsUtils {
   /**
@@ -84,5 +85,66 @@ export class StatsUtils {
     }
 
     return { maxStreak, currentStreak };
+  }
+
+  /**
+   * Check if a task is recurring (has interval defined)
+   * Recurring tasks have a defined interval in their recurrence pattern
+   */
+  static isRecurringTask(
+    task: StatsTask,
+    recurrenceMap: Map<number, StatsRecurrence>
+  ): boolean {
+    if (!task?.recurrenceId) return false;
+    const recurrence = recurrenceMap.get(task.recurrenceId);
+    if (!recurrence) return false;
+
+    // Rule 1: If it has an interval, it's recurring
+    if (recurrence.interval !== null && recurrence.interval !== undefined) return true;
+
+    // Rule 2: If it defines daysOfWeek or daysOfMonth AND the recurrence is not "fixed" (no endDate and no maxOccurrences), treat as recurring
+    const hasDaysOfWeek = Array.isArray(recurrence.daysOfWeek) && recurrence.daysOfWeek.length > 0;
+    const hasDaysOfMonth = Array.isArray(recurrence.daysOfMonth) && recurrence.daysOfMonth.length > 0;
+
+    const isFixedRecurrence = (rec: StatsRecurrence) => {
+      return (rec.endDate !== null && rec.endDate !== undefined) || (rec.maxOccurrences !== null && rec.maxOccurrences !== undefined);
+    };
+
+    if ((hasDaysOfWeek || hasDaysOfMonth) && !isFixedRecurrence(recurrence)) return true;
+
+    // Otherwise it's not a recurring pattern (treated as unique)
+    return false;
+  }
+
+  /**
+   * Check if a task is unique (no interval defined)
+   * Unique tasks have recurrence but no interval - they use daysOfWeek or daysOfMonth
+   */
+  static isUniqueTask(
+    task: StatsTask,
+    recurrenceMap: Map<number, StatsRecurrence>
+  ): boolean {
+    // Unique = has recurrenceId (or no recurrence) but does NOT satisfy recurring rules
+    if (!task?.recurrenceId) return true; // tasks without recurrenceId are unique
+    const recurrence = recurrenceMap.get(task.recurrenceId);
+    if (!recurrence) return true;
+
+    return !this.isRecurringTask(task, recurrenceMap);
+  }
+
+  /**
+   * Calculate recurring vs unique tasks distribution
+   */
+  static calculateRecurringVsUnique(
+    tasks: StatsTask[],
+    recurrenceMap: Map<number, StatsRecurrence>
+  ): { recurring: number; unique: number } {
+    const recurringCount = tasks.filter((t) => this.isRecurringTask(t, recurrenceMap)).length;
+    const uniqueCount = tasks.filter((t) => this.isUniqueTask(t, recurrenceMap)).length;
+
+    return {
+      recurring: recurringCount,
+      unique: uniqueCount,
+    };
   }
 }

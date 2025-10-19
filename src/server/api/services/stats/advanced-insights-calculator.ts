@@ -28,7 +28,8 @@ export class AdvancedInsightsCalculator {
         completionTrend: this.calculateCompletionTrend(occurrences),
         recurringVsUniqueComparison: this.calculateRecurringVsUniqueComparison(
           userTasks,
-          occurrences
+          occurrences,
+          recurrenceMap
         ),
         bottlenecks: this.calculateBottlenecks(userTasks, occurrences),
       };
@@ -133,15 +134,23 @@ export class AdvancedInsightsCalculator {
   /**
    * Compare recurring vs unique task completion rates
    */
-  private calculateRecurringVsUniqueComparison(userTasks: StatsTask[], occurrences: StatsOccurrence[]) {
+  private calculateRecurringVsUniqueComparison(
+    userTasks: StatsTask[],
+    occurrences: StatsOccurrence[],
+    recurrenceMap: Map<number, StatsRecurrence>
+  ) {
     const recurringTaskIds = new Set(
-      userTasks.filter((t) => t?.recurrenceId).map((t) => t.id)
+      userTasks.filter((t) => StatsUtils.isRecurringTask(t, recurrenceMap)).map((t) => t.id)
     );
+    const uniqueTaskIds = new Set(
+      userTasks.filter((t) => StatsUtils.isUniqueTask(t, recurrenceMap)).map((t) => t.id)
+    );
+    
     const recurringOccs = occurrences.filter((o) =>
       o?.associatedTaskId ? recurringTaskIds.has(o.associatedTaskId) : false
     );
     const uniqueOccs = occurrences.filter((o) =>
-      o?.associatedTaskId ? !recurringTaskIds.has(o.associatedTaskId) : false
+      o?.associatedTaskId ? uniqueTaskIds.has(o.associatedTaskId) : false
     );
 
     const recurringCompletionRate =

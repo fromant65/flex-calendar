@@ -50,6 +50,10 @@ export interface StatsEvent {
  */
 export interface StatsRecurrence {
   id: number;
+  interval: number | null;
+  daysOfWeek: string[] | null;
+  daysOfMonth: number[] | null;
+  endDate: Date | null;
   maxOccurrences: number | null;
 }
 

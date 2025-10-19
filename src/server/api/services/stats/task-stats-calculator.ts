@@ -5,6 +5,7 @@
 import type { TaskStatsData, ImportanceDistribution } from "~/types";
 import type { StatsDataset, StatsTask, StatsOccurrence } from "./stats-types";
 import { TaskStatsInsightsGenerator } from "./insights-generators";
+import { StatsUtils } from "./stats-utils";
 
 export class TaskStatsCalculator {
   /**
@@ -12,7 +13,7 @@ export class TaskStatsCalculator {
    */
   calculate(dataset: StatsDataset): TaskStatsData {
     try {
-      const { tasks: userTasks = [], occurrences = [] } = dataset;
+      const { tasks: userTasks = [], occurrences = [], recurrenceMap } = dataset;
 
       // Validate data
       if (!Array.isArray(userTasks) || !Array.isArray(occurrences)) {
@@ -31,7 +32,7 @@ export class TaskStatsCalculator {
         averageCompletionTime: this.calculateAverageCompletionTime(userTasks),
         importanceDistribution: this.calculateImportanceDistribution(userTasks, occurrences),
         fixedVsFlexible: this.calculateFixedVsFlexible(userTasks),
-        recurringVsUnique: this.calculateRecurringVsUnique(userTasks),
+        recurringVsUnique: StatsUtils.calculateRecurringVsUnique(userTasks, recurrenceMap),
       };
 
       // Generate insights
@@ -178,23 +179,6 @@ export class TaskStatsCalculator {
     return {
       fixed: fixedCount,
       flexible: flexibleCount,
-    };
-  }
-
-  /**
-   * Calculate recurring vs unique tasks distribution
-   */
-  private calculateRecurringVsUnique(userTasks: StatsTask[]): { recurring: number; unique: number } {
-    const recurringCount = userTasks.filter(
-      (t) => t?.recurrenceId !== null && t?.recurrenceId !== undefined
-    ).length;
-    const uniqueCount = userTasks.filter(
-      (t) => t?.recurrenceId === null || t?.recurrenceId === undefined
-    ).length;
-
-    return {
-      recurring: recurringCount,
-      unique: uniqueCount,
     };
   }
 
