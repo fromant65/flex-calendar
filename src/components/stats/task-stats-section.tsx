@@ -16,12 +16,77 @@ import {
   Legend,
 } from "recharts"
 import type { TaskStatsData } from "~/types"
+import { useEffect, useState } from "react"
 
 interface TaskStatsSectionProps {
   data: TaskStatsData
 }
 
 export function TaskStatsSection({ data }: TaskStatsSectionProps) {
+  const [chartColors, setChartColors] = useState({
+    text: "#888888",
+    border: "#e5e7eb",
+    primary: "#6366f1"
+  })
+
+  useEffect(() => {
+    const updateColors = () => {
+      // Create temporary elements to get the actual computed colors
+      const tempText = document.createElement('div')
+      tempText.className = 'text-foreground'
+      tempText.style.position = 'absolute'
+      tempText.style.visibility = 'hidden'
+      document.body.appendChild(tempText)
+      
+      const tempBorder = document.createElement('div')
+      tempBorder.className = 'border-border'
+      tempBorder.style.position = 'absolute'
+      tempBorder.style.visibility = 'hidden'
+      document.body.appendChild(tempBorder)
+      
+      const tempPrimary = document.createElement('div')
+      tempPrimary.className = 'bg-primary'
+      tempPrimary.style.position = 'absolute'
+      tempPrimary.style.visibility = 'hidden'
+      document.body.appendChild(tempPrimary)
+      
+      // Get the computed colors
+      const textColor = window.getComputedStyle(tempText).color
+      const borderColor = window.getComputedStyle(tempBorder).borderColor || '#e5e7eb'
+      const primaryColor = window.getComputedStyle(tempPrimary).backgroundColor || '#6366f1'
+      
+      // Clean up
+      document.body.removeChild(tempText)
+      document.body.removeChild(tempBorder)
+      document.body.removeChild(tempPrimary)
+      
+      setChartColors({
+        text: textColor || "#888888",
+        border: borderColor,
+        primary: primaryColor
+      })
+    }
+
+    // Initial update
+    updateColors()
+
+    // Listen for theme changes (class changes on html element)
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class' || mutation.attributeName === 'style') {
+          updateColors()
+        }
+      })
+    })
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'style']
+    })
+
+    return () => observer.disconnect()
+  }, [])
+
   const { averageCompletionTime, importanceDistribution, fixedVsFlexible, recurringVsUnique } = data
 
   // Prepare data for pie charts
@@ -123,50 +188,56 @@ export function TaskStatsSection({ data }: TaskStatsSectionProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={importanceDistribution}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis
-                  dataKey="importance"
-                  label={{ value: "Importancia", position: "insideBottom", offset: -5 }}
-                  tick={{ fill: 'hsl(var(--foreground))' }}
-                  stroke="hsl(var(--border))"
-                />
-                <YAxis
-                  label={{ value: "% Completación", angle: -90, position: "insideLeft" }}
-                  tick={{ fill: 'hsl(var(--foreground))' }}
-                  stroke="hsl(var(--border))"
-                />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length && payload[0]) {
-                      const data = payload[0].payload
-                      return (
-                        <div className="rounded-lg border bg-popover p-2 shadow-sm">
-                          <div className="grid gap-2">
-                            <div className="flex flex-col">
-                              <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                Importancia {data.importance}
-                              </span>
-                              <span className="font-bold text-popover-foreground">
-                                {data.completionRate.toFixed(1)}%
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>
-                                {data.completedOccurrences} de {data.totalOccurrences} ocurrencias
-                              </span>
+            <div className="[color-scheme:light] dark:[color-scheme:dark]">
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={importanceDistribution} margin={{ left: 20, right: 20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartColors.border} />
+                  <XAxis
+                    dataKey="importance"
+                    tick={{ fill: chartColors.text }}
+                    stroke={chartColors.border}
+                  />
+                  <YAxis
+                    label={{ 
+                      value: "% Completación", 
+                      angle: -90, 
+                      position: "insideLeft",
+                      style: { textAnchor: 'middle', fill: chartColors.text }
+                    }}
+                    tick={{ fill: chartColors.text }}
+                    stroke={chartColors.border}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length && payload[0]) {
+                        const data = payload[0].payload
+                        return (
+                          <div className="rounded-lg border bg-popover p-2 shadow-sm">
+                            <div className="grid gap-2">
+                              <div className="flex flex-col">
+                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                  Importancia {data.importance}
+                                </span>
+                                <span className="font-bold text-popover-foreground">
+                                  {data.completionRate.toFixed(1)}%
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span>
+                                  {data.completedOccurrences} de {data.totalOccurrences} ocurrencias
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )
-                    }
-                    return null
-                  }}
-                />
-                <Bar dataKey="completionRate" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+                        )
+                      }
+                      return null
+                    }}
+                  />
+                  <Bar dataKey="completionRate" fill={chartColors.primary} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
@@ -177,33 +248,63 @@ export function TaskStatsSection({ data }: TaskStatsSectionProps) {
             <CardDescription>Distribución por tipo de horario</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={fixedFlexibleData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {fixedFlexibleData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--popover))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '0.5rem'
-                  }}
-                  labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="[color-scheme:light] dark:[color-scheme:dark]">
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={fixedFlexibleData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {fixedFlexibleData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36}
+                    content={({ payload }) => (
+                      <div className="flex justify-center gap-4 mt-2">
+                        {payload?.map((entry, index) => (
+                          <div key={`legend-${index}`} className="flex items-center gap-2">
+                            <div
+                              className="h-3 w-3 rounded-full"
+                              style={{ backgroundColor: entry.color }}
+                            />
+                            <span className="text-sm text-foreground">{entry.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  />
+                  <Tooltip 
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length && payload[0]) {
+                        return (
+                          <div className="rounded-lg border bg-popover p-2 shadow-sm">
+                            <div className="flex flex-col gap-1">
+                              <span className="text-xs text-popover-foreground font-medium">
+                                {payload[0].name}
+                              </span>
+                              <span className="text-sm font-bold text-popover-foreground">
+                                {payload[0].value} tareas
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      }
+                      return null
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
@@ -214,33 +315,63 @@ export function TaskStatsSection({ data }: TaskStatsSectionProps) {
             <CardDescription>Distribución por tipo de repetición</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={recurringUniqueData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {recurringUniqueData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--popover))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '0.5rem'
-                  }}
-                  labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="[color-scheme:light] dark:[color-scheme:dark]">
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={recurringUniqueData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {recurringUniqueData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36}
+                    content={({ payload }) => (
+                      <div className="flex justify-center gap-4 mt-2">
+                        {payload?.map((entry, index) => (
+                          <div key={`legend-${index}`} className="flex items-center gap-2">
+                            <div
+                              className="h-3 w-3 rounded-full"
+                              style={{ backgroundColor: entry.color }}
+                            />
+                            <span className="text-sm text-foreground">{entry.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  />
+                  <Tooltip 
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length && payload[0]) {
+                        return (
+                          <div className="rounded-lg border bg-popover p-2 shadow-sm">
+                            <div className="flex flex-col gap-1">
+                              <span className="text-xs text-popover-foreground font-medium">
+                                {payload[0].name}
+                              </span>
+                              <span className="text-sm font-bold text-popover-foreground">
+                                {payload[0].value} tareas
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      }
+                      return null
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>

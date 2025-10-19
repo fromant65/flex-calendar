@@ -16,12 +16,72 @@ import {
 import type { RecurrenceStatsData } from "~/types"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
+import { useEffect, useState } from "react"
 
 interface RecurrenceStatsSectionProps {
   data: RecurrenceStatsData
 }
 
 export function RecurrenceStatsSection({ data }: RecurrenceStatsSectionProps) {
+  const [chartColors, setChartColors] = useState({
+    text: "#888888",
+    border: "#e5e7eb",
+    primary: "#6366f1"
+  })
+
+  useEffect(() => {
+    const updateColors = () => {
+      const tempText = document.createElement('div')
+      tempText.className = 'text-foreground'
+      tempText.style.position = 'absolute'
+      tempText.style.visibility = 'hidden'
+      document.body.appendChild(tempText)
+      
+      const tempBorder = document.createElement('div')
+      tempBorder.className = 'border-border'
+      tempBorder.style.position = 'absolute'
+      tempBorder.style.visibility = 'hidden'
+      document.body.appendChild(tempBorder)
+      
+      const tempPrimary = document.createElement('div')
+      tempPrimary.className = 'bg-primary'
+      tempPrimary.style.position = 'absolute'
+      tempPrimary.style.visibility = 'hidden'
+      document.body.appendChild(tempPrimary)
+      
+      const textColor = window.getComputedStyle(tempText).color
+      const borderColor = window.getComputedStyle(tempBorder).borderColor || '#e5e7eb'
+      const primaryColor = window.getComputedStyle(tempPrimary).backgroundColor || '#6366f1'
+      
+      document.body.removeChild(tempText)
+      document.body.removeChild(tempBorder)
+      document.body.removeChild(tempPrimary)
+      
+      setChartColors({
+        text: textColor || "#888888",
+        border: borderColor,
+        primary: primaryColor
+      })
+    }
+
+    updateColors()
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class' || mutation.attributeName === 'style') {
+          updateColors()
+        }
+      })
+    })
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'style']
+    })
+
+    return () => observer.disconnect()
+  }, [])
+
   const { habitCompliance, maxStreak, currentStreak, frequentDays } = data
 
   // Format compliance data for chart
@@ -122,57 +182,65 @@ export function RecurrenceStatsSection({ data }: RecurrenceStatsSectionProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={complianceChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis
-                  dataKey="dateLabel"
-                  tick={{ fill: 'hsl(var(--foreground))' }}
-                  stroke="hsl(var(--border))"
-                />
-                <YAxis
-                  label={{ value: "% Completación", angle: -90, position: "insideLeft" }}
-                  tick={{ fill: 'hsl(var(--foreground))' }}
-                  stroke="hsl(var(--border))"
-                  domain={[0, 100]}
-                />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length && payload[0]) {
-                      const data = payload[0].payload
-                      return (
-                        <div className="rounded-lg border bg-popover p-2 shadow-sm">
-                          <div className="grid gap-2">
-                            <div className="flex flex-col">
-                              <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                {data.dateLabel}
-                              </span>
-                              <span className="font-bold text-popover-foreground">
-                                {data.completionRate.toFixed(1)}%
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>
-                                {data.completedOccurrences} de {data.totalOccurrences} completadas
-                              </span>
+            <div className="[color-scheme:light] dark:[color-scheme:dark]">
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={complianceChartData} margin={{ left: 20, right: 30, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartColors.border} />
+                  <XAxis
+                    dataKey="dateLabel"
+                    tick={{ fill: chartColors.text }}
+                    stroke={chartColors.border}
+                    padding={{ left: 20, right: 20 }}
+                  />
+                  <YAxis
+                    label={{ 
+                      value: "% Completación", 
+                      angle: -90, 
+                      position: "insideLeft",
+                      style: { textAnchor: 'middle', fill: chartColors.text }
+                    }}
+                    tick={{ fill: chartColors.text }}
+                    stroke={chartColors.border}
+                    domain={[0, 100]}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length && payload[0]) {
+                        const data = payload[0].payload
+                        return (
+                          <div className="rounded-lg border bg-popover p-2 shadow-sm">
+                            <div className="grid gap-2">
+                              <div className="flex flex-col">
+                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                  {data.dateLabel}
+                                </span>
+                                <span className="font-bold text-popover-foreground">
+                                  {data.completionRate.toFixed(1)}%
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span>
+                                  {data.completedOccurrences} de {data.totalOccurrences} completadas
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )
-                    }
-                    return null
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="completionRate"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+                        )
+                      }
+                      return null
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="completionRate"
+                    stroke={chartColors.primary}
+                    strokeWidth={2}
+                    dot={{ fill: chartColors.primary, strokeWidth: 0 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
@@ -185,48 +253,55 @@ export function RecurrenceStatsSection({ data }: RecurrenceStatsSectionProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={daysChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis
-                  dataKey="day"
-                  tick={{ fill: 'hsl(var(--foreground))' }}
-                  stroke="hsl(var(--border))"
-                />
-                <YAxis
-                  label={{ value: "% Completación", angle: -90, position: "insideLeft" }}
-                  tick={{ fill: 'hsl(var(--foreground))' }}
-                  stroke="hsl(var(--border))"
-                  domain={[0, 100]}
-                />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length && payload[0]) {
-                      const data = payload[0].payload
-                      return (
-                        <div className="rounded-lg border bg-popover p-2 shadow-sm">
-                          <div className="grid gap-2">
-                            <div className="flex flex-col">
-                              <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                {data.day}
-                              </span>
-                              <span className="font-bold text-popover-foreground">
-                                {data.completionRate.toFixed(1)}%
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>{data.completionCount} completadas</span>
+            <div className="[color-scheme:light] dark:[color-scheme:dark]">
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={daysChartData} margin={{ left: 20, right: 20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartColors.border} />
+                  <XAxis
+                    dataKey="day"
+                    tick={{ fill: chartColors.text }}
+                    stroke={chartColors.border}
+                  />
+                  <YAxis
+                    label={{ 
+                      value: "% Completación", 
+                      angle: -90, 
+                      position: "insideLeft",
+                      style: { textAnchor: 'middle', fill: chartColors.text }
+                    }}
+                    tick={{ fill: chartColors.text }}
+                    stroke={chartColors.border}
+                    domain={[0, 100]}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length && payload[0]) {
+                        const data = payload[0].payload
+                        return (
+                          <div className="rounded-lg border bg-popover p-2 shadow-sm">
+                            <div className="grid gap-2">
+                              <div className="flex flex-col">
+                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                  {data.day}
+                                </span>
+                                <span className="font-bold text-popover-foreground">
+                                  {data.completionRate.toFixed(1)}%
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span>{data.completionCount} completadas</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )
-                    }
-                    return null
-                  }}
-                />
-                <Bar dataKey="completionRate" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+                        )
+                      }
+                      return null
+                    }}
+                  />
+                  <Bar dataKey="completionRate" fill={chartColors.primary} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>

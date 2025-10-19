@@ -16,12 +16,72 @@ import {
   Legend,
 } from "recharts"
 import type { OccurrenceStatsData } from "~/types"
+import { useEffect, useState } from "react"
 
 interface OccurrenceStatsSectionProps {
   data: OccurrenceStatsData
 }
 
 export function OccurrenceStatsSection({ data }: OccurrenceStatsSectionProps) {
+  const [chartColors, setChartColors] = useState({
+    text: "#888888",
+    border: "#e5e7eb",
+    primary: "#6366f1"
+  })
+
+  useEffect(() => {
+    const updateColors = () => {
+      const tempText = document.createElement('div')
+      tempText.className = 'text-foreground'
+      tempText.style.position = 'absolute'
+      tempText.style.visibility = 'hidden'
+      document.body.appendChild(tempText)
+      
+      const tempBorder = document.createElement('div')
+      tempBorder.className = 'border-border'
+      tempBorder.style.position = 'absolute'
+      tempBorder.style.visibility = 'hidden'
+      document.body.appendChild(tempBorder)
+      
+      const tempPrimary = document.createElement('div')
+      tempPrimary.className = 'bg-primary'
+      tempPrimary.style.position = 'absolute'
+      tempPrimary.style.visibility = 'hidden'
+      document.body.appendChild(tempPrimary)
+      
+      const textColor = window.getComputedStyle(tempText).color
+      const borderColor = window.getComputedStyle(tempBorder).borderColor || '#e5e7eb'
+      const primaryColor = window.getComputedStyle(tempPrimary).backgroundColor || '#6366f1'
+      
+      document.body.removeChild(tempText)
+      document.body.removeChild(tempBorder)
+      document.body.removeChild(tempPrimary)
+      
+      setChartColors({
+        text: textColor || "#888888",
+        border: borderColor,
+        primary: primaryColor
+      })
+    }
+
+    updateColors()
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class' || mutation.attributeName === 'style') {
+          updateColors()
+        }
+      })
+    })
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'style']
+    })
+
+    return () => observer.disconnect()
+  }, [])
+
   const {
     occurrencesByPeriod,
     statusDistribution,
@@ -119,49 +179,57 @@ export function OccurrenceStatsSection({ data }: OccurrenceStatsSectionProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={occurrencesByPeriod}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis 
-                  dataKey="period" 
-                  tick={{ fill: 'hsl(var(--foreground))' }}
-                  stroke="hsl(var(--border))"
-                />
-                <YAxis
-                  label={{ value: "Cantidad", angle: -90, position: "insideLeft" }}
-                  tick={{ fill: 'hsl(var(--foreground))' }}
-                  stroke="hsl(var(--border))"
-                />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length && payload[0]) {
-                      const data = payload[0].payload
-                      return (
-                        <div className="rounded-lg border bg-popover p-2 shadow-sm">
-                          <div className="grid gap-2">
-                            <div className="flex flex-col">
-                              <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                {data.period}
-                              </span>
-                              <span className="font-bold text-popover-foreground">{data.count} ocurrencias</span>
+            <div className="[color-scheme:light] dark:[color-scheme:dark]">
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={occurrencesByPeriod} margin={{ left: 20, right: 30, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartColors.border} />
+                  <XAxis 
+                    dataKey="period" 
+                    tick={{ fill: chartColors.text }}
+                    stroke={chartColors.border}
+                    padding={{ left: 20, right: 20 }}
+                  />
+                  <YAxis
+                    label={{ 
+                      value: "Cantidad", 
+                      angle: -90, 
+                      position: "insideLeft",
+                      style: { textAnchor: 'middle', fill: chartColors.text }
+                    }}
+                    tick={{ fill: chartColors.text }}
+                    stroke={chartColors.border}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length && payload[0]) {
+                        const data = payload[0].payload
+                        return (
+                          <div className="rounded-lg border bg-popover p-2 shadow-sm">
+                            <div className="grid gap-2">
+                              <div className="flex flex-col">
+                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                  {data.period}
+                                </span>
+                                <span className="font-bold text-popover-foreground">{data.count} ocurrencias</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )
-                    }
-                    return null
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="count"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+                        )
+                      }
+                      return null
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="count"
+                    stroke={chartColors.primary}
+                    strokeWidth={2}
+                    dot={{ r: 4, fill: chartColors.primary, strokeWidth: 0 }}
+                    activeDot={{ r: 6, fill: chartColors.primary }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
@@ -175,33 +243,63 @@ export function OccurrenceStatsSection({ data }: OccurrenceStatsSectionProps) {
           </CardHeader>
           <CardContent>
             <div className="grid gap-6 md:grid-cols-2">
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={statusData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {statusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--popover))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '0.5rem'
-                    }}
-                    labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <div className="[color-scheme:light] dark:[color-scheme:dark]">
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={statusData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {statusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Legend 
+                      verticalAlign="bottom" 
+                      height={36}
+                      content={({ payload }) => (
+                        <div className="flex flex-wrap justify-center gap-3 mt-2">
+                          {payload?.map((entry, index) => (
+                            <div key={`legend-${index}`} className="flex items-center gap-2">
+                              <div
+                                className="h-3 w-3 rounded-full"
+                                style={{ backgroundColor: entry.color }}
+                              />
+                              <span className="text-xs text-foreground">{entry.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    />
+                    <Tooltip 
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length && payload[0]) {
+                          return (
+                            <div className="rounded-lg border bg-popover p-2 shadow-sm">
+                              <div className="flex flex-col gap-1">
+                                <span className="text-xs text-popover-foreground font-medium">
+                                  {payload[0].name}
+                                </span>
+                                <span className="text-sm font-bold text-popover-foreground">
+                                  {payload[0].value} ocurrencias
+                                </span>
+                              </div>
+                            </div>
+                          )
+                        }
+                        return null
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
 
               <div className="flex flex-col justify-center space-y-4">
                 {statusData.map((item) => (

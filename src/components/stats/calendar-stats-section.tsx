@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
 import { CheckCircle, XCircle, Target } from "lucide-react"
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts"
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts"
 import type { CalendarStatsData } from "~/types"
 
 interface CalendarStatsSectionProps {
@@ -109,33 +109,63 @@ export function CalendarStatsSection({ data }: CalendarStatsSectionProps) {
             <CardDescription>Distribución general de cumplimiento</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={completionData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {completionData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--popover))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '0.5rem'
-                  }}
-                  labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="[color-scheme:light] dark:[color-scheme:dark]">
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={completionData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {completionData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36}
+                    content={({ payload }) => (
+                      <div className="flex justify-center gap-4 mt-2">
+                        {payload?.map((entry, index) => (
+                          <div key={`legend-${index}`} className="flex items-center gap-2">
+                            <div
+                              className="h-3 w-3 rounded-full"
+                              style={{ backgroundColor: entry.color }}
+                            />
+                            <span className="text-sm text-foreground">{entry.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  />
+                  <Tooltip 
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length && payload[0]) {
+                        return (
+                          <div className="rounded-lg border bg-popover p-2 shadow-sm">
+                            <div className="flex flex-col gap-1">
+                              <span className="text-xs text-popover-foreground font-medium">
+                                {payload[0].name}
+                              </span>
+                              <span className="text-sm font-bold text-popover-foreground">
+                                {payload[0].value} eventos
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      }
+                      return null
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
