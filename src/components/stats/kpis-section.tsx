@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/com
 import { TrendingUp, Clock, Gauge, Briefcase, Award, AlertTriangle } from "lucide-react"
 import { Progress } from "../ui/progress"
 import type { GlobalKPIs } from "~/types"
+import { InsightCard, InsightsSection } from "./insight-card"
 
 interface KPIsSectionProps {
   data: GlobalKPIs
@@ -99,6 +100,18 @@ export function KPIsSection({ data }: KPIsSectionProps) {
 
       {/* Balance Metrics */}
       <div className="grid gap-6 md:grid-cols-2">
+        {/* Overall Performance Insight */}
+        {data.insights && (
+          <Card className="md:col-span-2">
+            <CardContent className="pt-6">
+              <InsightCard
+                type="info"
+                message={data.insights.overallPerformanceAnalysis}
+              />
+            </CardContent>
+          </Card>
+        )}
+
         {/* Importance Balance */}
         <Card>
           <CardHeader>
@@ -152,20 +165,6 @@ export function KPIsSection({ data }: KPIsSectionProps) {
               />
             </div>
 
-            <div className="pt-2 border-t">
-              <p className="text-sm text-muted-foreground">
-                {importanceBalance.highImportanceCompletionRate >
-                importanceBalance.lowImportanceCompletionRate ? (
-                  <span className="text-green-600 dark:text-green-400">
-                    ✅ Excelente: Priorizas las tareas más importantes
-                  </span>
-                ) : (
-                  <span className="text-yellow-600 dark:text-yellow-400">
-                    ⚠️ Atención: Las tareas de baja importancia se completan más
-                  </span>
-                )}
-              </p>
-            </div>
           </CardContent>
         </Card>
 
@@ -221,27 +220,38 @@ export function KPIsSection({ data }: KPIsSectionProps) {
                 className="bg-red-500"
               />
             </div>
-
-            <div className="pt-2 border-t">
-              <p className="text-sm text-muted-foreground">
-                {urgencyBalance.earlyCompletionRate > 40 ? (
-                  <span className="text-green-600 dark:text-green-400">
-                    ✅ Excelente: Trabajas con anticipación
-                  </span>
-                ) : urgencyBalance.lateCompletionRate > 30 ? (
-                  <span className="text-red-600 dark:text-red-400">
-                    🚨 Crítico: Muchas tareas se completan tarde
-                  </span>
-                ) : (
-                  <span className="text-yellow-600 dark:text-yellow-400">
-                    ⚠️ Atención: Podrías mejorar la anticipación
-                  </span>
-                )}
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Efficiency and Recommendations */}
+      {data.insights && (
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Análisis de Eficiencia</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <InsightCard
+                type="info"
+                message={data.insights.efficiencyAnalysis}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Recomendación Principal</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <InsightCard
+                type="recommendation"
+                message={data.insights.recommendation}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

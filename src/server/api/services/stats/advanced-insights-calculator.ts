@@ -5,6 +5,7 @@
 import type { AdvancedInsights, LowComplianceHabit, TrendPoint, Bottleneck } from "~/types";
 import type { StatsDataset, StatsTask, StatsOccurrence, StatsRecurrence } from "./stats-types";
 import { StatsUtils } from "./stats-utils";
+import { AdvancedInsightsGenerator } from "./insights-generators";
 
 export class AdvancedInsightsCalculator {
   /**
@@ -18,7 +19,7 @@ export class AdvancedInsightsCalculator {
         `[AdvancedInsights] Processing ${userTasks.length} tasks, ${occurrences.length} occurrences`
       );
 
-      const insights = {
+      const insights: AdvancedInsights = {
         lowComplianceHabits: this.calculateLowComplianceHabits(
           userTasks,
           occurrences,
@@ -31,6 +32,9 @@ export class AdvancedInsightsCalculator {
         ),
         bottlenecks: this.calculateBottlenecks(userTasks, occurrences),
       };
+
+      // Generate insights
+      insights.insights = AdvancedInsightsGenerator.generate(insights);
 
       console.log("[AdvancedInsights] Calculation completed successfully");
       return insights;

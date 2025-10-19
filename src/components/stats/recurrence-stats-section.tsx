@@ -17,6 +17,8 @@ import type { RecurrenceStatsData } from "~/types"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { useEffect, useState } from "react"
+import { InsightCard, InsightsSection } from "./insight-card"
+import { InsightsModal } from "./insights-modal"
 
 interface RecurrenceStatsSectionProps {
   data: RecurrenceStatsData
@@ -176,10 +178,43 @@ export function RecurrenceStatsSection({ data }: RecurrenceStatsSectionProps) {
         {/* Habit Compliance Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Cumplimiento de Hábitos</CardTitle>
-            <CardDescription>
-              Evolución del porcentaje de ocurrencias completadas a lo largo del tiempo
-            </CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <div>
+                <CardTitle>Cumplimiento de Hábitos</CardTitle>
+                <CardDescription>
+                  Evolución del porcentaje de ocurrencias completadas a lo largo del tiempo
+                </CardDescription>
+              </div>
+              {data.insights && (
+                <InsightsModal
+                  title="Análisis de Hábitos Recurrentes"
+                  description="Análisis detallado del cumplimiento y evolución de tus hábitos"
+                  insights={[
+                    {
+                      title: "Análisis de Cumplimiento",
+                      message: data.insights.complianceAnalysis,
+                      type: "info",
+                    },
+                    {
+                      title: "Evolución",
+                      message: data.insights.evolutionAnalysis,
+                      type: data.insights.evolutionAnalysis.includes('aumentado') || 
+                             data.insights.evolutionAnalysis.includes('creciendo')
+                        ? 'success'
+                        : data.insights.evolutionAnalysis.includes('disminuido') ||
+                          data.insights.evolutionAnalysis.includes('bajando')
+                        ? 'warning'
+                        : 'info',
+                    },
+                    {
+                      title: "Recomendación",
+                      message: data.insights.recommendation,
+                      type: "recommendation",
+                    },
+                  ]}
+                />
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="[color-scheme:light] dark:[color-scheme:dark]">
@@ -302,6 +337,7 @@ export function RecurrenceStatsSection({ data }: RecurrenceStatsSectionProps) {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+
           </CardContent>
         </Card>
       </div>

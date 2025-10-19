@@ -4,6 +4,7 @@
 
 import type { GlobalKPIs, WorkloadData, ImportanceBalance, UrgencyBalance } from "~/types";
 import type { StatsDataset, StatsOccurrence, StatsEvent, StatsTask } from "./stats-types";
+import { GlobalKPIsInsightsGenerator } from "./insights-generators";
 
 export class GlobalKPIsCalculator {
   /**
@@ -29,7 +30,7 @@ export class GlobalKPIsCalculator {
       // Filter valid occurrences
       const validOccurrences = occurrences.filter((occ) => occ != null);
 
-      const kpis = {
+      const kpis: GlobalKPIs = {
         completionRate: this.calculateCompletionRate(validOccurrences),
         totalTimeInvested: this.calculateTotalTimeInvested(validOccurrences, userEvents),
         planningEfficiency: this.calculatePlanningEfficiency(validOccurrences, userEvents),
@@ -37,6 +38,9 @@ export class GlobalKPIsCalculator {
         importanceBalance: this.calculateImportanceBalance(validOccurrences, userTasks),
         urgencyBalance: this.calculateUrgencyBalance(validOccurrences),
       };
+
+      // Generate insights
+      kpis.insights = GlobalKPIsInsightsGenerator.generate(kpis);
 
       console.log("[GlobalKPIs] Calculation completed successfully");
       return kpis;

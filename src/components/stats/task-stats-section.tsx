@@ -17,6 +17,8 @@ import {
 } from "recharts"
 import type { TaskStatsData } from "~/types"
 import { useEffect, useState } from "react"
+import { InsightCard, InsightsSection } from "./insight-card"
+import { InsightsModal } from "./insights-modal"
 
 interface TaskStatsSectionProps {
   data: TaskStatsData
@@ -182,12 +184,39 @@ export function TaskStatsSection({ data }: TaskStatsSectionProps) {
         {/* Importance Distribution Chart */}
         <Card className="col-span-2">
           <CardHeader>
-            <CardTitle>Distribución por Importancia</CardTitle>
-            <CardDescription>
-              Porcentaje de completación de ocurrencias por nivel de importancia
-            </CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <div>
+                <CardTitle>Distribución por Importancia</CardTitle>
+                <CardDescription>
+                  Porcentaje de completación de ocurrencias por nivel de importancia
+                </CardDescription>
+              </div>
+              {data.insights && (
+                <InsightsModal
+                  title="Análisis de Tareas"
+                  description="Análisis detallado de la distribución y completación de tareas por importancia"
+                  insights={[
+                    {
+                      title: "Tendencia de Completación",
+                      message: data.insights.completionTrendMessage,
+                      type: "info",
+                    },
+                    {
+                      title: "Análisis de Importancia",
+                      message: data.insights.importanceAnalysis,
+                      type: "info",
+                    },
+                    {
+                      title: "Recomendación",
+                      message: data.insights.recommendation,
+                      type: "recommendation",
+                    },
+                  ]}
+                />
+              )}
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="[color-scheme:light] dark:[color-scheme:dark]">
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={importanceDistribution} margin={{ left: 20, right: 20, bottom: 20 }}>

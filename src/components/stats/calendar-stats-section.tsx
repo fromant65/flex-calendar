@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/com
 import { CheckCircle, XCircle, Target } from "lucide-react"
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts"
 import type { CalendarStatsData } from "~/types"
+import { InsightCard } from "./insight-card"
+import { InsightsModal } from "./insights-modal"
 
 interface CalendarStatsSectionProps {
   data: CalendarStatsData
@@ -107,6 +109,31 @@ export function CalendarStatsSection({ data }: CalendarStatsSectionProps) {
           <CardHeader>
             <CardTitle>Eventos Completados vs. No Completados</CardTitle>
             <CardDescription>Distribución general de cumplimiento</CardDescription>
+            {data.insights && (
+              <div className="mt-3">
+                <InsightsModal
+                  title="Análisis de Calendario"
+                  description="Análisis detallado de la completación de eventos y patrones temporales"
+                  insights={[
+                    {
+                      title: "Análisis de Completación General",
+                      message: data.insights.overallCompletionAnalysis,
+                      type: complianceRate >= 70 ? 'success' : complianceRate >= 50 ? 'info' : 'warning',
+                    },
+                    {
+                      title: "Patrones Temporales",
+                      message: data.insights.timePatternAnalysis,
+                      type: "info",
+                    },
+                    {
+                      title: "Recomendación",
+                      message: data.insights.recommendation,
+                      type: "recommendation",
+                    },
+                  ]}
+                />
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <div className="[color-scheme:light] dark:[color-scheme:dark]">
@@ -176,28 +203,85 @@ export function CalendarStatsSection({ data }: CalendarStatsSectionProps) {
             <CardDescription>Franjas del día con más eventos</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <div className="grid grid-cols-12 gap-1">
-                {hourlyDistribution.map((hour) => (
-                  <div
-                    key={hour.hour}
-                    className={`aspect-square rounded-sm ${getHeatmapColor(hour.count)} relative group cursor-pointer transition-all hover:scale-110`}
-                    title={`${hour.hour}:00 - ${hour.count} eventos (${hour.completionRate.toFixed(0)}% completados)`}
-                  >
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span className="text-[0.6rem] font-bold text-foreground">
-                        {hour.hour}
-                      </span>
+            <div className="space-y-3">
+              {/* Row 1: 0-5 */}
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground w-16 shrink-0">0h - 5h</span>
+                <div className="grid grid-cols-6 gap-1 flex-1">
+                  {hourlyDistribution.slice(0, 6).map((hour) => (
+                    <div
+                      key={hour.hour}
+                      className={`aspect-square rounded-sm ${getHeatmapColor(hour.count)} relative group cursor-pointer transition-all hover:scale-110`}
+                      title={`${hour.hour}:00 - ${hour.count} eventos (${hour.completionRate.toFixed(0)}% completados)`}
+                    >
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[0.6rem] font-bold text-foreground">
+                          {hour.hour}h
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center justify-between text-xs text-muted-foreground pt-2">
-                <span>0h</span>
-                <span>6h</span>
-                <span>12h</span>
-                <span>18h</span>
-                <span>23h</span>
+
+              {/* Row 2: 6-11 */}
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground w-16 shrink-0">6h - 11h</span>
+                <div className="grid grid-cols-6 gap-1 flex-1">
+                  {hourlyDistribution.slice(6, 12).map((hour) => (
+                    <div
+                      key={hour.hour}
+                      className={`aspect-square rounded-sm ${getHeatmapColor(hour.count)} relative group cursor-pointer transition-all hover:scale-110`}
+                      title={`${hour.hour}:00 - ${hour.count} eventos (${hour.completionRate.toFixed(0)}% completados)`}
+                    >
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[0.6rem] font-bold text-foreground">
+                          {hour.hour}h
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Row 3: 12-17 */}
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground w-16 shrink-0">12h - 17h</span>
+                <div className="grid grid-cols-6 gap-1 flex-1">
+                  {hourlyDistribution.slice(12, 18).map((hour) => (
+                    <div
+                      key={hour.hour}
+                      className={`aspect-square rounded-sm ${getHeatmapColor(hour.count)} relative group cursor-pointer transition-all hover:scale-110`}
+                      title={`${hour.hour}:00 - ${hour.count} eventos (${hour.completionRate.toFixed(0)}% completados)`}
+                    >
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[0.6rem] font-bold text-foreground">
+                          {hour.hour}h
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Row 4: 18-23 */}
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground w-16 shrink-0">18h - 23h</span>
+                <div className="grid grid-cols-6 gap-1 flex-1">
+                  {hourlyDistribution.slice(18, 24).map((hour) => (
+                    <div
+                      key={hour.hour}
+                      className={`aspect-square rounded-sm ${getHeatmapColor(hour.count)} relative group cursor-pointer transition-all hover:scale-110`}
+                      title={`${hour.hour}:00 - ${hour.count} eventos (${hour.completionRate.toFixed(0)}% completados)`}
+                    >
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[0.6rem] font-bold text-foreground">
+                          {hour.hour}h
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </CardContent>

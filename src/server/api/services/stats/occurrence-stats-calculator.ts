@@ -6,6 +6,7 @@ import type { OccurrenceStatsData, OccurrencesPeriod } from "~/types";
 import type { StatsDataset, StatsOccurrence } from "./stats-types";
 import { StatsUtils } from "./stats-utils";
 import { UrgencyCalculator } from "../../utils/urgency-calculator";
+import { OccurrenceStatsInsightsGenerator } from "./insights-generators";
 
 export class OccurrenceStatsCalculator {
   /**
@@ -33,13 +34,16 @@ export class OccurrenceStatsCalculator {
         return this.getDefaultStats();
       }
 
-      const stats = {
+      const stats: OccurrenceStatsData = {
         occurrencesByPeriod: this.calculateOccurrencesByPeriod(validOccurrences),
         statusDistribution: this.calculateStatusDistribution(validOccurrences),
         averageTimeDeviation: this.calculateAverageTimeDeviation(validOccurrences),
         averageUrgency: this.calculateAverageUrgency(validOccurrences),
         averageResolutionTime: this.calculateAverageResolutionTime(validOccurrences),
       };
+
+      // Generate insights
+      stats.insights = OccurrenceStatsInsightsGenerator.generate(stats);
 
       console.log("[OccurrenceStats] Calculation completed successfully");
       return stats;

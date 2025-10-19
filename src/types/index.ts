@@ -224,6 +224,11 @@ export interface TaskStatsData {
     recurring: number
     unique: number
   }
+  insights?: {
+    completionTrendMessage: string
+    importanceAnalysis: string
+    recommendation: string
+  }
 }
 
 export interface ImportanceDistribution {
@@ -239,6 +244,11 @@ export interface RecurrenceStatsData {
   maxStreak: number
   currentStreak: number
   frequentDays: DayFrequency[]
+  insights?: {
+    complianceAnalysis: string
+    evolutionAnalysis: string
+    recommendation: string
+  }
 }
 
 export interface HabitCompliancePoint {
@@ -266,6 +276,12 @@ export interface OccurrenceStatsData {
   averageTimeDeviation: number | null // Average difference between planned and actual time in hours
   averageUrgency: number | null
   averageResolutionTime: number | null // Average time from startDate to completedAt in hours
+  insights?: {
+    volumeAnalysis: string
+    evolutionAnalysis: string
+    statusDistributionAnalysis: string
+    recommendation: string
+  }
 }
 
 export interface OccurrencesPeriod {
@@ -281,6 +297,11 @@ export interface CalendarStatsData {
   }
   hourlyDistribution: HourlyDistribution[]
   complianceRate: number // Percentage (0-100)
+  insights?: {
+    overallCompletionAnalysis: string
+    timePatternAnalysis: string
+    recommendation: string
+  }
 }
 
 export interface HourlyDistribution {
@@ -297,6 +318,12 @@ export interface GlobalKPIs {
   averageWorkload: WorkloadData
   importanceBalance: ImportanceBalance
   urgencyBalance: UrgencyBalance
+  insights?: {
+    overallPerformanceAnalysis: string
+    balanceAnalysis: string
+    efficiencyAnalysis: string
+    recommendation: string
+  }
 }
 
 export interface WorkloadData {
@@ -325,6 +352,11 @@ export interface AdvancedInsights {
     uniqueCompletionRate: number
   }
   bottlenecks: Bottleneck[]
+  insights?: {
+    trendAnalysis: string
+    comparisonAnalysis: string
+    recommendation: string
+  }
 }
 
 export interface LowComplianceHabit {

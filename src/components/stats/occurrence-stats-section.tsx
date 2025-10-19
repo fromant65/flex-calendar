@@ -17,6 +17,8 @@ import {
 } from "recharts"
 import type { OccurrenceStatsData } from "~/types"
 import { useEffect, useState } from "react"
+import { InsightCard } from "./insight-card"
+import { InsightsModal } from "./insights-modal"
 
 interface OccurrenceStatsSectionProps {
   data: OccurrenceStatsData
@@ -173,10 +175,48 @@ export function OccurrenceStatsSection({ data }: OccurrenceStatsSectionProps) {
         {/* Occurrences by Period */}
         <Card className="col-span-2">
           <CardHeader>
-            <CardTitle>Ocurrencias por Período</CardTitle>
-            <CardDescription>
-              Número de ocurrencias generadas semanalmente
-            </CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <div>
+                <CardTitle>Ocurrencias por Período</CardTitle>
+                <CardDescription>
+                  Número de ocurrencias generadas semanalmente
+                </CardDescription>
+              </div>
+              {data.insights && (
+                <InsightsModal
+                  title="Análisis de Ocurrencias"
+                  description="Análisis detallado del volumen y distribución de ocurrencias"
+                  insights={[
+                    {
+                      title: "Análisis de Volumen",
+                      message: data.insights.volumeAnalysis,
+                      type: "info",
+                    },
+                    {
+                      title: "Evolución",
+                      message: data.insights.evolutionAnalysis,
+                      type: data.insights.evolutionAnalysis.includes('aumentado') || 
+                             data.insights.evolutionAnalysis.includes('creciendo')
+                        ? 'success'
+                        : data.insights.evolutionAnalysis.includes('disminuido') ||
+                          data.insights.evolutionAnalysis.includes('bajando')
+                        ? 'warning'
+                        : 'info',
+                    },
+                    {
+                      title: "Distribución de Estados",
+                      message: data.insights.statusDistributionAnalysis,
+                      type: "info",
+                    },
+                    {
+                      title: "Recomendación",
+                      message: data.insights.recommendation,
+                      type: "recommendation",
+                    },
+                  ]}
+                />
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="[color-scheme:light] dark:[color-scheme:dark]">

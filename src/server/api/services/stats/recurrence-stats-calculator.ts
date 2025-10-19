@@ -5,6 +5,7 @@
 import type { RecurrenceStatsData, HabitCompliancePoint, DayFrequency, DayOfWeek } from "~/types";
 import type { StatsDataset, StatsTask, StatsOccurrence } from "./stats-types";
 import { StatsUtils } from "./stats-utils";
+import { RecurrenceStatsInsightsGenerator } from "./insights-generators";
 
 export class RecurrenceStatsCalculator {
   /**
@@ -62,12 +63,17 @@ export class RecurrenceStatsCalculator {
         `[RecurrenceStats] Calculated: maxStreak=${maxStreak}, currentStreak=${currentStreak}`
       );
 
-      return {
+      const stats: RecurrenceStatsData = {
         habitCompliance,
         maxStreak,
         currentStreak,
         frequentDays,
       };
+
+      // Generate insights
+      stats.insights = RecurrenceStatsInsightsGenerator.generate(stats);
+
+      return stats;
     } catch (error) {
       console.error("[RecurrenceStats] Error calculating recurrence stats:", error);
       return this.getDefaultStats();

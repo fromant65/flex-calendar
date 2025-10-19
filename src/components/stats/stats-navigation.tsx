@@ -43,7 +43,7 @@ export function StatsNavigation({ activeSection, onSectionChange }: StatsNavigat
             key={section.id}
             onClick={() => onSectionChange(section.id)}
             className={cn(
-              "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+              "flex cursor-pointer w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
               "hover:bg-accent hover:text-accent-foreground",
               isActive && "bg-accent text-accent-foreground border-l-2 border-primary"
             )}

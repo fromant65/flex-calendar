@@ -6,6 +6,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import type { AdvancedInsights } from "~/types"
 import { Progress } from "~/components/ui/progress"
 import { useEffect, useState } from "react"
+import { InsightCard, InsightsSection as InsightsContainer } from "./insight-card"
 
 interface InsightsSectionProps {
   data: AdvancedInsights
@@ -178,23 +179,16 @@ export function InsightsSection({ data }: InsightsSectionProps) {
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-4 p-3 rounded-lg bg-muted/50">
-            <p className="text-sm">
-              {trendDirection > 5 ? (
-                <span className="text-green-600 dark:text-green-400 font-medium">
-                  📈 ¡Excelente progreso! Tu tasa de completación ha mejorado significativamente.
-                </span>
-              ) : trendDirection < -5 ? (
-                <span className="text-red-600 dark:text-red-400 font-medium">
-                  📉 Tu tasa de completación ha disminuido. Considera revisar tu carga de trabajo.
-                </span>
-              ) : (
-                <span className="text-muted-foreground font-medium">
-                  📊 Tu tasa de completación se mantiene estable.
-                </span>
-              )}
-            </p>
-          </div>
+
+          {/* Trend Insights */}
+          {data.insights && (
+            <div className="space-y-3 pt-4 border-t">
+              <InsightCard
+                type="info"
+                message={data.insights.trendAnalysis}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -227,21 +221,15 @@ export function InsightsSection({ data }: InsightsSectionProps) {
             <Progress value={recurringVsUniqueComparison.uniqueCompletionRate} />
           </div>
 
-          <div className="pt-2 border-t">
-            <p className="text-sm text-muted-foreground">
-              {recurringVsUniqueComparison.recurringCompletionRate >
-              recurringVsUniqueComparison.uniqueCompletionRate ? (
-                <span className="text-green-600 dark:text-green-400">
-                  ✅ Excelente consistencia con hábitos. Eres mejor con rutinas que con tareas
-                  únicas.
-                </span>
-              ) : (
-                <span className="text-yellow-600 dark:text-yellow-400">
-                  💡 Completas mejor las tareas únicas. Considera reforzar tus hábitos recurrentes.
-                </span>
-              )}
-            </p>
-          </div>
+          {/* Comparison Insight */}
+          {data.insights && data.insights.comparisonAnalysis && (
+            <div className="pt-4 border-t">
+              <InsightCard
+                type="info"
+                message={data.insights.comparisonAnalysis}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -335,6 +323,21 @@ export function InsightsSection({ data }: InsightsSectionProps) {
                 No se detectaron problemas significativos en tus tareas y hábitos.
               </p>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* General Recommendation */}
+      {data.insights && (
+        <Card>
+          <CardHeader>
+            <CardTitle>💡 Recomendación General</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <InsightCard
+              type="recommendation"
+              message={data.insights.recommendation}
+            />
           </CardContent>
         </Card>
       )}

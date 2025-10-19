@@ -4,6 +4,7 @@
 
 import type { CalendarStatsData, HourlyDistribution } from "~/types";
 import type { StatsDataset, StatsEvent } from "./stats-types";
+import { CalendarStatsInsightsGenerator } from "./insights-generators";
 
 export class CalendarStatsCalculator {
   /**
@@ -26,7 +27,7 @@ export class CalendarStatsCalculator {
       const completedCount = userEvents.filter((e) => e?.isCompleted === true).length;
       const incompleteCount = userEvents.filter((e) => e?.isCompleted !== true).length;
 
-      return {
+      const stats: CalendarStatsData = {
         completedVsIncomplete: {
           completed: completedCount,
           incomplete: incompleteCount,
@@ -34,6 +35,11 @@ export class CalendarStatsCalculator {
         hourlyDistribution: this.calculateHourlyDistribution(userEvents),
         complianceRate: userEvents.length > 0 ? (completedCount / userEvents.length) * 100 : 0,
       };
+
+      // Generate insights
+      stats.insights = CalendarStatsInsightsGenerator.generate(stats);
+
+      return stats;
     } catch (error) {
       console.error("Error calculating calendar stats:", error);
       return this.getDefaultStats();

@@ -4,6 +4,7 @@
 
 import type { TaskStatsData, ImportanceDistribution } from "~/types";
 import type { StatsDataset, StatsTask, StatsOccurrence } from "./stats-types";
+import { TaskStatsInsightsGenerator } from "./insights-generators";
 
 export class TaskStatsCalculator {
   /**
@@ -26,12 +27,15 @@ export class TaskStatsCalculator {
         `[TaskStats] Calculating stats for ${userTasks.length} tasks and ${occurrences.length} occurrences`
       );
 
-      const stats = {
+      const stats: TaskStatsData = {
         averageCompletionTime: this.calculateAverageCompletionTime(userTasks),
         importanceDistribution: this.calculateImportanceDistribution(userTasks, occurrences),
         fixedVsFlexible: this.calculateFixedVsFlexible(userTasks),
         recurringVsUnique: this.calculateRecurringVsUnique(userTasks),
       };
+
+      // Generate insights
+      stats.insights = TaskStatsInsightsGenerator.generate(stats);
 
       console.log("[TaskStats] Calculation completed successfully");
       return stats;
