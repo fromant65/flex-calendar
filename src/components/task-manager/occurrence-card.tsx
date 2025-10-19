@@ -100,108 +100,100 @@ export function OccurrenceCard({
   const isActive = occurrence.status !== "Completed" && occurrence.status !== "Skipped";
 
   return (
-    <Card className="bg-card">
-      <CardContent className="p-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex-1 space-y-3">
-            {/* Status and urgency badges */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {getStatusBadge(occurrence.status)}
-              {urgencyDisplay.badge}
-            </div>
-
-            {/* Occurrence details - reorganized in semantic order */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
-              {/* Row 1: Dates */}
-              <div>
-                <span className="font-medium text-muted-foreground">Inicio: </span>
-                <span>{formatDate(occurrence.startDate)}</span>
-              </div>
-              {occurrence.targetDate && (
-                <div>
-                  <span className="font-medium text-muted-foreground">Fecha meta: </span>
-                  <span>{formatDate(occurrence.targetDate)}</span>
-                </div>
-              )}
-
-              {/* Row 2: Limit date and importance */}
-              {occurrence.limitDate && (
-                <div>
-                  <span className="font-medium text-muted-foreground">Fecha límite: </span>
-                  <span className="font-medium">{formatDate(occurrence.limitDate)}</span>
-                </div>
-              )}
-              <div>
-                <span className="font-medium text-muted-foreground">Importancia: </span>
-                <span className="font-semibold">{taskImportance}/10</span>
-              </div>
-
-              {/* Row 3: Time metrics */}
-              <div>
-                <span className="font-medium text-muted-foreground">Tiempo dedicado: </span>
-                <span className="font-semibold">
-                  {occurrence.timeConsumed?.toFixed(1) ?? 0}h
-                </span>
-                {occurrence.targetTimeConsumption && (
-                  <span className="text-muted-foreground">
-                    {" / "}{occurrence.targetTimeConsumption}h
-                  </span>
-                )}
-              </div>
-              {occurrence.targetTimeConsumption && (
-                <div>
-                  <span className="font-medium text-muted-foreground">Tiempo esperado: </span>
-                  <span>{occurrence.targetTimeConsumption}h</span>
-                </div>
-              )}
-
-              {/* Row 4: Urgency */}
-              {occurrence.urgency !== null && (
-                <div>
-                  <span className="font-medium text-muted-foreground">Urgencia: </span>
-                  <span className={urgencyDisplay.color}>{urgencyDisplay.text}</span>
-                </div>
-              )}
-            </div>
+    <div className="rounded-lg border border-border bg-card p-3.5 transition-all hover:border-primary/30 hover:shadow-md">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex-1 space-y-2.5">
+          {/* Status and urgency badges */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {getStatusBadge(occurrence.status)}
+            {urgencyDisplay.badge}
           </div>
 
-          {/* Actions */}
-          {isActive && (
-            <div className="flex flex-row flex-wrap gap-2 sm:flex-col">
-              <Button
-                size="sm"
-                variant="outline"
-                className="cursor-pointer flex-1 sm:flex-none"
-                onClick={() => onEdit(occurrence.id, occurrence.timeConsumed)}
-              >
-                <Edit className="mr-1 h-4 w-4" />
-                Editar
-              </Button>
-              
-              <Button
-                size="sm"
-                variant="outline"
-                className="cursor-pointer flex-1 sm:flex-none"
-                onClick={() => onSkip(occurrence.id, taskName)}
-                disabled={isSkipping}
-              >
-                <SkipForward className="mr-1 h-4 w-4" />
-                Saltar
-              </Button>
-              <Button
-                size="sm"
-                variant="default"
-                className="cursor-pointer flex-1 sm:flex-none"
-                onClick={() => onComplete(occurrence.id, taskName)}
-                disabled={isCompleting}
-              >
-                <CheckCircle2 className="mr-1 h-4 w-4" />
-                Completar
-              </Button>
+          {/* Occurrence details - reorganized in semantic order */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+            {/* Row 1: Dates */}
+            <div>
+              <span className="font-medium text-muted-foreground">Inicio: </span>
+              <span className="text-foreground">{formatDate(occurrence.startDate)}</span>
             </div>
-          )}
+            {occurrence.targetDate && (
+              <div>
+                <span className="font-medium text-muted-foreground">Fecha meta: </span>
+                <span className="text-foreground">{formatDate(occurrence.targetDate)}</span>
+              </div>
+            )}
+
+            {/* Row 2: Limit date and importance */}
+            {occurrence.limitDate && (
+              <div>
+                <span className="font-medium text-muted-foreground">Fecha límite: </span>
+                <span className="font-semibold text-foreground">{formatDate(occurrence.limitDate)}</span>
+              </div>
+            )}
+            <div>
+              <span className="font-medium text-muted-foreground">Importancia: </span>
+              <span className="font-semibold text-foreground">{taskImportance}/10</span>
+            </div>
+
+            {/* Row 3: Time metrics */}
+            <div>
+              <span className="font-medium text-muted-foreground">Tiempo dedicado: </span>
+              <span className="font-semibold text-foreground">
+                {occurrence.timeConsumed?.toFixed(1) ?? 0}h
+              </span>
+              {occurrence.targetTimeConsumption && (
+                <span className="text-muted-foreground">
+                  {" / "}{occurrence.targetTimeConsumption}h
+                </span>
+              )}
+            </div>
+
+            {/* Row 4: Urgency */}
+            {occurrence.urgency !== null && (
+              <div>
+                <span className="font-medium text-muted-foreground">Urgencia: </span>
+                <span className={urgencyDisplay.color}>{urgencyDisplay.text}</span>
+              </div>
+            )}
+          </div>
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Actions */}
+        {isActive && (
+          <div className="flex flex-row flex-wrap gap-2 sm:flex-col sm:w-auto">
+            <Button
+              size="sm"
+              variant="outline"
+              className="cursor-pointer flex-1 sm:flex-none"
+              onClick={() => onEdit(occurrence.id, occurrence.timeConsumed)}
+            >
+              <Edit className="mr-1 h-3.5 w-3.5" />
+              Editar
+            </Button>
+            
+            <Button
+              size="sm"
+              variant="outline"
+              className="cursor-pointer flex-1 sm:flex-none"
+              onClick={() => onSkip(occurrence.id, taskName)}
+              disabled={isSkipping}
+            >
+              <SkipForward className="mr-1 h-3.5 w-3.5" />
+              Saltar
+            </Button>
+            <Button
+              size="sm"
+              variant="default"
+              className="cursor-pointer flex-1 sm:flex-none bg-primary hover:bg-primary/90"
+              onClick={() => onComplete(occurrence.id, taskName)}
+              disabled={isCompleting}
+            >
+              <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+              Completar
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

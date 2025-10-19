@@ -58,25 +58,28 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
   const weekEventsTyped = weekEvents as EventWithDetails[]
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-extrabold text-foreground">
+    <div className="flex flex-col h-full bg-background">
+      {/* Header */}
+      <div className="border-b border-border bg-card/50 backdrop-blur-sm flex-shrink-0">
+        <div className="container mx-auto px-4 lg:px-6 py-6">
+          <h1 className="text-3xl font-bold text-foreground">
             Bienvenido, <span className="text-primary">{userName}</span>
           </h1>
-          <p className="mt-2 text-muted-foreground">{userEmail}</p>
+          <p className="text-sm text-muted-foreground mt-1">{userEmail}</p>
         </div>
+      </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+      {/* Main Content */}
+      <div className="container mx-auto px-4 lg:px-6 py-6 flex-1 overflow-y-auto">
+        {/* Tareas Grid */}
+        <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-2 mb-6">
           {/* Tareas Urgentes */}
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="group rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-foreground">Tareas Urgentes</h2>
+              <h2 className="text-xl font-semibold text-foreground">Tareas Urgentes</h2>
               {topUrgentOccurrences.length > 0 && (
-                <span className="rounded-full bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-600 dark:text-red-400">
-                  {topUrgentOccurrences.length} {topUrgentOccurrences.length === 1 ? 'tarea' : 'tareas'}
+                <span className="rounded-full bg-destructive/10 px-3 py-1 text-xs font-semibold text-destructive">
+                  {topUrgentOccurrences.length}
                 </span>
               )}
             </div>
@@ -87,12 +90,12 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
           </div>
 
           {/* Tareas Importantes */}
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="group rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-foreground">Tareas Importantes</h2>
+              <h2 className="text-xl font-semibold text-foreground">Tareas Importantes</h2>
               {topImportantOccurrences.length > 0 && (
-                <span className="rounded-full bg-purple-500/10 px-3 py-1 text-xs font-semibold text-purple-600 dark:text-purple-400">
-                  {topImportantOccurrences.length} {topImportantOccurrences.length === 1 ? 'tarea' : 'tareas'}
+                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                  {topImportantOccurrences.length}
                 </span>
               )}
             </div>
@@ -103,17 +106,14 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
           </div>
         </div>
 
-        {/* Secondary Content Grid */}
-        <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
-          {/* Próximos Eventos */}
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm lg:col-span-2">
-            <h2 className="mb-4 text-2xl font-bold text-foreground">Próximos Eventos</h2>
-            <DayWeekEvents
-              todayEvents={todayEventsTyped}
-              weekEvents={weekEventsTyped}
-              onEventClick={handleEventClick}
-            />
-          </div>
+        {/* Próximos Eventos */}
+        <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg">
+          <h2 className="mb-4 text-xl font-semibold text-foreground">Próximos Eventos</h2>
+          <DayWeekEvents
+            todayEvents={todayEventsTyped}
+            weekEvents={weekEventsTyped}
+            onEventClick={handleEventClick}
+          />
         </div>
       </div>
 
@@ -125,6 +125,6 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
         event={selectedEvent}
         onEventCompleted={handleEventCompleted}
       />
-    </main>
+    </div>
   )
 }

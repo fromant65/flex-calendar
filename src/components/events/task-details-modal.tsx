@@ -205,32 +205,32 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl">{task?.name || "Detalles del Evento"}</DialogTitle>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto border-border bg-card">
+        <DialogHeader className="border-b border-border pb-4">
+          <DialogTitle className="text-xl font-bold text-foreground">{task?.name || "Detalles del Evento"}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 py-2">
           {task?.description && (
-            <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-1">Descripción</h4>
-              <p className="text-sm text-foreground">{task.description}</p>
+            <div className="rounded-lg bg-muted/30 p-3">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">Descripción</h4>
+              <p className="text-sm text-foreground leading-relaxed">{task.description}</p>
             </div>
           )}
 
           {/* Task Type and Fixed Status */}
           <div className="flex gap-2 flex-wrap">
             {task?.taskType && (
-              <div className="rounded-md border border-border bg-muted/30 px-3 py-1">
-                <p className="text-xs text-muted-foreground">Tipo</p>
-                <p className="text-sm font-medium text-foreground">{task.taskType}</p>
+              <div className="rounded-lg border border-border bg-muted/20 px-3 py-2">
+                <p className="text-xs text-muted-foreground mb-0.5">Tipo</p>
+                <p className="text-sm font-semibold text-foreground">{task.taskType}</p>
               </div>
             )}
             {task?.isFixed && (
-              <div className="rounded-md border border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950 px-3 py-1">
-                <p className="text-xs text-blue-600 dark:text-blue-400">Tarea Fija</p>
+              <div className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-2">
+                <p className="text-xs text-primary font-medium">Tarea Fija</p>
                 {task.fixedStartTime && task.fixedEndTime && (
-                  <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                  <p className="text-sm font-semibold text-primary">
                     {task.fixedStartTime.substring(0, 5)} - {task.fixedEndTime.substring(0, 5)}
                   </p>
                 )}
@@ -240,62 +240,70 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
 
           {/* Recurrence Information */}
           {taskWithRecurrence?.recurrence && (
-            <div className="rounded-lg border border-border bg-muted/20 p-3">
-              <h4 className="text-sm font-medium text-foreground mb-2">Patrón de Recurrencia</h4>
-              <div className="space-y-1 text-xs text-muted-foreground">
+            <div className="rounded-lg border border-border bg-muted/20 p-3.5">
+              <h4 className="text-sm font-semibold text-foreground mb-2.5">Patrón de Recurrencia</h4>
+              <div className="space-y-1.5 text-xs text-muted-foreground">
                 {taskWithRecurrence.recurrence.interval && (
-                  <p>Cada {taskWithRecurrence.recurrence.interval} días</p>
+                  <p>• Cada {taskWithRecurrence.recurrence.interval} días</p>
                 )}
                 {taskWithRecurrence.recurrence.daysOfWeek && taskWithRecurrence.recurrence.daysOfWeek.length > 0 && (
-                  <p>Días: {taskWithRecurrence.recurrence.daysOfWeek.join(", ")}</p>
+                  <p>• Días: {taskWithRecurrence.recurrence.daysOfWeek.join(", ")}</p>
                 )}
                 {taskWithRecurrence.recurrence.daysOfMonth && taskWithRecurrence.recurrence.daysOfMonth.length > 0 && (
-                  <p>Días del mes: {taskWithRecurrence.recurrence.daysOfMonth.join(", ")}</p>
+                  <p>• Días del mes: {taskWithRecurrence.recurrence.daysOfMonth.join(", ")}</p>
                 )}
                 {taskWithRecurrence.recurrence.maxOccurrences && (
-                  <p>Máximo de ocurrencias: {taskWithRecurrence.recurrence.maxOccurrences}</p>
+                  <p>• Máximo de ocurrencias: {taskWithRecurrence.recurrence.maxOccurrences}</p>
                 )}
                 {taskWithRecurrence.recurrence.endDate && (
-                  <p>Termina: {new Date(taskWithRecurrence.recurrence.endDate).toLocaleDateString()}</p>
+                  <p>• Termina: {new Date(taskWithRecurrence.recurrence.endDate).toLocaleDateString()}</p>
                 )}
               </div>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             {task?.importance !== undefined && (
-              <div className="flex items-center gap-2">
-                <Flag className="w-4 h-4 text-muted-foreground" />
+              <div className="flex items-center gap-2.5 rounded-lg bg-muted/20 p-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+                  <Flag className="w-4 h-4 text-primary" />
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Importancia</p>
-                  <p className="text-sm font-medium text-foreground">{task.importance}/10</p>
+                  <p className="text-sm font-semibold text-foreground">{task.importance}/10</p>
                 </div>
               </div>
             )}
 
             {displayOccurrence?.urgency !== undefined && displayOccurrence?.urgency !== null && (
-              <div className="flex items-center gap-2">
-                <Target className="w-4 h-4 text-muted-foreground" />
+              <div className="flex items-center gap-2.5 rounded-lg bg-muted/20 p-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-orange-500/10">
+                  <Target className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Urgencia</p>
-                  <p className="text-sm font-medium text-foreground">{displayOccurrence.urgency.toFixed(1)}/10</p>
+                  <p className="text-sm font-semibold text-foreground">{displayOccurrence.urgency.toFixed(1)}/10</p>
                 </div>
               </div>
             )}
 
             {displayOccurrence?.targetTimeConsumption && (
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-muted-foreground" />
+              <div className="flex items-center gap-2.5 rounded-lg bg-muted/20 p-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+                  <Clock className="w-4 h-4 text-primary" />
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Duración Objetivo</p>
-                  <p className="text-sm font-medium text-foreground">{displayOccurrence.targetTimeConsumption} {displayOccurrence.targetTimeConsumption===1? "h":"hs"}</p>
+                  <p className="text-sm font-semibold text-foreground">{displayOccurrence.targetTimeConsumption}h</p>
                 </div>
               </div>
             )}
 
             {displayOccurrence?.timeConsumed !== undefined && displayOccurrence?.timeConsumed !== null && (
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-muted-foreground" />
+              <div className="flex items-center gap-2.5 rounded-lg bg-muted/20 p-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-green-500/10">
+                  <Clock className="w-4 h-4 text-green-600 dark:text-green-400" />
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Tiempo Consumido</p>
                   <p className="text-sm font-medium text-foreground">{displayOccurrence.timeConsumed.toFixed(1)} hs</p>
@@ -304,21 +312,25 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
             )}
 
             {displayOccurrence?.status && (
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-muted-foreground" />
+              <div className="flex items-center gap-2.5 rounded-lg bg-muted/20 p-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted/30">
+                  <CheckCircle2 className="w-4 h-4 text-foreground" />
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Estado</p>
-                  <p className="text-sm font-medium text-foreground">{displayOccurrence.status}</p>
+                  <p className="text-sm font-semibold text-foreground">{displayOccurrence.status}</p>
                 </div>
               </div>
             )}
 
             {displayOccurrence?.targetDate && (
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-muted-foreground" />
+              <div className="flex items-center gap-2.5 rounded-lg bg-muted/20 p-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+                  <Calendar className="w-4 h-4 text-primary" />
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Fecha Objetivo</p>
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="text-sm font-semibold text-foreground">
                     {new Date(displayOccurrence.targetDate).toLocaleDateString()}
                   </p>
                 </div>
@@ -326,11 +338,13 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
             )}
 
             {displayOccurrence?.limitDate && (
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-destructive" />
+              <div className="flex items-center gap-2.5 rounded-lg bg-destructive/10 p-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-destructive/20">
+                  <Calendar className="w-4 h-4 text-destructive" />
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Fecha Límite</p>
-                  <p className="text-sm font-medium text-destructive">
+                  <p className="text-sm font-semibold text-destructive">
                     {new Date(displayOccurrence.limitDate).toLocaleDateString()}
                   </p>
                 </div>
@@ -341,28 +355,28 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
           {event && (
             <div className="border-t border-border pt-4 space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium text-foreground">Horario Programado</h4>
+                <h4 className="text-sm font-semibold text-foreground">Horario Programado</h4>
                 {!event.isCompleted && !isEditing && !event.isFixed && (
-                  <Button variant="ghost" size="sm" onClick={startEditMode}>
-                    <Edit2 className="h-4 w-4" />
+                  <Button variant="ghost" size="sm" onClick={startEditMode} className="hover:bg-accent">
+                    <Edit2 className="h-3.5 w-3.5" />
                   </Button>
                 )}
                 {isEditing && (
-                    <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={updateEventMutation.isPending}>
-                      <X className="h-4 w-4" />
+                    <div className="flex gap-1.5">
+                    <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={updateEventMutation.isPending} className="hover:bg-accent">
+                      <X className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={handleSaveEdit} disabled={updateEventMutation.isPending}>
-                      {updateEventMutation.isPending ? <LoadingSpinner size="xs" /> : <Save className="h-4 w-4" />}
+                    <Button variant="ghost" size="sm" onClick={handleSaveEdit} disabled={updateEventMutation.isPending} className="hover:bg-accent">
+                      {updateEventMutation.isPending ? <LoadingSpinner size="xs" /> : <Save className="h-3.5 w-3.5" />}
                     </Button>
                   </div>
                 )}
               </div>
 
               {event.isFixed && (
-                <div className="rounded-md bg-blue-50 dark:bg-blue-950/30 p-2 flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                <div className="rounded-lg bg-primary/10 border border-primary/20 p-3 flex items-center gap-2.5">
+                  <Lock className="h-4 w-4 text-primary flex-shrink-0" />
+                  <p className="text-xs text-foreground">
                     Este evento tiene un horario fijo y no se puede modificar
                   </p>
                 </div>
@@ -370,11 +384,13 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
 
               {!isEditing ? (
                 <>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
+                  <div className="flex items-center gap-2.5 rounded-lg bg-muted/20 p-2.5">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+                      <Calendar className="w-4 h-4 text-primary" />
+                    </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Fecha</p>
-                      <p className="text-sm font-medium text-foreground">
+                      <p className="text-sm font-semibold text-foreground">
                         {new Date(event.start).toLocaleDateString("es-ES", {
                           weekday: "long",
                           year: "numeric",
@@ -385,11 +401,13 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-foreground" />
+                  <div className="flex items-center gap-2.5 rounded-lg bg-muted/20 p-2.5">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+                      <Clock className="w-4 h-4 text-primary" />
+                    </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Horario</p>
-                      <p className="text-sm font-medium text-foreground">
+                      <p className="text-sm font-semibold text-foreground">
                         {new Date(event.start).toLocaleTimeString("es-ES", {
                           hour: "numeric",
                           minute: "2-digit",
@@ -404,47 +422,47 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                   </div>
                 </>
               ) : (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="editDate">Fecha</Label>
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="editDate" className="text-xs font-medium text-muted-foreground">Fecha</Label>
                     <Input
                       id="editDate"
                       type="date"
                       value={editDate}
                       onChange={(e) => setEditDate(e.target.value)}
-                      className="bg-input/5 dark:bg-input/30 text-foreground [color-scheme:light] dark:[color-scheme:dark]"
+                      className="bg-muted/20 border-border text-foreground"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="editStartTime">Hora de Inicio</Label>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="editStartTime" className="text-xs font-medium text-muted-foreground">Hora de Inicio</Label>
                       <Input
                         id="editStartTime"
                         type="time"
                         value={editStartTime}
                         onChange={(e) => setEditStartTime(e.target.value)}
-                        className="bg-input/5 dark:bg-input/30 text-foreground [color-scheme:light] dark:[color-scheme:dark]"
+                        className="bg-muted/20 border-border text-foreground"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="editEndTime">Hora de Fin</Label>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="editEndTime" className="text-xs font-medium text-muted-foreground">Hora de Fin</Label>
                       <Input
                         id="editEndTime"
                         type="time"
                         value={editEndTime}
                         onChange={(e) => setEditEndTime(e.target.value)}
-                        className="bg-input/5 dark:bg-input/30 text-foreground [color-scheme:light] dark:[color-scheme:dark]"
+                        className="bg-muted/20 border-border text-foreground"
                       />
                     </div>
                   </div>
-                </>
+                </div>
               )}
 
               {event.isFixed && !isEditing && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Lock className="w-4 h-4" />
-                  <p className="text-sm">Este evento es fijo y no se puede reprogramar</p>
+                <div className="flex items-center gap-2 text-muted-foreground rounded-lg bg-muted/20 p-2.5">
+                  <Lock className="w-4 h-4 flex-shrink-0" />
+                  <p className="text-xs">Este evento es fijo y no se puede reprogramar</p>
                 </div>
               )}
             </div>
@@ -452,14 +470,16 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
 
           {displayOccurrence && !event && (
             <div className="border-t border-border pt-4 space-y-3">
-              <h4 className="text-sm font-medium text-foreground">Detalles de la Ocurrencia</h4>
+              <h4 className="text-sm font-semibold text-foreground">Detalles de la Ocurrencia</h4>
 
               {displayOccurrence.targetDate && (
-                <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-muted-foreground" />
+                <div className="flex items-center gap-2.5 rounded-lg bg-muted/20 p-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+                    <Target className="w-4 h-4 text-primary" />
+                  </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Fecha Objetivo</p>
-                    <p className="text-sm font-medium text-foreground">
+                    <p className="text-sm font-semibold text-foreground">
                       {new Date(displayOccurrence.targetDate).toLocaleDateString("es-ES", {
                         year: "numeric",
                         month: "long",
@@ -471,11 +491,13 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
               )}
 
               {displayOccurrence.limitDate && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                <div className="flex items-center gap-2.5 rounded-lg bg-destructive/10 p-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-destructive/20">
+                    <Calendar className="w-4 h-4 text-destructive" />
+                  </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Fecha Límite</p>
-                    <p className="text-sm font-medium text-foreground">
+                    <p className="text-sm font-semibold text-destructive">
                       {new Date(displayOccurrence.limitDate).toLocaleDateString("es-ES", {
                         year: "numeric",
                         month: "long",
@@ -494,7 +516,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
           <div className="border-t border-border pt-4">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full" size="sm" disabled={deleteEventMutation.isPending}>
+                <Button variant="destructive" className="w-full hover:bg-destructive/90" size="sm" disabled={deleteEventMutation.isPending}>
                   {deleteEventMutation.isPending ? (
                     <>
                       <LoadingSpinner size="xs" />
@@ -502,23 +524,23 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                     </>
                   ) : (
                     <>
-                      <Trash2 className="h-4 w-4 mr-2" />
+                      <Trash2 className="h-3.5 w-3.5 mr-2" />
                       Eliminar Evento
                     </>
                   )}
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="border-border bg-card">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>¿Eliminar evento?</AlertDialogTitle>
-                  <AlertDialogDescription>
+                  <AlertDialogTitle className="text-foreground">¿Eliminar evento?</AlertDialogTitle>
+                  <AlertDialogDescription className="text-muted-foreground">
                     ¿Estás seguro de que quieres eliminar este evento? Esta acción no se puede deshacer.
                     {event.associatedOccurrenceId && " La ocurrencia asociada será recuperada y estará disponible para reprogramación."}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteEvent}>
+                  <AlertDialogCancel className="hover:bg-accent">Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteEvent} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
                     Eliminar
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -530,10 +552,10 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
         {/* Info message for fixed tasks */}
         {event && event.isFixed && !event.isCompleted && !isEditing && (
           <div className="border-t border-border pt-4">
-            <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950 p-3">
-              <div className="flex items-start gap-2">
-                <Lock className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
-                <p className="text-xs text-blue-700 dark:text-blue-300">
+            <div className="rounded-lg border border-primary/20 bg-primary/10 p-3">
+              <div className="flex items-start gap-2.5">
+                <Lock className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-foreground">
                   Los eventos de tareas fijas no se pueden eliminar. Usa "Skip" si no lo realizaste o "Complete" cuando lo termines.
                 </p>
               </div>
@@ -547,14 +569,14 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
             <div className="w-full space-y-3">
               {/* Warning if event hasn't started yet */}
               {!eventHasStarted && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950 p-3">
-                  <div className="flex items-start gap-2">
-                    <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                <div className="rounded-lg border border-orange-500/20 bg-orange-500/10 p-3">
+                  <div className="flex items-start gap-2.5">
+                    <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                      <p className="text-sm font-semibold text-foreground">
                         Evento aún no ha comenzado
                       </p>
-                      <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         Solo puedes completar eventos que ya hayan iniciado. Este evento comienza el{" "}
                         {new Date(event.start).toLocaleString("es", {
                           day: "numeric",
@@ -568,8 +590,8 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="dedicatedTime" className="text-sm font-medium">
+              <div className="space-y-1.5">
+                <Label htmlFor="dedicatedTime" className="text-xs font-medium text-muted-foreground">
                   Tiempo Dedicado (horas)
                 </Label>
                 <Input
@@ -580,7 +602,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                   placeholder="ej., 2.5"
                   value={dedicatedTime}
                   onChange={(e) => setDedicatedTime(e.target.value)}
-                  className="w-full"
+                  className="w-full bg-muted/20 border-border"
                 />
                 <p className="text-xs text-muted-foreground">
                   Deja vacío para usar la duración programada (
@@ -590,7 +612,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
               <div className="flex gap-2">
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="default" className="flex-1" disabled={skipEventMutation.isPending}>
+                    <Button variant="outline" size="default" className="flex-1 hover:bg-accent" disabled={skipEventMutation.isPending}>
                       {skipEventMutation.isPending ? (
                         <>
                           <LoadingSpinner size="xs" />
@@ -601,10 +623,10 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                       )}
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="border-border bg-card">
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Saltar evento</AlertDialogTitle>
-                      <AlertDialogDescription>
+                      <AlertDialogTitle className="text-foreground">Saltar evento</AlertDialogTitle>
+                      <AlertDialogDescription className="text-muted-foreground">
                         ¿Estás seguro de que deseas saltar este evento programado?
                       </AlertDialogDescription>
                     </AlertDialogHeader>
@@ -617,15 +639,15 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                         />
                         <label
                           htmlFor="skipOccurrence"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground"
                         >
                           También saltar la ocurrencia asociada
                         </label>
                       </div>
                     )}
                     <AlertDialogFooter>
-                      <AlertDialogCancel onClick={() => setSkipOccurrence(false)}>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleSkipEvent}>
+                      <AlertDialogCancel onClick={() => setSkipOccurrence(false)} className="hover:bg-accent">Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleSkipEvent} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                         Saltar
                       </AlertDialogAction>
                     </AlertDialogFooter>
@@ -636,7 +658,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                   <AlertDialogTrigger asChild>
                     <Button 
                       variant="default" 
-                      className="flex-1" 
+                      className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground" 
                       disabled={completeEventMutation.isPending || !eventHasStarted}
                     >
                       {completeEventMutation.isPending ? (
@@ -646,16 +668,16 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                         </>
                       ) : (
                         <>
-                          <CheckCircle2 className="h-4 w-4" />
+                          <CheckCircle2 className="h-3.5 w-3.5" />
                           <span className="ml-2">Marcar como Completado</span>
                         </>
                       )}
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="border-border bg-card">
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Completar evento</AlertDialogTitle>
-                      <AlertDialogDescription>
+                      <AlertDialogTitle className="text-foreground">Completar evento</AlertDialogTitle>
+                      <AlertDialogDescription className="text-muted-foreground">
                         ¿Estás seguro de que deseas marcar este evento como completado?
                       </AlertDialogDescription>
                     </AlertDialogHeader>
@@ -668,15 +690,15 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                         />
                         <label
                           htmlFor="completeOccurrence"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground"
                         >
                           También completar la ocurrencia asociada
                         </label>
                       </div>
                     )}
                     <AlertDialogFooter>
-                      <AlertDialogCancel onClick={() => setCompleteOccurrence(false)}>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleCompleteEvent}>
+                      <AlertDialogCancel onClick={() => setCompleteOccurrence(false)} className="hover:bg-accent">Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleCompleteEvent} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                         Completar
                       </AlertDialogAction>
                     </AlertDialogFooter>
@@ -689,15 +711,17 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
 
         {event && event.isCompleted && (
           <div className="border-t border-border pt-4">
-            <div className="flex items-center gap-2 text-[color:var(--success)] dark:text-[color:var(--success-foreground)]">
-              <CheckCircle2 className="h-5 w-5" />
-              <p className="text-sm font-medium">Este evento ha sido completado</p>
+            <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-3 flex items-center gap-2.5">
+              <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-foreground">Este evento ha sido completado</p>
+                {event.dedicatedTime && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Tiempo dedicado: {event.dedicatedTime.toFixed(2)} horas
+                  </p>
+                )}
+              </div>
             </div>
-            {event.dedicatedTime && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Tiempo dedicado: {event.dedicatedTime.toFixed(2)} horas
-              </p>
-            )}
           </div>
         )}
       </DialogContent>

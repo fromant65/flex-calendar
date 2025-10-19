@@ -69,9 +69,9 @@ export function TaskCard({
   );
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader
-        className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+    <div className="group rounded-xl border border-border bg-card/50 backdrop-blur-sm transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg overflow-hidden">
+      <div
+        className="cursor-pointer p-5 transition-colors hover:bg-accent/20"
         onClick={onToggle}
       >
         <div className="flex items-start justify-between">
@@ -79,56 +79,56 @@ export function TaskCard({
             <div className="flex items-center gap-2">
               {/* Expand/collapse indicator */}
               {isExpanded ? (
-                <ChevronDown className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               ) : (
-                <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               )}
               
-              <CardTitle className="flex-1">{task.name}</CardTitle>
+              <h3 className="flex-1 text-lg font-semibold text-foreground">{task.name}</h3>
               <Badge className={`${getTaskTypeColor(taskType)} text-white flex-shrink-0`}>
                 {taskType}
               </Badge>
             </div>
             {task.description && (
-              <CardDescription className="mt-2 ml-2 sm:ml-7">{task.description}</CardDescription>
+              <p className="mt-2 ml-6 text-sm text-muted-foreground">{task.description}</p>
             )}
 
-            <div className="mt-4 ml-2 flex flex-wrap gap-4 text-sm sm:ml-7">
-              <div className="flex items-center gap-1">
-                <TrendingUp className="h-4 w-4 text-blue-500 dark:text-blue-400" />
+            <div className="mt-3 ml-6 flex flex-wrap gap-3 text-xs">
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <TrendingUp className="h-3.5 w-3.5 text-primary" />
                 <span>Importancia: {task.importance}/10</span>
               </div>
-              <div className="flex items-center gap-1">
-                <Circle className="h-4 w-4 text-yellow-500 dark:text-yellow-400" />
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Circle className="h-3.5 w-3.5 text-yellow-500" />
                 <span>Activas: {activeOccurrences.length}</span>
               </div>
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="h-4 w-4 text-green-500 dark:text-green-400" />
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
                 <span>Completadas: {completedOccurrences.length}</span>
               </div>
-              <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4 text-purple-500 dark:text-purple-400" />
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Clock className="h-3.5 w-3.5 text-primary" />
                 <span>Tiempo total: {totalTimeConsumed.toFixed(1)}h</span>
               </div>
             </div>
           </div>
         </div>
-      </CardHeader>
+      </div>
 
       {isExpanded && (
-        <CardContent className="border-t bg-gray-50 dark:bg-gray-900 pt-4">
+        <div className="border-t border-border bg-muted/20 p-5">
           <div className="space-y-4">
             {/* Next occurrence preview */}
             {nextOccurrenceDate && (
-              <div className="rounded-lg bg-blue-50 dark:bg-blue-950 p-4 mb-4">
+              <div className="rounded-lg bg-primary/10 border border-primary/20 p-3.5 mb-4">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
                   <div className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                    <span className="font-semibold text-blue-900 dark:text-blue-100">
-                      Próxima ocurrencia al completar la actual:
+                    <Calendar className="h-4 w-4 text-primary" />
+                    <span className="font-semibold text-sm text-foreground">
+                      Próxima ocurrencia:
                     </span>
                   </div>
-                  <span className="text-blue-700 dark:text-blue-300 sm:ml-0">
+                  <span className="text-sm text-muted-foreground sm:ml-0">
                     {formatDate(nextOccurrenceDate)}
                   </span>
                 </div>
@@ -136,11 +136,11 @@ export function TaskCard({
             )}
 
             {/* Occurrences list */}
-            <div className="space-y-3">
-              <h3 className="font-semibold">
+            <div className="space-y-2.5">
+              <h3 className="font-semibold text-sm text-foreground">
                 Ocurrencias Activas ({visibleOccurrences.length})
                 {completedOccurrences.length > 0 && (
-                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">
                     • {completedOccurrences.length} completada{completedOccurrences.length !== 1 ? "s" : ""}
                   </span>
                 )}
@@ -160,8 +160,8 @@ export function TaskCard({
                   />
                 ))
               ) : (
-                <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 p-6 text-center">
-                  <CheckCircle2 className="mx-auto h-8 w-8 text-green-500 dark:text-green-400 mb-2" />
+                <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center">
+                  <CheckCircle2 className="mx-auto h-8 w-8 text-green-500 mb-2" />
                   <p className="text-sm text-muted-foreground">
                     Todas las ocurrencias han sido completadas
                   </p>
@@ -169,8 +169,8 @@ export function TaskCard({
               )}
             </div>
           </div>
-        </CardContent>
+        </div>
       )}
-    </Card>
+    </div>
   );
 }

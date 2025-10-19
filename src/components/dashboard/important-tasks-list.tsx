@@ -13,18 +13,18 @@ interface ImportantTasksListProps {
 export function ImportantTasksList({ occurrences, onTaskClick }: ImportantTasksListProps) {
   if (occurrences.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="mb-4 rounded-full bg-muted/50 p-4">
-          <Star className="h-8 w-8 text-muted-foreground" />
+      <div className="flex flex-col items-center justify-center py-8 text-center">
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-muted/50">
+          <Star className="h-6 w-6 text-muted-foreground" />
         </div>
         <p className="text-sm text-muted-foreground">No hay tareas importantes</p>
-        <p className="mt-1 text-xs text-muted-foreground">Las tareas con importancia &gt; 5 aparecerán aquí</p>
+        <p className="mt-1 text-xs text-muted-foreground">Importancia &gt; 5 aparecerán aquí</p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       {occurrences.map((occurrence, index) => {
         const task = occurrence.task
         const urgency = occurrence.urgency ?? 0
@@ -37,15 +37,15 @@ export function ImportantTasksList({ occurrences, onTaskClick }: ImportantTasksL
           "normal"
         
         const importanceColors = {
-          high: "border-purple-500/50 bg-purple-500/5 hover:bg-purple-500/10",
-          medium: "border-blue-500/50 bg-blue-500/5 hover:bg-blue-500/10",
-          normal: "border-primary/30 bg-primary/5 hover:bg-primary/10",
+          high: "border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50",
+          medium: "border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 hover:border-blue-500/50",
+          normal: "border-border bg-card/50 hover:bg-card hover:border-primary/30",
         }
 
         const importanceIconColors = {
-          high: "text-purple-600 dark:text-purple-400",
+          high: "text-primary",
           medium: "text-blue-600 dark:text-blue-400",
-          normal: "text-primary",
+          normal: "text-muted-foreground",
         }
 
         return (
@@ -53,15 +53,14 @@ export function ImportantTasksList({ occurrences, onTaskClick }: ImportantTasksL
             key={occurrence.id}
             onClick={() => onTaskClick?.(occurrence)}
             className={cn(
-              "group relative cursor-pointer rounded-lg border p-4 transition-all hover:shadow-md",
-              importanceColors[importanceLevel],
-              getTaskTypeClassName(task?.taskType)
+              "group relative cursor-pointer rounded-lg border p-3.5 transition-all hover:shadow-md",
+              importanceColors[importanceLevel]
             )}
           >
             {/* Importance icon */}
-            <div className="absolute -left-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-background border-2 border-current shadow-sm">
+            <div className="absolute -left-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-background border-2 border-current shadow-sm">
               <Star 
-                className={cn("h-4 w-4", importanceIconColors[importanceLevel])} 
+                className={cn("h-3.5 w-3.5", importanceIconColors[importanceLevel])} 
                 fill="currentColor"
               />
             </div>
@@ -69,43 +68,42 @@ export function ImportantTasksList({ occurrences, onTaskClick }: ImportantTasksL
             {/* Task content */}
             <div className="space-y-2">
               <div className="flex items-start justify-between gap-2">
-                <h3 className="font-semibold text-foreground line-clamp-1 pr-8">
+                <h3 className="font-semibold text-sm text-foreground line-clamp-1 pr-6">
                   {task?.name || "Sin nombre"}
                 </h3>
               </div>
 
               {task?.description && (
-                <p className="text-sm text-muted-foreground line-clamp-2">
+                <p className="text-xs text-muted-foreground line-clamp-2">
                   {task.description}
                 </p>
               )}
 
               {/* Metrics */}
-              <div className="flex flex-wrap items-center gap-3 text-xs">
+              <div className="flex flex-wrap items-center gap-2.5 text-xs">
                 <div className="flex items-center gap-1">
-                  <Flag className="h-3.5 w-3.5" />
+                  <Flag className="h-3 w-3" />
                   <span className="font-medium">Importancia:</span>
                   <span className={cn("font-bold", importanceIconColors[importanceLevel])}>
-                    {importance}/10
+                    {importance}
                   </span>
                 </div>
                 
                 <div className="flex items-center gap-1 text-muted-foreground">
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  <span>Urgencia:</span>
-                  <span className="font-medium">{urgency.toFixed(1)}/10</span>
+                  <AlertCircle className="h-3 w-3" />
+                  <span>{urgency.toFixed(1)}</span>
                 </div>
 
                 {occurrence.targetTimeConsumption && (
                   <div className="flex items-center gap-1 text-muted-foreground">
-                    <Clock className="h-3.5 w-3.5" />
+                    <Clock className="h-3 w-3" />
                     <span>{occurrence.targetTimeConsumption}h</span>
                   </div>
                 )}
 
                 {occurrence.limitDate && (
                   <div className="flex items-center gap-1 text-muted-foreground">
-                    <Calendar className="h-3.5 w-3.5" />
+                    <Calendar className="h-3 w-3" />
                     <span>
                       {new Date(occurrence.limitDate).toLocaleDateString("es-ES", {
                         day: "numeric",
