@@ -57,27 +57,33 @@ export class UrgencyCalculator {
     }
     // Case 2: Between target and limit
     else if (target && limit && now >= target && now <= limit) {
-      const totalRange = limit - target;
-      const elapsed = now - target;
-      const progress = totalRange > 0 ? elapsed / totalRange : 1;
-      urgency = 5 + progress * 5; // Range 5-10
-    }
-    // Case 3: Before target date
-    else if (target && now < target) {
-      const timeElapsed = now - created;
-      const timeRemaining = target - now;
+      // New rule: urgency between 6 and 10, growth at rate x * ln(1 + x)
+      // where x = days passed since target
+      const dayMs = 1000 * 60 * 60 * 24;
+      const daysSinceTarget = Math.max(0, Math.floor((now - target) / dayMs));
 
-      // Avoid division by zero
-      if (timeRemaining <= 0) {
-        urgency = 5;
-      } else if (timeElapsed <= 0) {
-        // If we just created the task, minimal urgency but not zero
-        const totalTime = target - created;
-        urgency = totalTime > 0 ? 0.5 : 1; // Min 0.5, max 1
+      // Score using x * ln(1 + x) (smooth, increasing). Normalize to 0..1 by score/(1+score)
+      const score = daysSinceTarget * Math.log(1 + daysSinceTarget);
+      const normalized = score > 0 ? score / (1 + score) : 0;
+      urgency = 6 + 4 * normalized; // maps into [6,10)
+    }
+    // Case 3: Before target date (between creation and target)
+    else if (target && now < target) {
+      // New rule: urgency between 0 and 6, grows at rate sqrt(x) where
+      // x = days passed since creation. We'll normalize by total days to target
+      // and apply sqrt to the fraction so urgency = 6 * sqrt(daysPassed/totalDays)
+      const dayMs = 1000 * 60 * 60 * 24;
+      const daysPassed = Math.max(0, (now - created) / dayMs);
+      const totalDays = Math.max(0, (target - created) / dayMs);
+
+      if (totalDays <= 0) {
+        urgency = 6;
+      } else if (daysPassed <= 0) {
+        // just created
+        urgency = 0.5;
       } else {
-        // urgency = 5 * (timeElapsed / timeRemaining)
-        // As we approach target, timeRemaining decreases and urgency increases
-        urgency = Math.min(5, 5 * (timeElapsed / timeRemaining));
+        const fraction = Math.min(1, daysPassed / totalDays);
+        urgency = Math.min(6, 6 * Math.sqrt(fraction));
       }
     }
     // Case 4: Only limit date exists and we're before it
