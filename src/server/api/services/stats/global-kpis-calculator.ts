@@ -3,32 +3,33 @@
  */
 
 import type { GlobalKPIs, WorkloadData, ImportanceBalance, UrgencyBalance } from "~/types";
-
-interface UserDataset {
-  tasks: any[];
-  occurrences: any[];
-  events: any[];
-  recurrenceMap: Map<number, any>;
-}
+import type { StatsDataset, StatsOccurrence, StatsEvent, StatsTask } from "./stats-types";
 
 export class GlobalKPIsCalculator {
   /**
    * Calculate all global KPIs
    */
-  calculate(dataset: UserDataset): GlobalKPIs {
+  calculate(dataset: StatsDataset): GlobalKPIs {
     try {
       const { occurrences = [], events: userEvents = [], tasks: userTasks = [] } = dataset;
 
       // Validate data
       if (!Array.isArray(occurrences) || !Array.isArray(userEvents)) {
-        console.warn("Invalid data structure in calculateGlobalKPIs");
+        console.error("[GlobalKPIs] Invalid data structure:", {
+          occurrencesIsArray: Array.isArray(occurrences),
+          eventsIsArray: Array.isArray(userEvents),
+        });
         return this.getDefaultKPIs();
       }
+
+      console.log(
+        `[GlobalKPIs] Processing ${occurrences.length} occurrences, ${userEvents.length} events, ${userTasks.length} tasks`
+      );
 
       // Filter valid occurrences
       const validOccurrences = occurrences.filter((occ) => occ != null);
 
-      return {
+      const kpis = {
         completionRate: this.calculateCompletionRate(validOccurrences),
         totalTimeInvested: this.calculateTotalTimeInvested(validOccurrences, userEvents),
         planningEfficiency: this.calculatePlanningEfficiency(validOccurrences, userEvents),
@@ -36,8 +37,11 @@ export class GlobalKPIsCalculator {
         importanceBalance: this.calculateImportanceBalance(validOccurrences, userTasks),
         urgencyBalance: this.calculateUrgencyBalance(validOccurrences),
       };
+
+      console.log("[GlobalKPIs] Calculation completed successfully");
+      return kpis;
     } catch (error) {
-      console.error("Error calculating global KPIs:", error);
+      console.error("[GlobalKPIs] Error calculating global KPIs:", error);
       return this.getDefaultKPIs();
     }
   }
@@ -45,7 +49,7 @@ export class GlobalKPIsCalculator {
   /**
    * Calculate overall completion rate
    */
-  private calculateCompletionRate(validOccurrences: any[]): number {
+  private calculateCompletionRate(validOccurrences: StatsOccurrence[]): number {
     if (validOccurrences.length === 0) return 0;
 
     const completedOccurrences = validOccurrences.filter((o) => o?.status === "Completed").length;
@@ -55,52 +59,127 @@ export class GlobalKPIsCalculator {
   /**
    * Calculate total time invested in tasks and events
    */
-  private calculateTotalTimeInvested(validOccurrences: any[], userEvents: any[]): number {
-    // Time from occurrences
-    const occurrenceTime =
-      validOccurrences
-        .filter((o) => o?.timeConsumed)
-        .reduce((sum, o) => sum + (o.timeConsumed || 0), 0) / 60; // Convert to hours
+  private calculateTotalTimeInvested(validOccurrences: StatsOccurrence[], userEvents: StatsEvent[]): number {
+    let invalidOccurrenceTimes = 0;
+    let invalidEventDurations = 0;
 
-    // Time from events
-    const eventTime = userEvents.reduce((sum, e) => {
-      if (!e?.start || !e?.finish) return sum;
+    // Time from occurrences (in minutes, convert to hours)
+    const occurrenceTime = validOccurrences.reduce((sum, occ) => {
+      if (!occ?.timeConsumed) return sum;
+
+      if (typeof occ.timeConsumed !== "number" || occ.timeConsumed < 0) {
+        invalidOccurrenceTimes++;
+        return sum;
+      }
+
+      return sum + occ.timeConsumed / 60; // Convert minutes to hours
+    }, 0);
+
+    // Time from events (calculate duration)
+    const eventTime = userEvents.reduce((sum, event) => {
+      if (!event?.start || !event?.finish) return sum;
+
       try {
-        const startTime = new Date(e.start).getTime();
-        const finishTime = new Date(e.finish).getTime();
-        if (isNaN(startTime) || isNaN(finishTime)) return sum;
-        const duration = (finishTime - startTime) / (1000 * 60 * 60);
-        return sum + (duration > 0 ? duration : 0);
-      } catch {
+        const startTime = new Date(event.start);
+        const finishTime = new Date(event.finish);
+
+        if (isNaN(startTime.getTime()) || isNaN(finishTime.getTime())) {
+          invalidEventDurations++;
+          return sum;
+        }
+
+        const durationMs = finishTime.getTime() - startTime.getTime();
+        const hours = durationMs / (1000 * 60 * 60);
+
+        // Only count positive durations less than 24 hours (reasonable event length)
+        if (hours > 0 && hours <= 24) {
+          return sum + hours;
+        } else if (hours > 24) {
+          console.warn(
+            `[GlobalKPIs] Unusually long event duration for event ${event.id}: ${hours.toFixed(2)} hours`
+          );
+          return sum + hours; // Still count it but log warning
+        } else {
+          invalidEventDurations++;
+          return sum;
+        }
+      } catch (error) {
+        console.error(`[GlobalKPIs] Error processing event ${event.id}:`, error);
+        invalidEventDurations++;
         return sum;
       }
     }, 0);
 
-    return occurrenceTime + eventTime;
+    if (invalidOccurrenceTimes > 0) {
+      console.warn(`[GlobalKPIs] Skipped ${invalidOccurrenceTimes} occurrences with invalid time consumed`);
+    }
+    if (invalidEventDurations > 0) {
+      console.warn(`[GlobalKPIs] Skipped ${invalidEventDurations} events with invalid durations`);
+    }
+
+    const total = occurrenceTime + eventTime;
+    console.log(
+      `[GlobalKPIs] Total time invested: ${total.toFixed(2)} hours (occurrences: ${occurrenceTime.toFixed(2)}h, events: ${eventTime.toFixed(2)}h)`
+    );
+
+    return total;
   }
 
   /**
    * Calculate planning efficiency (dedicated time vs actual time consumed)
    */
-  private calculatePlanningEfficiency(validOccurrences: any[], userEvents: any[]): number | null {
-    const efficiencyData = userEvents
-      .filter((e) => e?.associatedOccurrenceId && e?.dedicatedTime)
-      .map((e) => {
-        const occ = validOccurrences.find((o) => o?.id === e.associatedOccurrenceId);
-        if (!occ || !occ.timeConsumed || occ.timeConsumed === 0) return null;
-        return e.dedicatedTime! / (occ.timeConsumed / 60);
-      })
-      .filter((x): x is number => x !== null && !isNaN(x) && isFinite(x));
+  private calculatePlanningEfficiency(validOccurrences: StatsOccurrence[], userEvents: StatsEvent[]): number | null {
+    const efficiencyRatios: number[] = [];
 
-    if (efficiencyData.length === 0) return null;
+    for (const event of userEvents) {
+      if (!event?.associatedOccurrenceId || !event?.dedicatedTime) continue;
 
-    return efficiencyData.reduce((a, b) => a + b, 0) / efficiencyData.length;
+      const occ = validOccurrences.find((o) => o?.id === event.associatedOccurrenceId);
+      if (!occ || !occ.timeConsumed || occ.timeConsumed === 0) continue;
+
+      // Validate values
+      if (
+        typeof event.dedicatedTime !== "number" ||
+        typeof occ.timeConsumed !== "number" ||
+        event.dedicatedTime <= 0 ||
+        occ.timeConsumed <= 0
+      ) {
+        console.warn(
+          `[GlobalKPIs] Invalid efficiency values for event ${event.id}:`,
+          { dedicatedTime: event.dedicatedTime, timeConsumed: occ.timeConsumed }
+        );
+        continue;
+      }
+
+      const timeConsumedHours = occ.timeConsumed / 60; // Convert minutes to hours
+      const efficiency = event.dedicatedTime / timeConsumedHours;
+
+      // Filter out unrealistic efficiency values (e.g., > 10x or < 0.1x)
+      if (efficiency > 0.01 && efficiency < 100) {
+        efficiencyRatios.push(efficiency);
+      } else {
+        console.warn(
+          `[GlobalKPIs] Unrealistic efficiency ratio ${efficiency.toFixed(2)} for event ${event.id}`
+        );
+      }
+    }
+
+    if (efficiencyRatios.length === 0) {
+      console.log("[GlobalKPIs] No valid planning efficiency data found");
+      return null;
+    }
+
+    const average = efficiencyRatios.reduce((a, b) => a + b, 0) / efficiencyRatios.length;
+    console.log(
+      `[GlobalKPIs] Calculated planning efficiency: ${average.toFixed(2)} from ${efficiencyRatios.length} events`
+    );
+    return average;
   }
 
   /**
    * Calculate average workload per day and week
    */
-  private calculateAverageWorkload(userEvents: any[]): WorkloadData {
+  private calculateAverageWorkload(userEvents: StatsEvent[]): WorkloadData {
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -155,8 +234,8 @@ export class GlobalKPIsCalculator {
    * Calculate importance balance (completion rates by importance level)
    */
   private calculateImportanceBalance(
-    validOccurrences: any[],
-    userTasks: any[]
+    validOccurrences: StatsOccurrence[],
+    userTasks: StatsTask[]
   ): ImportanceBalance {
     const getTaskImportance = (occId: number): number => {
       const task = userTasks.find((t) =>
@@ -205,7 +284,7 @@ export class GlobalKPIsCalculator {
   /**
    * Calculate urgency balance (early, on-time, late completions)
    */
-  private calculateUrgencyBalance(validOccurrences: any[]): UrgencyBalance {
+  private calculateUrgencyBalance(validOccurrences: StatsOccurrence[]): UrgencyBalance {
     const completedWithTiming = validOccurrences.filter(
       (o) => o?.status === "Completed" && o?.completedAt && o?.limitDate
     );

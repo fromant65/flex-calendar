@@ -3,13 +3,7 @@
  */
 
 import { StatisticsRepository, TaskRepository } from "../repository";
-
-interface UserDataset {
-  tasks: any[];
-  occurrences: any[];
-  events: any[];
-  recurrenceMap: Map<number, any>;
-}
+import type { StatsDataset } from "../services/stats/stats-types";
 
 export class StatisticsAdapter {
   private statsRepo: StatisticsRepository;
@@ -23,7 +17,7 @@ export class StatisticsAdapter {
   /**
    * Fetch all necessary data for statistics calculation
    */
-  async fetchUserDataset(userId: string): Promise<UserDataset> {
+  async fetchUserDataset(userId: string): Promise<StatsDataset> {
     const [userTasks, joinedOccurrences, userEvents, recurrences] = await Promise.all([
       this.statsRepo.findUserTasks(userId),
       this.statsRepo.findUserTasksWithOccurrences(userId),

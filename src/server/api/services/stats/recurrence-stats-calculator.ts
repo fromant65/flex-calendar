@@ -3,28 +3,30 @@
  */
 
 import type { RecurrenceStatsData, HabitCompliancePoint, DayFrequency, DayOfWeek } from "~/types";
+import type { StatsDataset, StatsTask, StatsOccurrence } from "./stats-types";
 import { StatsUtils } from "./stats-utils";
-
-interface UserDataset {
-  tasks: any[];
-  occurrences: any[];
-  events: any[];
-  recurrenceMap: Map<number, any>;
-}
 
 export class RecurrenceStatsCalculator {
   /**
    * Calculate all recurrence statistics (habits)
    */
-  calculate(dataset: UserDataset): RecurrenceStatsData {
+  calculate(dataset: StatsDataset): RecurrenceStatsData {
     try {
       const { tasks: userTasks = [], occurrences = [], recurrenceMap } = dataset;
 
       // Validate data
       if (!Array.isArray(userTasks) || !Array.isArray(occurrences) || !recurrenceMap) {
-        console.warn("Invalid data structure in calculateRecurrenceStats");
+        console.error("[RecurrenceStats] Invalid data structure:", {
+          tasksIsArray: Array.isArray(userTasks),
+          occurrencesIsArray: Array.isArray(occurrences),
+          hasRecurrenceMap: !!recurrenceMap,
+        });
         return this.getDefaultStats();
       }
+
+      console.log(
+        `[RecurrenceStats] Processing ${userTasks.length} tasks, ${occurrences.length} occurrences, ${recurrenceMap.size} recurrences`
+      );
 
       // Filter habits (tasks with recurrence and no maxOccurrences or maxOccurrences > 10)
       const habitTasks = userTasks.filter((t) => {
@@ -33,7 +35,10 @@ export class RecurrenceStatsCalculator {
         return rec && (!rec.maxOccurrences || rec.maxOccurrences > 10);
       });
 
+      console.log(`[RecurrenceStats] Found ${habitTasks.length} habit tasks`);
+
       if (habitTasks.length === 0) {
+        console.log("[RecurrenceStats] No habits found, returning default stats");
         return this.getDefaultStats();
       }
 
@@ -41,6 +46,8 @@ export class RecurrenceStatsCalculator {
       const habitOccurrences = occurrences.filter(
         (o) => o?.associatedTaskId && habitTaskIds.has(o.associatedTaskId)
       );
+
+      console.log(`[RecurrenceStats] Found ${habitOccurrences.length} habit occurrences`);
 
       // Calculate habit compliance over time
       const habitCompliance = this.calculateHabitCompliance(habitOccurrences);
@@ -51,6 +58,10 @@ export class RecurrenceStatsCalculator {
       // Calculate frequent days
       const frequentDays = this.calculateFrequentDays(habitOccurrences);
 
+      console.log(
+        `[RecurrenceStats] Calculated: maxStreak=${maxStreak}, currentStreak=${currentStreak}`
+      );
+
       return {
         habitCompliance,
         maxStreak,
@@ -58,7 +69,7 @@ export class RecurrenceStatsCalculator {
         frequentDays,
       };
     } catch (error) {
-      console.error("Error calculating recurrence stats:", error);
+      console.error("[RecurrenceStats] Error calculating recurrence stats:", error);
       return this.getDefaultStats();
     }
   }
@@ -66,15 +77,23 @@ export class RecurrenceStatsCalculator {
   /**
    * Calculate habit compliance by week
    */
-  private calculateHabitCompliance(habitOccurrences: any[]): HabitCompliancePoint[] {
+  private calculateHabitCompliance(habitOccurrences: StatsOccurrence[]): HabitCompliancePoint[] {
     const complianceByWeek = new Map<string, { completed: number; total: number }>();
+    let invalidDates = 0;
 
     for (const occ of habitOccurrences) {
-      if (!occ?.startDate) continue;
+      if (!occ?.startDate) {
+        invalidDates++;
+        continue;
+      }
 
       try {
         const date = new Date(occ.startDate);
-        if (isNaN(date.getTime())) continue;
+        if (isNaN(date.getTime())) {
+          console.warn(`[RecurrenceStats] Invalid startDate for occurrence ${occ.id}: ${occ.startDate}`);
+          invalidDates++;
+          continue;
+        }
 
         const weekKey = StatsUtils.getWeekKey(date);
 
@@ -88,11 +107,17 @@ export class RecurrenceStatsCalculator {
           week.completed++;
         }
       } catch (error) {
-        continue; // Skip invalid occurrences
+        console.error(`[RecurrenceStats] Error processing occurrence ${occ.id}:`, error);
+        invalidDates++;
+        continue;
       }
     }
 
-    return Array.from(complianceByWeek.entries())
+    if (invalidDates > 0) {
+      console.warn(`[RecurrenceStats] Skipped ${invalidDates} occurrences with invalid dates`);
+    }
+
+    const result = Array.from(complianceByWeek.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([weekKey, data]) => ({
         date: StatsUtils.getDateFromWeekKey(weekKey),
@@ -100,12 +125,15 @@ export class RecurrenceStatsCalculator {
         completedOccurrences: data.completed,
         totalOccurrences: data.total,
       }));
+
+    console.log(`[RecurrenceStats] Calculated compliance for ${result.length} weeks`);
+    return result;
   }
 
   /**
    * Calculate completion frequency by day of week
    */
-  private calculateFrequentDays(habitOccurrences: any[]): DayFrequency[] {
+  private calculateFrequentDays(habitOccurrences: StatsOccurrence[]): DayFrequency[] {
     const dayCount = new Map<string, { completed: number; total: number }>();
     const dayNames: DayOfWeek[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 

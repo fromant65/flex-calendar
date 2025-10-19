@@ -3,11 +3,10 @@
  */
 
 import type {
-  UrgencyCalculationInput,
-  UrgencyCalculationResult,
   TaskStatistics,
   TaskOccurrence,
 } from "./types";
+import { UrgencyCalculator } from "../utils/urgency-calculator";
 import { OccurrenceAdapter } from "../adapter";
 import { TaskRepository, TaskOccurrenceRepository } from "../repository";
 
@@ -23,106 +22,12 @@ export class TaskAnalyticsService {
   }
 
   /**
-   * Calculate urgency for a task occurrence
-   * 
-   * Algorithm:
-   * - Urgency 0-5: Before target date (based on progress: time elapsed / time remaining)
-   * - Urgency 5-10: Between target and limit date
-   * - Urgency > 10: Past limit date (overdue)
-   */
-  calculateUrgency(input: UrgencyCalculationInput): UrgencyCalculationResult {
-    const { currentDate, creationDate, targetDate, limitDate } = input;
-    
-    // If no dates are set, urgency is minimal
-    if (!targetDate && !limitDate) {
-      return {
-        urgency: 0,
-        isOverdue: false,
-      };
-    }
-
-    const now = currentDate.getTime();
-    const created = creationDate.getTime();
-    const target = targetDate?.getTime();
-    const limit = limitDate?.getTime();
-
-    // Calculate days until dates
-    const daysUntilTarget = target
-      ? Math.floor((target - now) / (1000 * 60 * 60 * 24))
-      : undefined;
-    const daysUntilLimit = limit
-      ? Math.floor((limit - now) / (1000 * 60 * 60 * 24))
-      : undefined;
-
-    let urgency = 0;
-    let isOverdue = false;
-
-    // Case 1: Past limit date - OVERDUE
-    if (limit && now > limit) {
-      const daysOverdue = Math.abs(daysUntilLimit ?? 0);
-      urgency = 10 + Math.min(daysOverdue * 0.5, 10); // Max urgency of 20
-      isOverdue = true;
-    }
-    // Case 2: Between target and limit
-    else if (target && limit && now >= target && now <= limit) {
-      const totalRange = limit - target;
-      const elapsed = now - target;
-      const progress = totalRange > 0 ? elapsed / totalRange : 1;
-      urgency = 5 + progress * 5; // Range 5-10
-    }
-    // Case 3: Before target date
-    else if (target && now < target) {
-      const timeElapsed = now - created;
-      const timeRemaining = target - now;
-      
-      // Evitar división por cero
-      if (timeRemaining <= 0) {
-        urgency = 5;
-      } else if (timeElapsed <= 0) {
-        // Si acabamos de crear la tarea, urgencia mínima pero no cero
-        // Usar una pequeña fracción basada en el tiempo total disponible
-        const totalTime = target - created;
-        urgency = totalTime > 0 ? 0.5 : 1; // Mínimo 0.5, máximo 1
-      } else {
-        // urgency = 5 * (timeElapsed / timeRemaining)
-        // A medida que nos acercamos al target, timeRemaining disminuye y urgency aumenta
-        urgency = Math.min(5, 5 * (timeElapsed / timeRemaining));
-      }
-    }
-    // Case 4: Only limit date exists and we're before it
-    else if (limit && now < limit) {
-      const timeElapsed = now - created;
-      const timeRemaining = limit - now;
-      
-      // Evitar división por cero
-      if (timeRemaining <= 0) {
-        urgency = 10;
-      } else if (timeElapsed <= 0) {
-        // Si acabamos de crear la tarea, urgencia mínima pero no cero
-        const totalTime = limit - created;
-        urgency = totalTime > 0 ? 0.5 : 1; // Mínimo 0.5, máximo 1
-      } else {
-        // Similar al caso 3, pero escalado a 10 en lugar de 5
-        urgency = Math.min(10, 10 * (timeElapsed / timeRemaining));
-      }
-    }
-
-    return {
-      urgency: Math.round(urgency * 100) / 100, // Round to 2 decimals
-      isOverdue,
-      daysUntilTarget,
-      daysUntilLimit,
-    };
-  }
-
-
-  /**
    * Calculate and add urgency to an occurrence (no DB update)
    */
   enrichOccurrenceWithUrgency<T extends { createdAt: Date; targetDate: Date | null; limitDate: Date | null }>(
     occurrence: T
   ): T & { urgency: number } {
-    const result = this.calculateUrgency({
+    const result = UrgencyCalculator.calculateUrgency({
       currentDate: new Date(),
       creationDate: occurrence.createdAt,
       targetDate: occurrence.targetDate ?? undefined,

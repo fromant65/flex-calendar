@@ -10,6 +10,7 @@ import { OccurrenceStatsCalculator } from "./occurrence-stats-calculator";
 import { CalendarStatsCalculator } from "./calendar-stats-calculator";
 import { GlobalKPIsCalculator } from "./global-kpis-calculator";
 import { AdvancedInsightsCalculator } from "./advanced-insights-calculator";
+import type { StatsDataset } from "./stats-types";
 import type {
   AllStatistics,
   TaskStatsData,
@@ -19,13 +20,6 @@ import type {
   GlobalKPIs,
   AdvancedInsights,
 } from "~/types";
-
-interface UserDataset {
-  tasks: any[];
-  occurrences: any[];
-  events: any[];
-  recurrenceMap: Map<number, any>;
-}
 
 export class StatisticsService {
   private adapter: StatisticsAdapter;

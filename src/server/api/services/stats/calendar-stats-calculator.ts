@@ -3,19 +3,13 @@
  */
 
 import type { CalendarStatsData, HourlyDistribution } from "~/types";
-
-interface UserDataset {
-  tasks: any[];
-  occurrences: any[];
-  events: any[];
-  recurrenceMap: Map<number, any>;
-}
+import type { StatsDataset, StatsEvent } from "./stats-types";
 
 export class CalendarStatsCalculator {
   /**
    * Calculate all calendar statistics
    */
-  calculate(dataset: UserDataset): CalendarStatsData {
+  calculate(dataset: StatsDataset): CalendarStatsData {
     try {
       const { events: userEvents = [] } = dataset;
 
@@ -49,7 +43,7 @@ export class CalendarStatsCalculator {
   /**
    * Calculate hourly distribution of events
    */
-  private calculateHourlyDistribution(userEvents: any[]): HourlyDistribution[] {
+  private calculateHourlyDistribution(userEvents: StatsEvent[]): HourlyDistribution[] {
     const hourlyData = new Map<number, { count: number; completed: number }>();
 
     // Initialize all hours

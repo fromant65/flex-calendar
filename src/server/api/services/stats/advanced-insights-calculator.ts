@@ -3,24 +3,22 @@
  */
 
 import type { AdvancedInsights, LowComplianceHabit, TrendPoint, Bottleneck } from "~/types";
+import type { StatsDataset, StatsTask, StatsOccurrence, StatsRecurrence } from "./stats-types";
 import { StatsUtils } from "./stats-utils";
-
-interface UserDataset {
-  tasks: any[];
-  occurrences: any[];
-  events: any[];
-  recurrenceMap: Map<number, any>;
-}
 
 export class AdvancedInsightsCalculator {
   /**
    * Calculate all advanced insights
    */
-  calculate(dataset: UserDataset): AdvancedInsights {
+  calculate(dataset: StatsDataset): AdvancedInsights {
     try {
       const { tasks: userTasks = [], occurrences = [], recurrenceMap } = dataset;
 
-      return {
+      console.log(
+        `[AdvancedInsights] Processing ${userTasks.length} tasks, ${occurrences.length} occurrences`
+      );
+
+      const insights = {
         lowComplianceHabits: this.calculateLowComplianceHabits(
           userTasks,
           occurrences,
@@ -33,8 +31,11 @@ export class AdvancedInsightsCalculator {
         ),
         bottlenecks: this.calculateBottlenecks(userTasks, occurrences),
       };
+
+      console.log("[AdvancedInsights] Calculation completed successfully");
+      return insights;
     } catch (error) {
-      console.error("Error calculating advanced insights:", error);
+      console.error("[AdvancedInsights] Error calculating advanced insights:", error);
       return this.getDefaultInsights();
     }
   }
@@ -43,9 +44,9 @@ export class AdvancedInsightsCalculator {
    * Identify habits with low completion rates
    */
   private calculateLowComplianceHabits(
-    userTasks: any[],
-    occurrences: any[],
-    recurrenceMap: Map<number, any>
+    userTasks: StatsTask[],
+    occurrences: StatsOccurrence[],
+    recurrenceMap: Map<number, StatsRecurrence>
   ): LowComplianceHabit[] {
     // Filter habits (tasks with recurrence and no maxOccurrences or maxOccurrences > 10)
     const habitTasks = userTasks.filter((t) => {
@@ -76,15 +77,22 @@ export class AdvancedInsightsCalculator {
   /**
    * Calculate completion trend over time (by week)
    */
-  private calculateCompletionTrend(occurrences: any[]): TrendPoint[] {
+  private calculateCompletionTrend(occurrences: StatsOccurrence[]): TrendPoint[] {
     const trendByWeek = new Map<string, { completed: number; total: number }>();
+    let invalidDates = 0;
 
     for (const occ of occurrences) {
-      if (!occ?.startDate) continue;
+      if (!occ?.startDate) {
+        invalidDates++;
+        continue;
+      }
 
       try {
         const date = new Date(occ.startDate);
-        if (isNaN(date.getTime())) continue;
+        if (isNaN(date.getTime())) {
+          invalidDates++;
+          continue;
+        }
 
         const weekKey = StatsUtils.getWeekKey(date);
 
@@ -97,23 +105,31 @@ export class AdvancedInsightsCalculator {
           week.completed++;
         }
       } catch (error) {
+        invalidDates++;
         continue;
       }
     }
 
-    return Array.from(trendByWeek.entries())
+    if (invalidDates > 0) {
+      console.warn(`[AdvancedInsights] Skipped ${invalidDates} occurrences with invalid dates in trend`);
+    }
+
+    const result = Array.from(trendByWeek.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .slice(-12) // Last 12 weeks
       .map(([period, data]) => ({
         period,
         completionRate: data.total > 0 ? (data.completed / data.total) * 100 : 0,
       }));
+
+    console.log(`[AdvancedInsights] Calculated completion trend for ${result.length} weeks`);
+    return result;
   }
 
   /**
    * Compare recurring vs unique task completion rates
    */
-  private calculateRecurringVsUniqueComparison(userTasks: any[], occurrences: any[]) {
+  private calculateRecurringVsUniqueComparison(userTasks: StatsTask[], occurrences: StatsOccurrence[]) {
     const recurringTaskIds = new Set(
       userTasks.filter((t) => t?.recurrenceId).map((t) => t.id)
     );
@@ -143,7 +159,7 @@ export class AdvancedInsightsCalculator {
   /**
    * Identify tasks with high pending or skipped occurrences
    */
-  private calculateBottlenecks(userTasks: any[], occurrences: any[]): Bottleneck[] {
+  private calculateBottlenecks(userTasks: StatsTask[], occurrences: StatsOccurrence[]): Bottleneck[] {
     const taskOccurrenceMap = new Map<number, any[]>();
 
     for (const occ of occurrences) {
