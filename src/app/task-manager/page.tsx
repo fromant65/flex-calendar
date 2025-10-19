@@ -7,6 +7,7 @@ import { LoadingSpinner } from "~/components/ui/loading-spinner";
 import { AlertCircle } from "lucide-react";
 import type { TaskType } from "~/server/api/services/types";
 import { TaskCard } from "~/components/task-manager/task-card";
+import { HelpTip } from "~/components/ui/help-tip";
 import { ConfirmActionDialog } from "~/components/task-manager/confirm-action-dialog";
 import { EditOccurrenceDialog } from "~/components/task-manager/edit-occurrence-dialog";
 
@@ -137,10 +138,15 @@ export default function TaskManagerPage() {
       {/* Header */}
       <div className="border-b border-border bg-card/50 backdrop-blur-sm flex-shrink-0">
         <div className="container mx-auto px-4 lg:px-6 py-6">
-          <h1 className="text-3xl font-bold text-foreground">Gestor de Ocurrencias</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Gestiona y completa las ocurrencias de tus tareas
-          </p>
+          <div className="flex items-center gap-2">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Gestor de Ocurrencias</h1>
+              <p className="text-sm text-muted-foreground mt-1">Gestiona y completa las ocurrencias de tus tareas</p>
+            </div>
+            <HelpTip title="Cómo usar el gestor">
+              En esta página verás las ocurrencias agrupadas por tarea. Expande una tarjeta para editar, completar o saltar ocurrencias. Usa los diálogos para confirmar acciones.
+            </HelpTip>
+          </div>
         </div>
       </div>
 

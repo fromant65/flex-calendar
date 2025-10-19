@@ -2,6 +2,7 @@ import { Card, CardContent } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { CheckCircle2, Edit, AlertCircle, SkipForward } from "lucide-react";
+import HelpTip from "~/components/ui/help-tip"
 
 interface OccurrenceCardProps {
   occurrence: any;
@@ -103,6 +104,13 @@ export function OccurrenceCard({
     <div className="rounded-lg border border-border bg-card p-3.5 transition-all hover:border-primary/30 hover:shadow-md">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex-1 space-y-2.5">
+          <div className="flex items-center justify-end">
+            <HelpTip title="Acciones sobre ocurrencia">
+              Editar: cambiar horas dedicadas. <br />
+              Saltar: marcar la ocurrencia como no realizada. <br />
+              Completar: marcar como hecha y registrar tiempo dedicado.
+            </HelpTip>
+          </div>
           {/* Status and urgency badges */}
           <div className="flex items-center gap-2 flex-wrap">
             {getStatusBadge(occurrence.status)}

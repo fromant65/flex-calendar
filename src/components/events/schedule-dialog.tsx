@@ -4,6 +4,7 @@ import type { EventWithDetails, OccurrenceWithTask } from "~/types"
 import { useState, useEffect } from "react"
 import { Button } from "../ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog"
+import { HelpTip } from "~/components/ui/help-tip"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 
@@ -88,6 +89,13 @@ export function ScheduleDialog({
             {event ? "Actualiza el horario de este evento" : "Establece el rango de tiempo para esta tarea"}
           </DialogDescription>
         </DialogHeader>
+
+        <div className="px-4">
+          <HelpTip title="Sobre este formulario" side="bottom">
+            <p className="mb-1">Aquí defines la hora de inicio y fin del evento. Si editas un evento fijo, algunos campos pueden estar bloqueados.</p>
+            <p className="text-xs text-muted-foreground">La duración calculada se mostrará automáticamente. Asegúrate de que la hora de fin sea posterior a la de inicio.</p>
+          </HelpTip>
+        </div>
 
         {task && (
           <div className="space-y-4">

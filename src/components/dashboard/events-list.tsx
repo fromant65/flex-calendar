@@ -2,6 +2,7 @@
 
 import type { EventWithDetails } from "~/types"
 import { Calendar, Clock, CheckCircle2, AlertCircle } from "lucide-react"
+import HelpTip from "~/components/ui/help-tip"
 import { cn } from "~/lib/utils"
 
 interface EventsListProps {
@@ -12,6 +13,13 @@ interface EventsListProps {
 }
 
 export function EventsList({ events, title, emptyMessage = "No hay eventos", onEventClick }: EventsListProps) {
+  const helpText = (
+    <>
+      Esta lista muestra eventos programados. Puedes tocar un evento para abrir sus detalles,
+      marcarlo como completado, o ver cuánto tiempo se dedicó. Los eventos pueden estar vinculados
+      a tareas (aparecerá el nombre de la tarea) y pueden ser fijos o flexibles.
+    </>
+  )
   if (events.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -25,6 +33,9 @@ export function EventsList({ events, title, emptyMessage = "No hay eventos", onE
 
   return (
     <div className="space-y-2.5">
+      <div className="flex items-center justify-end">
+        <HelpTip title={title}>{helpText}</HelpTip>
+      </div>
       {events.map((event) => {
         const task = event.occurrence?.task
         const startTime = new Date(event.start)

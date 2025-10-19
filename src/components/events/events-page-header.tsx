@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "~/components/ui/button"
+import { HelpTip } from "~/components/ui/help-tip"
 import { Grid3x3, Calendar } from "lucide-react"
 import { useEventsContext } from "./events-context"
 
@@ -15,11 +16,17 @@ export function EventsPageHeader() {
       <div className="px-4 lg:px-6 py-4">
         {/* Layout: 2 rows on <sm, 2 columns on >=sm */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-foreground">Planificador de Tareas</h1>
-            <p className="hidden sm:block text-xs lg:text-sm text-muted-foreground">
-              Organiza y programa tus tareas de manera eficiente
-            </p>
+          <div className="flex items-center gap-2">
+            <div>
+              <h1 className="text-xl lg:text-2xl font-bold text-foreground">Planificador de Tareas</h1>
+              <p className="hidden sm:block text-xs lg:text-sm text-muted-foreground">
+                Organiza y programa tus tareas de manera eficiente
+              </p>
+            </div>
+            <HelpTip title="Cómo usar Eventos" side="right">
+              <p className="mb-1">Matriz: clasifica tareas por urgencia e importancia. <br /> Calendario: Permite programar tareas en eventos. Haz click para ver o editar detalles de los eventos.</p>
+              <p className="text-xs text-muted-foreground">Para completar un evento haz click sobre él y usa la acción en la tarjeta.</p>
+            </HelpTip>
           </div>
 
           {/* Mobile view toggle - only visible on screens < lg */}

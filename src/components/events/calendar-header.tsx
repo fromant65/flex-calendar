@@ -3,6 +3,7 @@
 import { Button } from "~/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { CalendarView } from "~/types"
+import HelpTip from "~/components/ui/help-tip"
 
 // TODO: Modular component - CalendarHeader
 // Handles calendar navigation and view selection
@@ -44,6 +45,11 @@ export function CalendarHeader({
       </div>
 
       <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="hidden lg:block">
+          <HelpTip title="Ayuda del calendario">
+            Puedes arrastrar eventos para reubicarlos.
+          </HelpTip>
+        </div>
         <Button
           variant={view === "day" ? "default" : "outline"}
           className="cursor-pointer flex-1 sm:flex-none"

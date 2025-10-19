@@ -6,6 +6,7 @@ import { mockTimelineApi, type TimelineData } from "~/lib/mock-timeline-data"
 import type { OccurrenceWithTask, EventWithDetails } from "~/types"
 import { api } from "~/trpc/react"
 import { TimelineControls, type NavigationInterval } from "./timeline-controls"
+import { HelpTip } from "~/components/ui/help-tip"
 import { TimelineHeader } from "./timeline-header"
 import { TimelineTaskRow } from "./timeline-task-row"
 import { TimelineModals, type DayCellDetails } from "./timeline-modals"
@@ -187,7 +188,8 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
   return (
     <div className="flex h-full flex-col gap-2 bg-background p-4">
       {/* Header Controls */}
-      <TimelineControls
+      <div className="flex items-center justify-between">
+        <TimelineControls
         navigationInterval={navigationInterval}
         setNavigationInterval={setNavigationInterval}
         daysToShow={daysToShow}
@@ -195,7 +197,15 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
         onPrevious={goToPrevious}
         onNext={goToNext}
         onToday={goToToday}
-      />
+        />
+        <HelpTip title="Vista Línea de Tiempo" side="left">
+          <p className="mb-1">
+            Usa la vista para cambiar la granularidad (horas/días/meses). <br />
+            También puedes ajustar qué periodo saltas al moverte con las flechas con la opción de salto. <br />
+            Haz click en una celda para ver ocurrencias y eventos.
+          </p>
+        </HelpTip>
+      </div>
 
       {/* Timeline Container */}
       <div className="flex-1 overflow-auto rounded-lg border border-border bg-card shadow-sm">

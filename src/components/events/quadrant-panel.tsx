@@ -14,9 +14,6 @@ import {
   DropdownMenuSeparator,
 } from "~/components/ui/dropdown-menu"
 
-// TODO: Modular component - QuadrantPanel
-// Renders a single quadrant in the Eisenhower Matrix with sorting options
-
 interface QuadrantPanelProps {
   title: string
   subtitle: string

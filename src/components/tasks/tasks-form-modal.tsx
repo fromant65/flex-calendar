@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"
 import { api } from "~/trpc/react"
 import type { TaskWithRecurrence } from "~/types"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "~/components/ui/dialog"
+import HelpTip from "~/components/ui/help-tip"
 import { Button } from "~/components/ui/button"
 import { LoadingSpinner } from "~/components/ui/loading-spinner"
 import { toast } from "sonner"
@@ -238,6 +239,19 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="px-2">
+            <HelpTip title="Tipos de tarea" side="bottom">
+              <p className="mb-1">
+                Única: una sola ocurrencia. <br />
+                Recurrente (Finita): se repite según intervalo/días, una cantidad definida de veces. <br />
+                Hábito: una ocurrencia por periodo. <br />
+                Hábito +: una o más ocurrencias por periodo, con la capacidad de definir días específicos de ocurrencia. <br />
+                Fija Única: asigna hora y/o fecha fijas para una única ocurrencia. <br />
+                Fija Repetitiva: asigna hora fija y días específicos para una cantidad definida de ocurrencias.
+              </p>
+              <p className="text-xs text-muted-foreground">El tipo determina qué campos adicionales aparecen en este formulario (fechas, recurrencia, horarios fijos).</p>
+            </HelpTip>
+          </div>
           {/* Basic Information */}
           <TaskBasicInfo
             name={formData.name}
@@ -249,6 +263,8 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
             onImportanceChange={(value) => setFormData({ ...formData, importance: value })}
             onTargetTimeChange={(value) => setFormData({ ...formData, targetTimeConsumption: value })}
           />
+
+          {/* removed inline HelpTip that was in middle of form to keep top placement */}
 
           {/* Task Type Selection */}
           {!editingTask && (

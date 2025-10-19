@@ -4,6 +4,7 @@ import type { OccurrenceWithTask, QuadrantPosition } from "~/types"
 import { calculateQuadrant, getQuadrantLabel } from "~/lib/eisenhower-utils"
 import { useMemo } from "react"
 import { QuadrantPanel } from "./quadrant-panel"
+import HelpTip from "~/components/ui/help-tip"
 
 // TODO: Modularized component - EisenhowerMatrix
 // Main matrix layout, delegates quadrant rendering to QuadrantPanel
@@ -41,6 +42,18 @@ export function EisenhowerMatrix({
 
   return (
     <div className="h-full flex flex-col">
+      <div className="flex justify-end p-2">
+        <HelpTip title="Matriz Eisenhower">
+          La matriz clasifica ocurrencias según urgencia e importancia. <br />
+          Haz doble click para ver detalles de la misma.
+          <div className="hidden lg:block">
+            Arrastra tareas al calendario para programar su ejecución.
+          </div>
+          <div className="lg:hidden">
+            Selecciona una tarea para programarla en el calendario.
+          </div>
+        </HelpTip>
+      </div>
       <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-px bg-border p-px overflow-hidden">
         {/* Top Left: Not Urgent but Important */}
         <QuadrantPanel
