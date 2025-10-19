@@ -4,13 +4,16 @@ import type { OccurrenceWithTask } from "~/types"
 import { Star, Calendar, Clock, Flag, AlertCircle } from "lucide-react"
 import { cn } from "~/lib/utils"
 import { getTaskTypeClassName } from "~/lib/task-type-colors"
+import { TaskActionButtons } from "./task-action-buttons"
 
 interface ImportantTasksListProps {
   occurrences: OccurrenceWithTask[]
   onTaskClick?: (occurrence: OccurrenceWithTask) => void
+  onCompleteTask?: (occurrence: OccurrenceWithTask) => void
+  onSkipTask?: (occurrence: OccurrenceWithTask) => void
 }
 
-export function ImportantTasksList({ occurrences, onTaskClick }: ImportantTasksListProps) {
+export function ImportantTasksList({ occurrences, onTaskClick, onCompleteTask, onSkipTask }: ImportantTasksListProps) {
   if (occurrences.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -37,8 +40,8 @@ export function ImportantTasksList({ occurrences, onTaskClick }: ImportantTasksL
           "normal"
         
         const importanceColors = {
-          high: "border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50",
-          medium: "border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 hover:border-blue-500/50",
+          high: "border-primary/30 hover:border-primary/50",
+          medium: "border-blue-500/30 hover:border-blue-500/50",
           normal: "border-border bg-card/50 hover:bg-card hover:border-primary/30",
         }
 
@@ -51,9 +54,8 @@ export function ImportantTasksList({ occurrences, onTaskClick }: ImportantTasksL
         return (
           <div
             key={occurrence.id}
-            onClick={() => onTaskClick?.(occurrence)}
             className={cn(
-              "group relative cursor-pointer rounded-lg border p-3.5 transition-all hover:shadow-md",
+              "group relative rounded-lg border p-3.5 transition-all hover:shadow-md",
               importanceColors[importanceLevel]
             )}
           >
@@ -68,9 +70,17 @@ export function ImportantTasksList({ occurrences, onTaskClick }: ImportantTasksL
             {/* Task content */}
             <div className="space-y-2">
               <div className="flex items-start justify-between gap-2">
-                <h3 className="font-semibold text-sm text-foreground line-clamp-1 pr-6">
+                <h3 
+                  className="font-semibold text-sm text-foreground line-clamp-1 flex-1 cursor-pointer hover:text-primary transition-colors"
+                  onClick={() => onTaskClick?.(occurrence)}
+                >
                   {task?.name || "Sin nombre"}
                 </h3>
+                <TaskActionButtons
+                  occurrence={occurrence}
+                  onComplete={onCompleteTask}
+                  onSkip={onSkipTask}
+                />
               </div>
 
               {task?.description && (

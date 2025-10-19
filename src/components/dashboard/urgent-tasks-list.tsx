@@ -4,13 +4,16 @@ import type { OccurrenceWithTask } from "~/types"
 import { AlertCircle, Calendar, Clock, Flag } from "lucide-react"
 import { cn } from "~/lib/utils"
 import { getTaskTypeClassName } from "~/lib/task-type-colors"
+import { TaskActionButtons } from "./task-action-buttons"
 
 interface UrgentTasksListProps {
   occurrences: OccurrenceWithTask[]
   onTaskClick?: (occurrence: OccurrenceWithTask) => void
+  onCompleteTask?: (occurrence: OccurrenceWithTask) => void
+  onSkipTask?: (occurrence: OccurrenceWithTask) => void
 }
 
-export function UrgentTasksList({ occurrences, onTaskClick }: UrgentTasksListProps) {
+export function UrgentTasksList({ occurrences, onTaskClick, onCompleteTask, onSkipTask }: UrgentTasksListProps) {
   if (occurrences.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -32,14 +35,14 @@ export function UrgentTasksList({ occurrences, onTaskClick }: UrgentTasksListPro
         
         // Determine urgency level for styling
         const urgencyLevel = 
-          urgency >= 8 ? "critical" : 
-          urgency >= 6 ? "high" : 
+          urgency >= 9 ? "critical" : 
+          urgency >= 7 ? "high" : 
           "medium"
         
         const urgencyColors = {
-          critical: "border-destructive/30 bg-destructive/5 hover:bg-destructive/10 hover:border-destructive/50",
-          high: "border-orange-500/30 bg-orange-500/5 hover:bg-orange-500/10 hover:border-orange-500/50",
-          medium: "border-yellow-500/30 bg-yellow-500/5 hover:bg-yellow-500/10 hover:border-yellow-500/50",
+          critical: "border-destructive/30 hover:border-destructive/50",
+          high: "border-orange-500/30 hover:border-orange-500/50",
+          medium: "border-yellow-500/30 hover:border-yellow-500/50",
         }
 
         const urgencyTextColors = {
@@ -51,9 +54,8 @@ export function UrgentTasksList({ occurrences, onTaskClick }: UrgentTasksListPro
         return (
           <div
             key={occurrence.id}
-            onClick={() => onTaskClick?.(occurrence)}
             className={cn(
-              "group relative cursor-pointer rounded-lg border p-3.5 transition-all hover:shadow-md",
+              "group relative rounded-lg border p-3.5 transition-all hover:shadow-md",
               urgencyColors[urgencyLevel]
             )}
           >
@@ -67,9 +69,17 @@ export function UrgentTasksList({ occurrences, onTaskClick }: UrgentTasksListPro
             {/* Task content */}
             <div className="space-y-2">
               <div className="flex items-start justify-between gap-2">
-                <h3 className="font-semibold text-sm text-foreground line-clamp-1 pr-6">
+                <h3 
+                  className="font-semibold text-sm text-foreground line-clamp-1 flex-1 cursor-pointer hover:text-primary transition-colors"
+                  onClick={() => onTaskClick?.(occurrence)}
+                >
                   {task?.name || "Sin nombre"}
                 </h3>
+                <TaskActionButtons
+                  occurrence={occurrence}
+                  onComplete={onCompleteTask}
+                  onSkip={onSkipTask}
+                />
               </div>
 
               {task?.description && (

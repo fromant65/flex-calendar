@@ -5,9 +5,11 @@ import { UrgentTasksList } from "~/components/dashboard/urgent-tasks-list"
 import { ImportantTasksList } from "~/components/dashboard/important-tasks-list"
 import { DayWeekEvents } from "~/components/dashboard/events-list"
 import { TaskDetailsModal } from "~/components/events/task-details-modal"
+import { TaskConfirmationDialogs } from "~/components/dashboard/task-confirmation-dialogs"
 import { LoadingPage } from "~/components/ui/loading-spinner"
 import { useState } from "react"
 import type { OccurrenceWithTask, EventWithDetails } from "~/types"
+import { toast } from "sonner"
 
 interface DashboardClientProps {
   userName: string
@@ -18,6 +20,10 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
   const [selectedOccurrence, setSelectedOccurrence] = useState<OccurrenceWithTask | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<EventWithDetails | null>(null)
   const [detailsModalOpen, setDetailsModalOpen] = useState(false)
+  const [confirmCompleteOpen, setConfirmCompleteOpen] = useState(false)
+  const [confirmSkipOpen, setConfirmSkipOpen] = useState(false)
+  const [occurrenceToComplete, setOccurrenceToComplete] = useState<OccurrenceWithTask | null>(null)
+  const [occurrenceToSkip, setOccurrenceToSkip] = useState<OccurrenceWithTask | null>(null)
 
   // Fetch data
   const { data: urgentOccurrences = [], isLoading: urgentLoading } = api.task.getByUrgency.useQuery()
@@ -26,6 +32,68 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
   const { data: weekEvents = [], isLoading: weekLoading } = api.calendarEvent.getWeekEvents.useQuery()
   
   const utils = api.useUtils()
+
+  const completeOccurrenceMutation = api.occurrence.complete.useMutation({
+    onSuccess: async () => {
+      toast.success("¡Tarea completada!", {
+        description: "La tarea ha sido marcada como completada",
+      })
+      // Invalidate all queries to refresh data
+      await utils.task.getByUrgency.invalidate()
+      await utils.task.getByImportance.invalidate()
+      await utils.calendarEvent.getTodayEvents.invalidate()
+      await utils.calendarEvent.getWeekEvents.invalidate()
+      setConfirmCompleteOpen(false)
+      setOccurrenceToComplete(null)
+    },
+    onError: (error) => {
+      toast.error("Error al completar tarea", {
+        description: error.message || "Hubo un problema al completar la tarea",
+      })
+      console.error("Error completing occurrence:", error)
+    }
+  })
+
+  const skipOccurrenceMutation = api.occurrence.skip.useMutation({
+    onSuccess: async () => {
+      toast.info("Tarea saltada", {
+        description: "La tarea ha sido marcada como saltada",
+      })
+      // Invalidate all queries to refresh data
+      await utils.task.getByUrgency.invalidate()
+      await utils.task.getByImportance.invalidate()
+      await utils.calendarEvent.getTodayEvents.invalidate()
+      await utils.calendarEvent.getWeekEvents.invalidate()
+      setConfirmSkipOpen(false)
+      setOccurrenceToSkip(null)
+    },
+    onError: (error) => {
+      toast.error("Error al saltar tarea", {
+        description: error.message || "Hubo un problema al saltar la tarea",
+      })
+      console.error("Error skipping occurrence:", error)
+    }
+  })
+
+  const handleCompleteTask = (occurrence: OccurrenceWithTask) => {
+    setOccurrenceToComplete(occurrence)
+    setConfirmCompleteOpen(true)
+  }
+
+  const handleSkipTask = (occurrence: OccurrenceWithTask) => {
+    setOccurrenceToSkip(occurrence)
+    setConfirmSkipOpen(true)
+  }
+
+  const confirmCompleteTask = () => {
+    if (!occurrenceToComplete) return
+    completeOccurrenceMutation.mutate({ id: occurrenceToComplete.id })
+  }
+
+  const confirmSkipTask = () => {
+    if (!occurrenceToSkip) return
+    skipOccurrenceMutation.mutate({ id: occurrenceToSkip.id })
+  }
 
   const handleTaskClick = (occurrence: OccurrenceWithTask) => {
     setSelectedOccurrence(occurrence)
@@ -86,6 +154,8 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
             <UrgentTasksList 
               occurrences={topUrgentOccurrences} 
               onTaskClick={handleTaskClick}
+              onCompleteTask={handleCompleteTask}
+              onSkipTask={handleSkipTask}
             />
           </div>
 
@@ -102,6 +172,8 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
             <ImportantTasksList 
               occurrences={topImportantOccurrences} 
               onTaskClick={handleTaskClick}
+              onCompleteTask={handleCompleteTask}
+              onSkipTask={handleSkipTask}
             />
           </div>
         </div>
@@ -124,6 +196,20 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
         occurrence={selectedOccurrence}
         event={selectedEvent}
         onEventCompleted={handleEventCompleted}
+      />
+
+      {/* Task Confirmation Dialogs */}
+      <TaskConfirmationDialogs
+        confirmCompleteOpen={confirmCompleteOpen}
+        onConfirmCompleteChange={setConfirmCompleteOpen}
+        occurrenceToComplete={occurrenceToComplete}
+        onConfirmComplete={confirmCompleteTask}
+        isCompleting={completeOccurrenceMutation.isPending}
+        confirmSkipOpen={confirmSkipOpen}
+        onConfirmSkipChange={setConfirmSkipOpen}
+        occurrenceToSkip={occurrenceToSkip}
+        onConfirmSkip={confirmSkipTask}
+        isSkipping={skipOccurrenceMutation.isPending}
       />
     </div>
   )
