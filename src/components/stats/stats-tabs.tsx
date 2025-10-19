@@ -35,7 +35,7 @@ interface StatsTabsProps {
 export function StatsTabs({ activeSection, onSectionChange }: StatsTabsProps) {
   return (
     <div className="flex overflow-x-auto scrollbar-hide">
-      <div className="flex gap-1 p-2 min-w-full">
+      <div className="flex gap-1 p-2 min-w-full justify-around">
         {tabs.map((tab) => {
           const Icon = tab.icon
           const isActive = activeSection === tab.id
@@ -45,7 +45,7 @@ export function StatsTabs({ activeSection, onSectionChange }: StatsTabsProps) {
               key={tab.id}
               onClick={() => onSectionChange(tab.id)}
               className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all flex-shrink-0",
+                "flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all flex-shrink-0",
                 "hover:bg-accent hover:text-accent-foreground",
                 isActive 
                   ? "bg-primary text-primary-foreground" 
@@ -53,8 +53,7 @@ export function StatsTabs({ activeSection, onSectionChange }: StatsTabsProps) {
               )}
             >
               <Icon className="h-4 w-4" />
-              <span className="hidden xs:inline">{tab.label}</span>
-              <span className="xs:hidden">{tab.shortLabel}</span>
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           )
         })}

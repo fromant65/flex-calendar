@@ -18,7 +18,6 @@ import type { StatsSection } from "~/components/stats/types"
 export default function StatsPage() {
   const [activeSection, setActiveSection] = useState<StatsSection>("tasks")
   
-  // Fetch stats granularly based on active section
   const { data: taskStats, isLoading: loadingTask, error: errorTask } = 
     api.stats.getTaskStats.useQuery(undefined, { enabled: activeSection === "tasks" })
   
@@ -108,13 +107,13 @@ export default function StatsPage() {
         <StatsPageHeader />
       </div>
 
-      {/* Mobile Tabs - Fixed below navbar */}
-      <div className="lg:hidden sticky top-14 z-40 bg-background border-b">
+      {/* Mobile Tabs - Fixed at bottom of screen */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t">
         <StatsTabs activeSection={activeSection} onSectionChange={setActiveSection} />
       </div>
 
-      <div className="container mx-auto p-4 md:p-8 flex-1">
-        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-8">
+      <div className="container mx-auto p-4 md:p-8 flex-1 pb-16 lg:mb-0">
+        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-4 lg:gap-8">
           {/* Desktop Navigation - Sidebar */}
           <aside className="hidden lg:block">
             <StatsNavigation activeSection={activeSection} onSectionChange={setActiveSection} />

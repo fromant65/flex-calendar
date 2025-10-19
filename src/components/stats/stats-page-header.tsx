@@ -4,7 +4,7 @@ import { BarChart3 } from "lucide-react"
 
 export function StatsPageHeader() {
   return (
-    <div className="mb-6">
+    <div className="mb-3">
       <div className="flex items-center gap-3 mb-2">
         <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
           <BarChart3 className="h-6 w-6 text-primary" />

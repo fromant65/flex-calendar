@@ -180,9 +180,9 @@ export function TaskStatsSection({ data }: TaskStatsSectionProps) {
       </div>
 
       {/* Charts */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
         {/* Importance Distribution Chart */}
-        <Card className="col-span-2">
+        <Card className="md:col-span-2">
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
               <div>
