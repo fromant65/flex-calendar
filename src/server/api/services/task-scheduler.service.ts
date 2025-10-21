@@ -99,29 +99,43 @@ export class TaskSchedulerService {
   /**
    * Increment completed occurrences counter
    * Called when an occurrence is completed
+   * @param recurrenceId - The recurrence ID
+   * @param occurrenceStartDate - The startDate of the occurrence being completed
    */
-  async incrementCompletedOccurrences(recurrenceId: number): Promise<void> {
+  async incrementCompletedOccurrences(recurrenceId: number, occurrenceStartDate: Date): Promise<void> {
     const recurrence = await this.recurrenceRepo.findById(recurrenceId);
     if (!recurrence) return;
 
-    const currentDate = new Date();
+    // Determine which period the occurrence belongs to
+    const currentPeriodStart = recurrence.lastPeriodStart ?? new Date();
+    const currentPeriodEnd = new Date(currentPeriodStart);
+    if (recurrence.interval) {
+      currentPeriodEnd.setDate(currentPeriodEnd.getDate() + recurrence.interval);
+    }
 
-    // Check if we need to start a new period first
-    if (this.shouldStartNewPeriod(recurrence.lastPeriodStart, recurrence.interval, currentDate)) {
-      // If completing an occurrence in a new period, start fresh with count = 1
-      const nextPeriodStart = recurrence.lastPeriodStart
-        ? this.getNextPeriodStart(recurrence.lastPeriodStart, recurrence.interval!)
-        : currentDate;
+    // Check if the occurrence belongs to the current period
+    const occurrenceInCurrentPeriod = 
+      occurrenceStartDate >= currentPeriodStart && 
+      occurrenceStartDate < currentPeriodEnd;
 
-      await this.recurrenceRepo.updateById(recurrenceId, {
-        completedOccurrences: 1,
-        lastPeriodStart: nextPeriodStart,
-      });
-    } else {
+    if (occurrenceInCurrentPeriod) {
       // Increment in current period
       await this.recurrenceRepo.updateById(recurrenceId, {
         completedOccurrences: (recurrence.completedOccurrences ?? 0) + 1,
       });
+    }
+    else if (occurrenceStartDate >= currentPeriodEnd) {
+      // The occurrence is in a future period, advance to that period and set count to 1
+      const nextPeriodStart = this.getNextPeriodStart(currentPeriodStart, recurrence.interval!);
+      await this.recurrenceRepo.updateById(recurrenceId, {
+        completedOccurrences: 1,
+        lastPeriodStart: nextPeriodStart,
+      });
+    }
+    else {
+      // Occurrence is from past period (backlog), don't increment counter
+      // No database update needed
+      return;
     }
   }
 
@@ -142,15 +156,22 @@ export class TaskSchedulerService {
       interval?: number | null;
       daysOfWeek?: string[] | null;
       daysOfMonth?: number[] | null;
+      maxOccurrences?: number | null;
+      completedOccurrences?: number | null;
     }
   ): Date {
     const nextDate = new Date(lastOccurrenceDate);
 
     // Case 1: Interval-based (every N days/weeks/months)
     if (recurrence.interval) {
-      // For now, assume interval is in days
-      // TODO: Add support for week/month intervals with a unit field
-      nextDate.setDate(nextDate.getDate() + recurrence.interval);
+      // For habits+ with maxOccurrences, distribute occurrences uniformly within the period
+      if (recurrence.maxOccurrences && recurrence.maxOccurrences > 1) {
+        const distributedInterval = Math.floor(recurrence.interval / recurrence.maxOccurrences);
+        nextDate.setDate(nextDate.getDate() + distributedInterval);
+      } else {
+        // For regular habits, use the full interval
+        nextDate.setDate(nextDate.getDate() + recurrence.interval);
+      }
       return nextDate;
     }
 
@@ -355,77 +376,71 @@ export class TaskSchedulerService {
       return;
     }
 
-    // Check if we've reached the period limit
-    if (this.hasReachedPeriodLimit(updatedRecurrence)) {
-      // Schedule occurrence for the start of next period
-      const nextPeriodStart = updatedRecurrence.lastPeriodStart
-        ? this.getNextPeriodStart(updatedRecurrence.lastPeriodStart, updatedRecurrence.interval!)
-        : new Date();
-
-      // Calculate target and limit dates for this occurrence
-      // Use initial dates if provided (for first occurrence), otherwise calculate
-      let targetDate: Date;
-      let limitDate: Date;
-      
-      if (initialDates?.targetDate || initialDates?.limitDate) {
-        targetDate = initialDates.targetDate ?? this.calculateOccurrenceDates(nextPeriodStart, updatedRecurrence).targetDate;
-        limitDate = initialDates.limitDate ?? this.calculateOccurrenceDates(nextPeriodStart, updatedRecurrence).limitDate;
-      } else {
-        const calculated = this.calculateOccurrenceDates(nextPeriodStart, updatedRecurrence);
-        targetDate = calculated.targetDate;
-        limitDate = calculated.limitDate;
-      }
-
-      // Get targetTimeConsumption from initial dates or latest occurrence
-      const latestOccurrence = await this.occurrenceAdapter.getLatestOccurrenceByTaskId(taskId);
-
-      const occurrenceData: CreateOccurrenceDTO = {
-        associatedTaskId: taskId,
-        startDate: nextPeriodStart,
-        targetDate,
-        limitDate,
-        targetTimeConsumption: initialDates?.targetTimeConsumption ?? latestOccurrence?.targetTimeConsumption ?? undefined,
-      };
-
-      await this.occurrenceAdapter.createOccurrence(occurrenceData);
+    // Get the latest occurrence to calculate next date
+    const latestOccurrence = await this.occurrenceAdapter.getLatestOccurrenceByTaskId(taskId);
+    
+    // For the first occurrence, use current date. For subsequent ones, calculate next date
+    let nextDate: Date;
+    if (!latestOccurrence) {
+      // First occurrence - start now
+      nextDate = new Date();
     } else {
-      // Create occurrence for current period
-      const latestOccurrence = await this.occurrenceAdapter.getLatestOccurrenceByTaskId(taskId);
-      
-      // For the first occurrence, use current date. For subsequent ones, calculate next date
-      let nextDate: Date;
-      if (!latestOccurrence) {
-        // First occurrence - start now
-        nextDate = new Date();
-      } else {
-        // Subsequent occurrences - calculate next date
-        nextDate = this.calculateNextOccurrenceDate(latestOccurrence.startDate, updatedRecurrence);
-      }
-
-      // Calculate target and limit dates for this occurrence
-      // Use initial dates if provided (for first occurrence), otherwise calculate
-      let targetDate: Date;
-      let limitDate: Date;
-      
-      if (initialDates?.targetDate || initialDates?.limitDate) {
-        targetDate = initialDates.targetDate ?? this.calculateOccurrenceDates(nextDate, updatedRecurrence).targetDate;
-        limitDate = initialDates.limitDate ?? this.calculateOccurrenceDates(nextDate, updatedRecurrence).limitDate;
-      } else {
-        const calculated = this.calculateOccurrenceDates(nextDate, updatedRecurrence);
-        targetDate = calculated.targetDate;
-        limitDate = calculated.limitDate;
-      }
-
-      const occurrenceData: CreateOccurrenceDTO = {
-        associatedTaskId: taskId,
-        startDate: nextDate,
-        targetDate,
-        limitDate,
-        targetTimeConsumption: initialDates?.targetTimeConsumption ?? latestOccurrence?.targetTimeConsumption ?? undefined,
-      };
-
-      await this.occurrenceAdapter.createOccurrence(occurrenceData);
+      // Subsequent occurrences - calculate next date based on the last occurrence's startDate
+      nextDate = this.calculateNextOccurrenceDate(latestOccurrence.startDate, updatedRecurrence);
     }
+
+    // Check if nextDate is within the current period
+    const currentPeriodStart = updatedRecurrence.lastPeriodStart ?? new Date();
+    const currentPeriodEnd = new Date(currentPeriodStart);
+    if (updatedRecurrence.interval) {
+      currentPeriodEnd.setDate(currentPeriodEnd.getDate() + updatedRecurrence.interval);
+    }
+
+    // Check if we've completed all occurrences for this period
+    const hasCompletedAllInPeriod = this.hasReachedPeriodLimit(updatedRecurrence);
+    
+    // If we've completed all occurrences in the current period, move to next period
+    if (hasCompletedAllInPeriod && updatedRecurrence.interval) {
+      // All occurrences in current period are complete, move to next period
+      const nextPeriodStart = this.getNextPeriodStart(currentPeriodStart, updatedRecurrence.interval);
+
+      // Reset the occurrence counter and update lastPeriodStart
+      await this.recurrenceRepo.updateById(updatedRecurrence.id, {
+        completedOccurrences: 0,
+        lastPeriodStart: nextPeriodStart,
+      });
+      
+      // Update local copy for further calculations
+      updatedRecurrence.completedOccurrences = 0;
+      updatedRecurrence.lastPeriodStart = nextPeriodStart;
+
+      // Start from the new period
+      nextDate = nextPeriodStart;
+    }
+
+    // Calculate target and limit dates for this occurrence
+    // Use initial dates if provided (for first occurrence), otherwise calculate
+    let targetDate: Date;
+    let limitDate: Date;
+    
+    if (initialDates?.targetDate || initialDates?.limitDate) {
+      targetDate = initialDates.targetDate ?? this.calculateOccurrenceDates(nextDate, updatedRecurrence).targetDate;
+      limitDate = initialDates.limitDate ?? this.calculateOccurrenceDates(nextDate, updatedRecurrence).limitDate;
+    } else {
+      const calculated = this.calculateOccurrenceDates(nextDate, updatedRecurrence);
+      targetDate = calculated.targetDate;
+      limitDate = calculated.limitDate;
+    }
+
+    const occurrenceData: CreateOccurrenceDTO = {
+      associatedTaskId: taskId,
+      startDate: nextDate,
+      targetDate,
+      limitDate,
+      targetTimeConsumption: initialDates?.targetTimeConsumption ?? latestOccurrence?.targetTimeConsumption ?? undefined,
+    };
+
+    await this.occurrenceAdapter.createOccurrence(occurrenceData);
   }
 
   /**

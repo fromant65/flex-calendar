@@ -5,7 +5,7 @@ import { HelpTip } from "~/components/ui/help-tip"
 import { Grid3x3, Calendar } from "lucide-react"
 import { useEventsContext } from "./events-context"
 
-// TODO: Modular component - EventsPageHeader
+// Modular component - EventsPageHeader
 // Handles the page header with title and mobile view toggle
 
 export function EventsPageHeader() {

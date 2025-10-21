@@ -13,7 +13,8 @@ import { api } from "~/trpc/react"
 import { toast } from "sonner"
 import type { EventWithDetails, OccurrenceWithTask } from "~/types"
 
-// TODO: Modularized events page
+// TODO: Modularizar más
+// Modularized events page
 // Main responsibilities:
 // - Data fetching (events and occurrences)
 // - Event handlers (task selection, scheduling, drag-and-drop)
@@ -46,25 +47,19 @@ function EventsPageContent() {
     setConfirmScheduleDialogOpen,
     pendingScheduleTask,
     setPendingScheduleTask,
+    filterStartDate,
+    filterEndDate,
   } = useEventsContext()
 
   // Get utils for query invalidation
   const utils = api.useUtils()
 
-  // Calculate date range for queries (current week)
-  const today = new Date()
-  const startOfWeek = new Date(today)
-  startOfWeek.setDate(today.getDate() - today.getDay())
-  startOfWeek.setHours(0, 0, 0, 0)
-  const endOfWeek = new Date(startOfWeek)
-  endOfWeek.setDate(startOfWeek.getDate() + 7)
-
   // Fetch data using tRPC API
   const { data: eventsData = [], isLoading: eventsLoading, error: eventsError } = api.calendarEvent.getMyEventsWithDetails.useQuery()
 
   const { data: occurrencesData = [], isLoading: occurrencesLoading, error: occurrencesError } = api.occurrence.getByDateRange.useQuery({
-    startDate: startOfWeek,
-    endDate: endOfWeek,
+    startDate: filterStartDate,
+    endDate: filterEndDate,
   })
 
   // Show query errors as toasts (type-safe)

@@ -1,8 +1,12 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { CheckCircle2, Circle, Clock, TrendingUp, Calendar, ChevronDown, ChevronRight } from "lucide-react";
 import type { TaskType } from "~/server/api/services/types";
 import { OccurrenceCard } from "./occurrence-card";
+import { BacklogAlert } from "./backlog-alert";
+import { api } from "~/trpc/react";
 
 interface TaskCardProps {
   task: any;
@@ -14,8 +18,10 @@ interface TaskCardProps {
   onEditOccurrence: (id: number, timeConsumed: number | null) => void;
   onCompleteOccurrence: (id: number, taskName: string) => void;
   onSkipOccurrence: (id: number, taskName: string) => void;
+  onSkipBacklog: (taskId: number) => void;
   isCompleting?: boolean;
   isSkipping?: boolean;
+  isSkippingBacklog?: boolean;
 }
 
 // Helper to format dates
@@ -51,9 +57,16 @@ export function TaskCard({
   onEditOccurrence,
   onCompleteOccurrence,
   onSkipOccurrence,
+  onSkipBacklog,
   isCompleting = false,
   isSkipping = false,
+  isSkippingBacklog = false,
 }: TaskCardProps) {
+  // Detect backlog when expanded
+  const { data: backlogInfo } = api.occurrence.detectBacklog.useQuery(
+    { taskId: task.id },
+    { enabled: isExpanded }
+  );
   const activeOccurrences = occurrences.filter(
     (o: any) => o.status === "Pending" || o.status === "In Progress"
   );
@@ -118,6 +131,18 @@ export function TaskCard({
       {isExpanded && (
         <div className="border-t border-border bg-muted/20 p-5">
           <div className="space-y-4">
+            {/* Backlog Alert */}
+            {backlogInfo?.hasSevereBacklog && backlogInfo.oldestPendingDate && (
+              <BacklogAlert
+                taskId={task.id}
+                taskName={task.name}
+                pendingCount={backlogInfo.pendingCount}
+                oldestPendingDate={backlogInfo.oldestPendingDate}
+                onSkipBacklog={() => onSkipBacklog(task.id)}
+                isLoading={isSkippingBacklog}
+              />
+            )}
+
             {/* Next occurrence preview */}
             {nextOccurrenceDate && (
               <div className="rounded-lg bg-primary/10 border border-primary/20 p-3.5 mb-4">

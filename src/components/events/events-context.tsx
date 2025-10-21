@@ -3,7 +3,7 @@
 import type { CalendarView, EventWithDetails, OccurrenceWithTask } from "~/types"
 import { createContext, useContext, useState, type ReactNode } from "react"
 
-// TODO: Context for managing events page state and reducing prop drilling
+// Context for managing events page state and reducing prop drilling
 // This context handles:
 // - Calendar view state (day/week/month)
 // - Selected tasks and events
@@ -53,16 +53,34 @@ interface EventsContextValue {
   setConfirmScheduleDialogOpen: (open: boolean) => void
   pendingScheduleTask: OccurrenceWithTask | null
   setPendingScheduleTask: (task: OccurrenceWithTask | null) => void
+  
+  // Date range filter state
+  filterStartDate: Date
+  setFilterStartDate: (date: Date) => void
+  filterEndDate: Date
+  setFilterEndDate: (date: Date) => void
 }
 
 const EventsContext = createContext<EventsContextValue | null>(null)
 
 export function EventsProvider({ children }: { children: ReactNode }) {
+  // Calculate default date range (current week)
+  const today = new Date()
+  const defaultStartOfWeek = new Date(today)
+  defaultStartOfWeek.setDate(today.getDate() - today.getDay())
+  defaultStartOfWeek.setHours(0, 0, 0, 0)
+  const defaultEndOfWeek = new Date(defaultStartOfWeek)
+  defaultEndOfWeek.setDate(defaultStartOfWeek.getDate() + 7)
+  
   // Calendar state
   const [calendarView, setCalendarView] = useState<CalendarView>("week")
   
   // Selection state
   const [selectedTask, setSelectedTask] = useState<OccurrenceWithTask | null>(null)
+  
+  // Date range filter state
+  const [filterStartDate, setFilterStartDate] = useState<Date>(defaultStartOfWeek)
+  const [filterEndDate, setFilterEndDate] = useState<Date>(defaultEndOfWeek)
   
   // Drag state
   const [draggedTask, setDraggedTask] = useState<OccurrenceWithTask | null>(null)
@@ -117,6 +135,10 @@ export function EventsProvider({ children }: { children: ReactNode }) {
         setConfirmScheduleDialogOpen,
         pendingScheduleTask,
         setPendingScheduleTask,
+        filterStartDate,
+        setFilterStartDate,
+        filterEndDate,
+        setFilterEndDate,
       }}
     >
       {children}

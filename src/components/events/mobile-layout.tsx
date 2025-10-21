@@ -5,7 +5,7 @@ import { EisenhowerMatrix } from "./eisenhower-matrix"
 import { useEventsContext } from "./events-context"
 import type { EventWithDetails, OccurrenceWithTask } from "~/types"
 
-// TODO: Modular component - MobileLayout
+// Modular component - MobileLayout
 // Renders the mobile view with toggled matrix/calendar views
 
 interface MobileLayoutProps {

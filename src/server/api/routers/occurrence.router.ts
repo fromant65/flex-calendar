@@ -164,4 +164,27 @@ export const occurrenceRouter = createTRPCRouter({
       const service = new TaskLifecycleService();
       return await service.getOccurrenceEvents(input.occurrenceId);
     }),
+
+  /**
+   * Detect backlog for a task
+   * Returns information about pending occurrences that are in the past
+   */
+  detectBacklog: protectedProcedure
+    .input(z.object({ taskId: z.number() }))
+    .query(async ({ input }) => {
+      const service = new TaskLifecycleService();
+      return await service.detectBacklog(input.taskId);
+    }),
+
+  /**
+   * Skip all backlog occurrences except the most recent one
+   * Useful for catching up when user has fallen behind
+   */
+  skipBacklog: protectedProcedure
+    .input(z.object({ taskId: z.number() }))
+    .mutation(async ({ input }) => {
+      const service = new TaskLifecycleService();
+      const skippedCount = await service.skipBacklogOccurrences(input.taskId);
+      return { success: true, skippedCount };
+    }),
 });

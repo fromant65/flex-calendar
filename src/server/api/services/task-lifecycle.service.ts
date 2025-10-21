@@ -220,7 +220,7 @@ export class TaskLifecycleService {
       const recurrence = task.recurrence;
 
       // Increment completed occurrences counter for the period
-      await this.schedulerService.incrementCompletedOccurrences(recurrence.id);
+      await this.schedulerService.incrementCompletedOccurrences(recurrence.id, occurrence.startDate);
       
       // Tarea Única: maxOccurrences = 1, no interval
       if (recurrence.maxOccurrences === 1 && !recurrence.interval) {
@@ -276,7 +276,7 @@ export class TaskLifecycleService {
     const task = await this.taskAdapter.getTaskWithRecurrence(occurrence.task.id);
     if (task?.recurrence) {
       // Increment completed occurrences counter for the period (skipped counts)
-      await this.schedulerService.incrementCompletedOccurrences(task.recurrence.id);
+      await this.schedulerService.incrementCompletedOccurrences(task.recurrence.id, occurrence.startDate);
       
       // Create next occurrence
       await this.schedulerService.createNextOccurrence(task.id);
@@ -291,6 +291,164 @@ export class TaskLifecycleService {
    */
   async previewNextOccurrence(taskId: number): Promise<Date | null> {
     return await this.schedulerService.previewNextOccurrenceDate(taskId);
+  }
+
+  /**
+   * Detect and optionally skip backlog occurrences
+   * Returns information about pending occurrences and allows skipping them
+   * @param taskId - The task ID to check for backlog
+   * @returns Object with backlog information and skip function
+   */
+  async detectBacklog(taskId: number): Promise<{
+    hasSevereBacklog: boolean;
+    pendingCount: number;
+    oldestPendingDate: Date | null;
+    estimatedBacklogCount: number;
+    pendingOccurrences: Array<{ id: number; startDate: Date; status: string }>;
+  }> {
+    const task = await this.taskAdapter.getTaskWithRecurrence(taskId);
+    if (!task || !task.recurrence) {
+      return {
+        hasSevereBacklog: false,
+        pendingCount: 0,
+        oldestPendingDate: null,
+        estimatedBacklogCount: 0,
+        pendingOccurrences: [],
+      };
+    }
+
+    // Get all pending/in-progress occurrences for this task
+    const allOccurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
+    const pendingOccurrences = allOccurrences
+      .filter(occ => occ.status === "Pending" || occ.status === "InProgress")
+      .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+
+    if (pendingOccurrences.length === 0) {
+      return {
+        hasSevereBacklog: false,
+        pendingCount: 0,
+        oldestPendingDate: null,
+        estimatedBacklogCount: 0,
+        pendingOccurrences: [],
+      };
+    }
+
+    const oldestPending = pendingOccurrences[0]!;
+    const now = new Date();
+
+    // Calculate how many occurrences should have been generated based on recurrence pattern
+    let estimatedCount = 0;
+    if (task.recurrence.interval) {
+      // For interval-based recurrence, calculate how many periods have passed
+      const daysSinceOldest = Math.floor(
+        (now.getTime() - oldestPending.startDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      const periodsPassed = Math.floor(daysSinceOldest / task.recurrence.interval);
+      
+      // Each period can have maxOccurrences
+      if (task.recurrence.maxOccurrences) {
+        estimatedCount = periodsPassed * task.recurrence.maxOccurrences;
+      } else {
+        estimatedCount = periodsPassed;
+      }
+    } else if (task.recurrence.daysOfWeek) {
+      // For day-of-week based recurrence, count occurrences between oldest and now
+      estimatedCount = this.countOccurrencesBetweenDates(
+        oldestPending.startDate,
+        now,
+        task.recurrence.daysOfWeek
+      );
+    } else if (task.recurrence.daysOfMonth) {
+      // For day-of-month based recurrence
+      estimatedCount = this.countMonthlyOccurrencesBetweenDates(
+        oldestPending.startDate,
+        now,
+        task.recurrence.daysOfMonth
+      );
+    }
+
+    const hasSevereBacklog = pendingOccurrences.length > 5;
+
+    return {
+      hasSevereBacklog,
+      pendingCount: pendingOccurrences.length,
+      oldestPendingDate: oldestPending.startDate,
+      estimatedBacklogCount: estimatedCount,
+      pendingOccurrences: pendingOccurrences.map(occ => ({
+        id: occ.id,
+        startDate: occ.startDate,
+        status: occ.status,
+      })),
+    };
+  }
+
+  /**
+   * Skip all backlog occurrences except the most recent one
+   * @param taskId - The task ID
+   * @returns Number of occurrences skipped
+   */
+  async skipBacklogOccurrences(taskId: number): Promise<number> {
+    const backlogInfo = await this.detectBacklog(taskId);
+    
+    if (!backlogInfo.hasSevereBacklog || backlogInfo.pendingOccurrences.length <= 1) {
+      return 0; // Nothing to skip
+    }
+
+    // Skip all except the last (most recent) one
+    const toSkip = backlogInfo.pendingOccurrences.slice(0, -1);
+    
+    for (const occ of toSkip) {
+      await this.skipOccurrence(occ.id);
+    }
+
+    return toSkip.length;
+  }
+
+  /**
+   * Helper: Count how many occurrences of specific days of week exist between two dates
+   */
+  private countOccurrencesBetweenDates(
+    startDate: Date,
+    endDate: Date,
+    daysOfWeek: string[]
+  ): number {
+    const dayMap: Record<string, number> = {
+      Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+    };
+
+    const targetDays = daysOfWeek.map(day => dayMap[day]).filter(d => d !== undefined);
+    let count = 0;
+    const current = new Date(startDate);
+
+    while (current <= endDate) {
+      if (targetDays.includes(current.getDay())) {
+        count++;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    return count;
+  }
+
+  /**
+   * Helper: Count how many occurrences of specific days of month exist between two dates
+   */
+  private countMonthlyOccurrencesBetweenDates(
+    startDate: Date,
+    endDate: Date,
+    daysOfMonth: number[]
+  ): number {
+    let count = 0;
+    const current = new Date(startDate);
+
+    while (current <= endDate) {
+      if (daysOfMonth.includes(current.getDate())) {
+        count++;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    return count;
   }
 
   /**
@@ -480,6 +638,7 @@ export class TaskLifecycleService {
     const event = await this.eventAdapter.updateEvent(eventId, {
       isCompleted: true,
       dedicatedTime: calculatedTime,
+      completedAt: new Date(),
     });
 
     // If event is associated with an occurrence, handle the task lifecycle
@@ -492,17 +651,15 @@ export class TaskLifecycleService {
 
       // FIXED TASKS: Completing event completes the occurrence (always)
       if (task?.isFixed) {
-        // Mark occurrence as completed
-        await this.occurrenceAdapter.updateOccurrence(eventDetails.associatedOccurrenceId, {
-          status: "Completed"
-        });
+        // Mark occurrence as completed (includes completedAt timestamp)
+        await this.occurrenceAdapter.completeOccurrence(eventDetails.associatedOccurrenceId);
 
-        if (task.recurrenceId) {
+        if (task.recurrenceId && occurrence) {
           const recurrence = await this.schedulerService.getRecurrence(task.recurrenceId);
           
           if (recurrence) {
             // Increment completed occurrences counter
-            await this.schedulerService.incrementCompletedOccurrences(task.recurrenceId);
+            await this.schedulerService.incrementCompletedOccurrences(task.recurrenceId, occurrence.startDate);
 
             // Fija Única: maxOccurrences = 1
             if (recurrence.maxOccurrences === 1) {

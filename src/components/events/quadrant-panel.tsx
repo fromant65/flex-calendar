@@ -179,18 +179,33 @@ function TaskCard({ occurrence, quadrant, onSelect, onDragStart, onClick, isSele
       {occurrence.task?.description && (
         <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{occurrence.task.description}</p>
       )}
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         {occurrence.targetTimeConsumption && (
           <div className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            <span>
+            <Clock className="w-3 h-3 shrink-0" />
+            <span className="whitespace-nowrap">
               {occurrence.targetTimeConsumption} {occurrence.targetTimeConsumption === 1 ? "h" : "hs"}
             </span>
           </div>
         )}
         {typeof occurrence.urgency === "number" && (
           <div className="flex items-center gap-1">
-            <span>Urgency: {occurrence.urgency}/10</span>
+            <span className="whitespace-nowrap">Urgency: {occurrence.urgency}/10</span>
+          </div>
+        )}
+        
+        {/* Dates: targetDate and limitDate (inline with other metadata) */}
+        {occurrence.targetDate && (
+          <div className="flex items-center gap-1">
+            <span className="text-[10px]">Meta:</span>
+            <span className="font-medium whitespace-nowrap text-[11px]">{new Date(occurrence.targetDate).toLocaleDateString()}</span>
+          </div>
+        )}
+
+        {occurrence.limitDate && (
+          <div className="flex items-center gap-1">
+            <span className="text-[10px]">Límite:</span>
+            <span className="font-medium whitespace-nowrap text-[11px]">{new Date(occurrence.limitDate).toLocaleDateString()}</span>
           </div>
         )}
       </div>

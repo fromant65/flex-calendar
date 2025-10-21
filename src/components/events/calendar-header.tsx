@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { CalendarView } from "~/types"
 import HelpTip from "~/components/ui/help-tip"
 
-// TODO: Modular component - CalendarHeader
+// Modular component - CalendarHeader
 // Handles calendar navigation and view selection
 
 interface CalendarHeaderProps {

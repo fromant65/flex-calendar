@@ -7,7 +7,7 @@ import type { EventWithDetails, OccurrenceWithTask } from "~/types"
 import { useState, useRef, useEffect } from "react"
 import { GripVertical } from "lucide-react"
 
-// TODO: Modular component - DesktopLayout
+// Modular component - DesktopLayout
 // Renders the desktop view with resizable panels (matrix + calendar)
 
 interface DesktopLayoutProps {

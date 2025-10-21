@@ -3,8 +3,6 @@
 import { api } from "~/trpc/react";
 import { toast } from "sonner"
 import { useState, useMemo, useEffect } from "react";
-import { Card, CardContent } from "~/components/ui/card";
-import { LoadingSpinner } from "~/components/ui/loading-spinner";
 import { AlertCircle } from "lucide-react";
 import type { TaskType } from "~/server/api/services/types";
 import { TaskCard } from "~/components/task-manager/task-card";
@@ -84,6 +82,19 @@ export default function TaskManagerPage() {
     onError: (error) => {
       toast.error("Error al actualizar ocurrencia", { description: error.message || "No se pudo actualizar la ocurrencia" })
       console.error("Error updating occurrence:", error)
+    }
+  });
+
+  const skipBacklog = api.occurrence.skipBacklog.useMutation({
+    onSuccess: (result) => {
+      void utils.occurrence.getMyOccurrencesWithTask.invalidate();
+      toast.success("Backlog procesado", { 
+        description: `Se saltearon ${result.skippedCount} ocurrencia${result.skippedCount !== 1 ? 's' : ''}` 
+      })
+    },
+    onError: (error) => {
+      toast.error("Error al procesar backlog", { description: error.message || "No se pudo procesar el backlog" })
+      console.error("Error skipping backlog:", error)
     }
   });
 
@@ -208,8 +219,10 @@ export default function TaskManagerPage() {
                 onSkipOccurrence={(id, taskName) =>
                   setConfirmAction({ type: "skip", occurrenceId: id, taskName })
                 }
+                onSkipBacklog={(taskId) => skipBacklog.mutate({ taskId })}
                 isCompleting={completeOccurrence.isPending}
                 isSkipping={skipOccurrence.isPending}
+                isSkippingBacklog={skipBacklog.isPending}
               />
             );
           })}

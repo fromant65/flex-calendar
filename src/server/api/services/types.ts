@@ -136,6 +136,7 @@ export interface UpdateCalendarEventDTO {
   finish?: Date;
   isCompleted?: boolean;
   dedicatedTime?: number;
+  completedAt?: Date;
 }
 
 // Output DTOs with calculated fields
