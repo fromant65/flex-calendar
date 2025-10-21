@@ -73,10 +73,14 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
         description: "Los cambios han sido guardados correctamente",
       })
       setIsEditing(false)
-      // Invalidate queries to refresh the UI
-      await utils.calendarEvent.getMyEventsWithDetails.invalidate()
-      await utils.occurrence.invalidate() // Invalidate all occurrence queries
-      if (onEventCompleted) onEventCompleted()
+      // If parent provided onEventCompleted, delegate invalidation to it (avoid double invalidation)
+      if (onEventCompleted) {
+        onEventCompleted()
+      } else {
+        // Invalidate queries to refresh the UI
+        await utils.calendarEvent.getMyEventsWithDetails.invalidate()
+        await utils.occurrence.invalidate() // Invalidate all occurrence queries
+      }
     },
     onError: (error) => {
       toast.error("Error al actualizar evento", {
@@ -91,11 +95,14 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
       toast.success("Evento eliminado", {
         description: "El evento ha sido eliminado de tu calendario",
       })
-      // Invalidate queries to refresh the UI
-      await utils.calendarEvent.getMyEventsWithDetails.invalidate()
-      await utils.occurrence.invalidate() // Invalidate all occurrence queries
+      // Delegate invalidation to parent when possible
+      if (onEventCompleted) {
+        onEventCompleted()
+      } else {
+        await utils.calendarEvent.getMyEventsWithDetails.invalidate()
+        await utils.occurrence.invalidate()
+      }
       onOpenChange(false)
-      if (onEventCompleted) onEventCompleted()
     },
     onError: (error) => {
       toast.error("Error al eliminar evento", {
@@ -112,16 +119,17 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
           ? `Registraste ${dedicatedTime} hora(s) de dedicación` 
           : "El evento ha sido marcado como completado",
       })
-      // Invalidate queries to refresh the UI
-      await utils.calendarEvent.getMyEventsWithDetails.invalidate()
-      await utils.occurrence.invalidate() // Invalidate all occurrence queries
+      // Delegate invalidation to parent when possible
+      if (onEventCompleted) {
+        onEventCompleted()
+      } else {
+        await utils.calendarEvent.getMyEventsWithDetails.invalidate()
+        await utils.occurrence.invalidate()
+      }
       onOpenChange(false)
       setDedicatedTime("")
       setCompleteOccurrence(false)
       setIsCompleting(false)
-      if (onEventCompleted) {
-        onEventCompleted()
-      }
     },
     onError: (error) => {
       toast.error("Error al completar evento", {
@@ -137,12 +145,15 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
       toast.info("Evento omitido", {
         description: "El evento ha sido marcado como omitido",
       })
-      // Invalidate queries to refresh the UI
-      await utils.calendarEvent.getMyEventsWithDetails.invalidate()
-      await utils.occurrence.invalidate() // Invalidate all occurrence queries
+      // Delegate invalidation to parent when possible
+      if (onEventCompleted) {
+        onEventCompleted()
+      } else {
+        await utils.calendarEvent.getMyEventsWithDetails.invalidate()
+        await utils.occurrence.invalidate()
+      }
       onOpenChange(false)
       setSkipOccurrence(false)
-      if (onEventCompleted) onEventCompleted()
     },
     onError: (error) => {
       toast.error("Error al omitir evento", {

@@ -31,7 +31,8 @@ export default function TasksPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState<number | null>(null)
 
-  const { data: tasks = [], refetch, isLoading, error: tasksError } = api.task.getMyTasks.useQuery()
+  const { data: tasks = [], isLoading, error: tasksError } = api.task.getMyTasks.useQuery()
+  const utils = api.useUtils()
 
   // Show query error as toast
   useEffect(() => {
@@ -42,11 +43,12 @@ export default function TasksPage() {
   }, [tasksError])
 
   const deleteMutation = api.task.delete.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Tarea eliminada", {
         description: "La tarea y todos sus eventos asociados han sido eliminados",
       })
-      refetch()
+      // Invalidate cached tasks to refresh the list
+      await utils.task.getMyTasks.invalidate()
       setDeleteDialogOpen(false)
       setTaskToDelete(null)
     },
@@ -157,8 +159,8 @@ export default function TasksPage() {
         open={isFormOpen}
         onOpenChange={handleFormClose}
         editingTask={editingTask}
-        onSuccess={() => {
-          refetch()
+        onSuccess={async () => {
+          await utils.task.getMyTasks.invalidate()
           handleFormClose()
         }}
       />

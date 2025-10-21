@@ -44,11 +44,15 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
     fixedEndTime: "",
   })
 
+  const utils = api.useUtils()
+
   const createMutation = api.task.create.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Tarea creada exitosamente", {
         description: `"${formData.name}" ha sido agregada a tu lista de tareas`,
       })
+      // Invalidate tasks list so pages refresh
+      await utils.task.getMyTasks.invalidate()
       onSuccess()
     },
     onError: (error) => {
@@ -59,10 +63,11 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
   })
 
   const updateMutation = api.task.update.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Tarea actualizada", {
         description: "Los cambios han sido guardados correctamente",
       })
+      await utils.task.getMyTasks.invalidate()
       onSuccess()
     },
     onError: (error) => {

@@ -48,7 +48,7 @@ export function DayView({
   }
 
   return (
-    <div className="relative min-w-0">
+    <div className="relative min-w-0 [--cell-height:3rem] lg:[--cell-height:4rem]">
       {/* Time column */}
       <div className="flex min-w-0">
         <div className="w-12 lg:w-20 flex-shrink-0 border-r border-border">
@@ -75,7 +75,7 @@ export function DayView({
           {showCurrentTime && (
             <div
               className="absolute left-0 right-0 flex items-center pointer-events-none z-10"
-              style={{ top: `${currentTime * 3}rem` }}
+              style={{ top: `calc(${currentTime} * var(--cell-height))` }}
             >
               <div className="w-2 lg:w-3 h-2 lg:h-3 rounded-full bg-primary flex-shrink-0" />
               <div className="flex-1 h-px bg-primary" />
@@ -102,8 +102,8 @@ export function DayView({
                   event.isFixed ? "cursor-pointer" : "cursor-move"
                 }`}
                 style={{
-                  top: `${startHour * 3}rem`,
-                  height: `${duration * 3}rem`,
+                  top: `calc(${startHour} * var(--cell-height))`,
+                  height: `calc(${duration} * var(--cell-height))`,
                 }}
                 onClick={() => onEventClick(event)}
               >

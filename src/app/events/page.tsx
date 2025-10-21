@@ -119,9 +119,11 @@ function EventsPageContent() {
     }
   })
 
+  // Only occurrences that are active (Pending or In Progress) and without an active event
   const availableOccurrences = occurrences.filter((occurrence) => {
+    const isActiveStatus = occurrence.status === "Pending" || occurrence.status === "In Progress"
     const hasActiveEvent = events.some((event) => event.associatedOccurrenceId === occurrence.id && !event.isCompleted)
-    return !hasActiveEvent
+    return isActiveStatus && !hasActiveEvent
   })
 
   // Event handlers

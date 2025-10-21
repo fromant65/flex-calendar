@@ -39,7 +39,7 @@ export function WeekView({
   }
 
   return (
-    <div className="relative min-w-0">
+    <div className="relative min-w-0 [--cell-height:3rem] lg:[--cell-height:4rem]">
       {/* Header with day names */}
       <div className="flex border-b border-border sticky top-0 bg-background z-20 min-w-0">
         <div className="w-12 lg:w-20 flex-shrink-0 border-r border-border" />
@@ -85,7 +85,7 @@ export function WeekView({
               {showCurrentTime && (
                 <div
                   className="absolute left-0 right-0 flex items-center pointer-events-none z-10"
-                  style={{ top: `${currentTime * 3}rem` }}
+                  style={{ top: `calc(${currentTime} * var(--cell-height))` }}
                 >
                   <div className="w-1.5 lg:w-2 h-1.5 lg:h-2 rounded-full bg-primary flex-shrink-0" />
                   <div className="flex-1 h-px bg-primary" />
@@ -112,8 +112,8 @@ export function WeekView({
                       event.isFixed ? "cursor-pointer" : "cursor-move"
                     }`}
                     style={{
-                      top: `${startHour * 3}rem`,
-                      height: `${duration * 3}rem`,
+                      top: `calc(${startHour} * var(--cell-height))`,
+                      height: `calc(${duration} * var(--cell-height))`,
                     }}
                     onClick={() => onEventClick(event)}
                   >
