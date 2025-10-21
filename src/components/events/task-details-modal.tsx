@@ -373,14 +373,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                 )}
               </div>
 
-              {event.isFixed && (
-                <div className="rounded-lg bg-primary/10 border border-primary/20 p-3 flex items-center gap-2.5">
-                  <Lock className="h-4 w-4 text-primary flex-shrink-0" />
-                  <p className="text-xs text-foreground">
-                    Este evento tiene un horario fijo y no se puede modificar
-                  </p>
-                </div>
-              )}
+              {/* If the task is fixed, we show a single informative message later; remove inline duplicate. */}
 
               {!isEditing ? (
                 <>
