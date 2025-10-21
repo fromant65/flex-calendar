@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { api } from "~/trpc/react"
 import { Button } from "~/components/ui/button"
+import { toast } from "sonner"
 
 interface AuthFormProps {
   mode: "login" | "register"
@@ -23,10 +24,12 @@ export function AuthForm({ mode }: AuthFormProps) {
   const registerMutation = api.auth.register.useMutation({
     onSuccess: async () => {
       setError("")
+      toast.success("Cuenta creada", { description: "Ya puedes iniciar sesión" })
       await handleLogin()
     },
     onError: (error) => {
       setError(error.message)
+      toast.error("Error al crear cuenta", { description: error.message || "No se pudo crear la cuenta" })
     },
   })
 
@@ -44,6 +47,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     if (result?.error) {
       setError("Email o contraseña incorrectos")
+      toast.error("Error al iniciar sesión", { description: "Email o contraseña incorrectos" })
     } else {
       router.push("/dashboard")
     }

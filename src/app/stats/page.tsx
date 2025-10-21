@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { StatsPageHeader } from "~/components/stats/stats-page-header"
 import { StatsNavigation } from "~/components/stats/stats-navigation"
 import { StatsTabs } from "~/components/stats/stats-tabs"
@@ -10,10 +10,10 @@ import { OccurrenceStatsSection } from "~/components/stats/occurrence-stats-sect
 import { CalendarStatsSection } from "~/components/stats/calendar-stats-section"
 import { KPIsSection } from "~/components/stats/kpis-section"
 import { InsightsSection } from "~/components/stats/insights-section"
-import { LoadingPage } from "~/components/ui/loading-spinner"
 import { api } from "~/trpc/react"
 import { mockStatsData } from "~/lib/mock-stats-data"
 import type { StatsSection } from "~/components/stats/types"
+import { toast } from "sonner"
 
 export default function StatsPage() {
   const [activeSection, setActiveSection] = useState<StatsSection>("tasks")
@@ -36,7 +36,25 @@ export default function StatsPage() {
   const { data: insights, isLoading: loadingInsights, error: errorInsights } = 
     api.stats.getInsights.useQuery(undefined, { enabled: activeSection === "insights" })
 
-  // Determine loading state and error for active section
+  // Show toast when there's an error in the active section
+  useEffect(() => {
+    const error = 
+      (activeSection === "tasks" && errorTask) ||
+      (activeSection === "recurrences" && errorRecurrence) ||
+      (activeSection === "occurrences" && errorOccurrence) ||
+      (activeSection === "calendar" && errorCalendar) ||
+      (activeSection === "kpis" && errorKPIs) ||
+      (activeSection === "insights" && errorInsights)
+    
+    if (error) {
+      toast.error("Error al cargar estadísticas", { 
+        description: error.message || "No se pudieron cargar las estadísticas" 
+      })
+      console.error("Error fetching stats:", error)
+    }
+  }, [activeSection, errorTask, errorRecurrence, errorOccurrence, errorCalendar, errorKPIs, errorInsights])
+
+  // Determine loading state for active section
   const isLoading = 
     (activeSection === "tasks" && loadingTask) ||
     (activeSection === "recurrences" && loadingRecurrence) ||
@@ -44,14 +62,6 @@ export default function StatsPage() {
     (activeSection === "calendar" && loadingCalendar) ||
     (activeSection === "kpis" && loadingKPIs) ||
     (activeSection === "insights" && loadingInsights)
-
-  const error = 
-    (activeSection === "tasks" && errorTask) ||
-    (activeSection === "recurrences" && errorRecurrence) ||
-    (activeSection === "occurrences" && errorOccurrence) ||
-    (activeSection === "calendar" && errorCalendar) ||
-    (activeSection === "kpis" && errorKPIs) ||
-    (activeSection === "insights" && errorInsights)
 
   const renderSection = () => {
     // Show loading spinner for active section
@@ -63,39 +73,24 @@ export default function StatsPage() {
       )
     }
 
-    // Show error state with mock data fallback
-    if (error) {
-      return (
-        <div className="space-y-6">
-          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
-            <h3 className="font-semibold text-destructive mb-2">Error al cargar estadísticas</h3>
-            <p className="text-sm text-muted-foreground">
-              Mostrando datos de ejemplo. {error.message}
-            </p>
-          </div>
-          {getSectionComponent(activeSection, true)}
-        </div>
-      )
-    }
-
-    // Render section with real data
-    return getSectionComponent(activeSection, false)
+    // Render section with real data (or fallback to mock on error)
+    return getSectionComponent(activeSection)
   }
 
-  const getSectionComponent = (section: StatsSection, useMock: boolean) => {
+  const getSectionComponent = (section: StatsSection) => {
     switch (section) {
       case "tasks":
-        return <TaskStatsSection data={useMock ? mockStatsData.taskStats : (taskStats ?? mockStatsData.taskStats)} />
+        return <TaskStatsSection data={taskStats ?? mockStatsData.taskStats} />
       case "recurrences":
-        return <RecurrenceStatsSection data={useMock ? mockStatsData.recurrenceStats : (recurrenceStats ?? mockStatsData.recurrenceStats)} />
+        return <RecurrenceStatsSection data={recurrenceStats ?? mockStatsData.recurrenceStats} />
       case "occurrences":
-        return <OccurrenceStatsSection data={useMock ? mockStatsData.occurrenceStats : (occurrenceStats ?? mockStatsData.occurrenceStats)} />
+        return <OccurrenceStatsSection data={occurrenceStats ?? mockStatsData.occurrenceStats} />
       case "calendar":
-        return <CalendarStatsSection data={useMock ? mockStatsData.calendarStats : (calendarStats ?? mockStatsData.calendarStats)} />
+        return <CalendarStatsSection data={calendarStats ?? mockStatsData.calendarStats} />
       case "kpis":
-        return <KPIsSection data={useMock ? mockStatsData.globalKPIs : (kpis ?? mockStatsData.globalKPIs)} />
+        return <KPIsSection data={kpis ?? mockStatsData.globalKPIs} />
       case "insights":
-        return <InsightsSection data={useMock ? mockStatsData.insights : (insights ?? mockStatsData.insights)} />
+        return <InsightsSection data={insights ?? mockStatsData.insights} />
       default:
         return <TaskStatsSection data={mockStatsData.taskStats} />
     }

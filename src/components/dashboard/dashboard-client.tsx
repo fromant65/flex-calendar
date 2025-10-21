@@ -7,7 +7,7 @@ import { DayWeekEvents } from "~/components/dashboard/events-list"
 import { TaskDetailsModal } from "~/components/events/task-details-modal"
 import { TaskConfirmationDialogs } from "~/components/dashboard/task-confirmation-dialogs"
 import { LoadingPage } from "~/components/ui/loading-spinner"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type { OccurrenceWithTask, EventWithDetails } from "~/types"
 import { toast } from "sonner"
 
@@ -26,10 +26,38 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
   const [occurrenceToSkip, setOccurrenceToSkip] = useState<OccurrenceWithTask | null>(null)
 
   // Fetch data
-  const { data: urgentOccurrences = [], isLoading: urgentLoading } = api.task.getByUrgency.useQuery()
-  const { data: importantOccurrences = [], isLoading: importantLoading } = api.task.getByImportance.useQuery()
-  const { data: todayEvents = [], isLoading: todayLoading } = api.calendarEvent.getTodayEvents.useQuery()
-  const { data: weekEvents = [], isLoading: weekLoading } = api.calendarEvent.getWeekEvents.useQuery()
+  const { data: urgentOccurrences = [], isLoading: urgentLoading, error: urgentError } = api.task.getByUrgency.useQuery()
+  const { data: importantOccurrences = [], isLoading: importantLoading, error: importantError } = api.task.getByImportance.useQuery()
+  const { data: todayEvents = [], isLoading: todayLoading, error: todayError } = api.calendarEvent.getTodayEvents.useQuery()
+  const { data: weekEvents = [], isLoading: weekLoading, error: weekError } = api.calendarEvent.getWeekEvents.useQuery()
+
+  // Show toast when there's an error
+  useEffect(() => {
+    if (urgentError) {
+      toast.error("Error al cargar tareas urgentes", { 
+        description: urgentError.message || "No se pudieron cargar las tareas urgentes" 
+      })
+      console.error("Error fetching urgent tasks:", urgentError)
+    }
+    if (importantError) {
+      toast.error("Error al cargar tareas importantes", { 
+        description: importantError.message || "No se pudieron cargar las tareas importantes" 
+      })
+      console.error("Error fetching important tasks:", importantError)
+    }
+    if (todayError) {
+      toast.error("Error al cargar eventos de hoy", { 
+        description: todayError.message || "No se pudieron cargar los eventos de hoy" 
+      })
+      console.error("Error fetching today events:", todayError)
+    }
+    if (weekError) {
+      toast.error("Error al cargar eventos de la semana", { 
+        description: weekError.message || "No se pudieron cargar los eventos de la semana" 
+      })
+      console.error("Error fetching week events:", weekError)
+    }
+  }, [urgentError, importantError, todayError, weekError])
   
   const utils = api.useUtils()
 

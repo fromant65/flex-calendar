@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { ScheduleDialog } from "~/components/events/schedule-dialog"
 import { TaskDetailsModal } from "~/components/events/task-details-modal"
 import { ConfirmScheduleDialog } from "~/components/events/confirm-schedule-dialog"
@@ -9,6 +10,7 @@ import { DesktopLayout } from "~/components/events/desktop-layout"
 import { MobileLayout } from "~/components/events/mobile-layout"
 import { LoadingPage } from "~/components/ui/loading-spinner"
 import { api } from "~/trpc/react"
+import { toast } from "sonner"
 import type { EventWithDetails, OccurrenceWithTask } from "~/types"
 
 // TODO: Modularized events page
@@ -58,11 +60,24 @@ function EventsPageContent() {
   endOfWeek.setDate(startOfWeek.getDate() + 7)
 
   // Fetch data using tRPC API
-  const { data: eventsData = [], isLoading: eventsLoading } = api.calendarEvent.getMyEventsWithDetails.useQuery()
-  const { data: occurrencesData = [], isLoading: occurrencesLoading } = api.occurrence.getByDateRange.useQuery({
+  const { data: eventsData = [], isLoading: eventsLoading, error: eventsError } = api.calendarEvent.getMyEventsWithDetails.useQuery()
+
+  const { data: occurrencesData = [], isLoading: occurrencesLoading, error: occurrencesError } = api.occurrence.getByDateRange.useQuery({
     startDate: startOfWeek,
     endDate: endOfWeek,
   })
+
+  // Show query errors as toasts (type-safe)
+  useEffect(() => {
+    if (eventsError) {
+      toast.error("Error al cargar eventos", { description: eventsError.message || "No se pudieron cargar los eventos" })
+      console.error("Error fetching events:", eventsError)
+    }
+    if (occurrencesError) {
+      toast.error("Error al cargar ocurrencias", { description: occurrencesError.message || "No se pudieron cargar las ocurrencias" })
+      console.error("Error fetching occurrences:", occurrencesError)
+    }
+  }, [eventsError, occurrencesError])
   
   // Cast to expected types (API returns data with relations)
   const events = eventsData as EventWithDetails[]
@@ -78,6 +93,11 @@ function EventsPageContent() {
       setSelectedTask(null)
       setSelectedDate(null)
       setSelectedHour(undefined)
+      toast.success("Evento creado", { description: "El evento se programó correctamente" })
+    },
+    onError: (error) => {
+      toast.error("Error al crear evento", { description: error.message || "No se pudo crear el evento" })
+      console.error("Error creating event:", error)
     }
   })
   
@@ -91,6 +111,11 @@ function EventsPageContent() {
       setEventToReschedule(null)
       setSelectedDate(null)
       setSelectedHour(undefined)
+      toast.success("Evento actualizado", { description: "Los cambios se guardaron correctamente" })
+    },
+    onError: (error) => {
+      toast.error("Error al actualizar evento", { description: error.message || "No se pudo actualizar el evento" })
+      console.error("Error updating event:", error)
     }
   })
 

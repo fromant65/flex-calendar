@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { api } from "~/trpc/react"
 import type { TaskGetMyTasksOutput } from "~/server/api/routers/derived-endpoint-types"
 import { TaskFormModal } from "~/components/tasks/tasks-form-modal"
@@ -31,7 +31,16 @@ export default function TasksPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState<number | null>(null)
 
-  const { data: tasks = [], refetch, isLoading } = api.task.getMyTasks.useQuery()
+  const { data: tasks = [], refetch, isLoading, error: tasksError } = api.task.getMyTasks.useQuery()
+
+  // Show query error as toast
+  useEffect(() => {
+    if (tasksError) {
+      toast.error("Error al cargar tareas", { description: tasksError.message || "No se pudieron cargar las tareas" })
+      console.error("Error fetching tasks:", tasksError)
+    }
+  }, [tasksError])
+
   const deleteMutation = api.task.delete.useMutation({
     onSuccess: () => {
       toast.success("Tarea eliminada", {

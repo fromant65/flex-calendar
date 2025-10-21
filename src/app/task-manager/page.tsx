@@ -1,7 +1,8 @@
 "use client";
 
 import { api } from "~/trpc/react";
-import { useState, useMemo } from "react";
+import { toast } from "sonner"
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent } from "~/components/ui/card";
 import { LoadingSpinner } from "~/components/ui/loading-spinner";
 import { AlertCircle } from "lucide-react";
@@ -24,13 +25,29 @@ export default function TaskManagerPage() {
   } | null>(null);
   
   // Fetch all occurrences with task details
-  const { data: occurrences, isLoading } = api.occurrence.getMyOccurrencesWithTask.useQuery();
+  const { data: occurrences, isLoading, error: occurrencesError } = api.occurrence.getMyOccurrencesWithTask.useQuery()
   
   // Get next occurrence preview for selected task
-  const { data: nextOccurrenceDate } = api.task.previewNextOccurrence.useQuery(
+  const { data: nextOccurrenceDate, error: nextOccurrenceError } = api.task.previewNextOccurrence.useQuery(
     { id: selectedTaskId! },
     { enabled: !!selectedTaskId }
-  );
+  )
+
+  // Show error toasts for queries
+  useEffect(() => {
+    if (occurrencesError) {
+      toast.error("Error al cargar ocurrencias", { 
+        description: occurrencesError.message || "No se pudieron cargar las ocurrencias" 
+      })
+      console.error("Error fetching occurrences:", occurrencesError)
+    }
+    if (nextOccurrenceError) {
+      toast.error("Error al obtener próxima ocurrencia", { 
+        description: nextOccurrenceError.message || "No se pudo obtener la próxima ocurrencia" 
+      })
+      console.error("Error fetching next occurrence preview:", nextOccurrenceError)
+    }
+  }, [occurrencesError, nextOccurrenceError])
   
   // Mutations
   const utils = api.useUtils();
@@ -38,21 +55,36 @@ export default function TaskManagerPage() {
     onSuccess: () => {
       void utils.occurrence.getMyOccurrencesWithTask.invalidate();
       setConfirmAction(null);
+      toast.success("Ocurrencia completada", { description: "La ocurrencia fue marcada como completada" })
     },
+    onError: (error) => {
+      toast.error("Error al completar ocurrencia", { description: error.message || "No se pudo completar la ocurrencia" })
+      console.error("Error completing occurrence:", error)
+    }
   });
   
   const skipOccurrence = api.occurrence.skip.useMutation({
     onSuccess: () => {
       void utils.occurrence.getMyOccurrencesWithTask.invalidate();
       setConfirmAction(null);
+      toast.info("Ocurrencia saltada", { description: "La ocurrencia fue marcada como saltada" })
     },
+    onError: (error) => {
+      toast.error("Error al saltar ocurrencia", { description: error.message || "No se pudo saltar la ocurrencia" })
+      console.error("Error skipping occurrence:", error)
+    }
   });
 
   const updateOccurrence = api.occurrence.update.useMutation({
     onSuccess: () => {
       void utils.occurrence.getMyOccurrencesWithTask.invalidate();
       setEditingOccurrence(null);
+      toast.success("Ocurrencia actualizada", { description: "Los cambios se guardaron correctamente" })
     },
+    onError: (error) => {
+      toast.error("Error al actualizar ocurrencia", { description: error.message || "No se pudo actualizar la ocurrencia" })
+      console.error("Error updating occurrence:", error)
+    }
   });
 
   // Handlers

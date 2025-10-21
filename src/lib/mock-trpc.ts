@@ -15,6 +15,7 @@ const mockTasks: Task[] = [
     fixedEndTime: null,
     createdAt: new Date("2025-01-01"),
     updatedAt: null,
+    completedAt: null,
   },
   {
     id: 2,
@@ -29,6 +30,7 @@ const mockTasks: Task[] = [
     fixedEndTime: null,
     createdAt: new Date("2025-01-02"),
     updatedAt: null,
+    completedAt: null,
   },
   {
     id: 3,
@@ -43,6 +45,7 @@ const mockTasks: Task[] = [
     fixedEndTime: null,
     createdAt: new Date("2025-01-03"),
     updatedAt: null,
+    completedAt: null,
   },
   {
     id: 4,
@@ -57,6 +60,7 @@ const mockTasks: Task[] = [
     fixedEndTime: null,
     createdAt: new Date("2025-01-04"),
     updatedAt: null,
+    completedAt: null,
   },
   {
     id: 5,
@@ -71,6 +75,7 @@ const mockTasks: Task[] = [
     fixedEndTime: null,
     createdAt: new Date("2025-01-05"),
     updatedAt: null,
+    completedAt: null,
   },
   {
     id: 6,
@@ -85,6 +90,7 @@ const mockTasks: Task[] = [
     fixedEndTime: null,
     createdAt: new Date("2025-01-06"),
     updatedAt: null,
+    completedAt: null,
   },
   {
     id: 7,
@@ -99,6 +105,7 @@ const mockTasks: Task[] = [
     fixedEndTime: null,
     createdAt: new Date("2025-01-07"),
     updatedAt: null,
+    completedAt: null,
   },
   {
     id: 8,
@@ -113,6 +120,7 @@ const mockTasks: Task[] = [
     fixedEndTime: null,
     createdAt: new Date("2025-01-08"),
     updatedAt: null,
+    completedAt: null,
   },
 ]
 
@@ -135,6 +143,7 @@ const mockOccurrences: TaskOccurrence[] = [
     urgency: 9,
     createdAt: today,
     updatedAt: null,
+    completedAt: null,
   },
   {
     id: 2,
@@ -148,6 +157,7 @@ const mockOccurrences: TaskOccurrence[] = [
     urgency: 8,
     createdAt: today,
     updatedAt: null,
+    completedAt: null,
   },
   {
     id: 3,
@@ -161,6 +171,7 @@ const mockOccurrences: TaskOccurrence[] = [
     urgency: 4,
     createdAt: today,
     updatedAt: null,
+    completedAt: null,
   },
   {
     id: 4,
@@ -174,6 +185,7 @@ const mockOccurrences: TaskOccurrence[] = [
     urgency: 7,
     createdAt: today,
     updatedAt: null,
+    completedAt: null,
   },
   {
     id: 5,
@@ -187,6 +199,7 @@ const mockOccurrences: TaskOccurrence[] = [
     urgency: 6,
     createdAt: today,
     updatedAt: null,
+    completedAt: null,
   },
   {
     id: 6,
@@ -200,6 +213,7 @@ const mockOccurrences: TaskOccurrence[] = [
     urgency: 10,
     createdAt: today,
     updatedAt: null,
+    completedAt: null,
   },
   {
     id: 7,
@@ -213,6 +227,7 @@ const mockOccurrences: TaskOccurrence[] = [
     urgency: 2,
     createdAt: today,
     updatedAt: null,
+    completedAt: null,
   },
   {
     id: 8,
@@ -226,6 +241,7 @@ const mockOccurrences: TaskOccurrence[] = [
     urgency: 5,
     createdAt: today,
     updatedAt: null,
+    completedAt: null,
   },
 ]
 
@@ -243,6 +259,7 @@ const mockEventsState: CalendarEvent[] = [
     dedicatedTime: 30,
     createdAt: today,
     updatedAt: null,
+    completedAt: null,
   },
   {
     id: 2,
@@ -256,6 +273,7 @@ const mockEventsState: CalendarEvent[] = [
     dedicatedTime: 60,
     createdAt: today,
     updatedAt: null,
+    completedAt: null,
   },
 ]
 
@@ -314,6 +332,7 @@ export const mockTrpc = {
             dedicatedTime: Math.round((data.finish.getTime() - data.start.getTime()) / (1000 * 60)),
             createdAt: new Date(),
             updatedAt: null,
+            completedAt: null,
           }
           mockEventsState.push(newEvent)
           notifyUpdates()

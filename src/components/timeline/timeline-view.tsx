@@ -5,6 +5,7 @@ import { motion } from "motion/react"
 import { mockTimelineApi, type TimelineData } from "~/lib/mock-timeline-data"
 import type { OccurrenceWithTask, EventWithDetails } from "~/types"
 import { api } from "~/trpc/react"
+import { toast } from "sonner"
 import { TimelineControls, type NavigationInterval } from "./timeline-controls"
 import { HelpTip } from "~/components/ui/help-tip"
 import { TimelineHeader } from "./timeline-header"
@@ -44,7 +45,7 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
     useTimelineSegments(currentDate, daysToShow, isMobile)
 
   // Fetch real data using tRPC
-  const { data: realData, isLoading } = api.timeline.getTimelineData.useQuery(
+  const { data: realData, isLoading, error: timelineError } = api.timeline.getTimelineData.useQuery(
     {
       startDate: startDate!,
       endDate: endDate!,
@@ -53,6 +54,16 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
       enabled: !useMockData,
     }
   )
+
+  // Show error toast when timeline data fails to load
+  useEffect(() => {
+    if (timelineError) {
+      toast.error("Error al cargar la línea de tiempo", { 
+        description: timelineError.message || "No se pudieron cargar los datos de la línea de tiempo" 
+      })
+      console.error("Error fetching timeline data:", timelineError)
+    }
+  }, [timelineError])
 
   // Fetch data with caching for mock data
   useEffect(() => {
