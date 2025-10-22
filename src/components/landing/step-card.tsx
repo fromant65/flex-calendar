@@ -15,7 +15,7 @@ export function StepCard({ number, title, description, index }: StepCardProps) {
       initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
       whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true, margin: "-50px" }}
-      transition={{ delay: index * 0.15, duration: 0.6 }}
+      transition={{ delay: index * 0.04, duration: 0.45 }}
       className="relative flex gap-4 cursor-default"
     >
       {/* Number badge */}
@@ -36,8 +36,8 @@ export function StepCard({ number, title, description, index }: StepCardProps) {
             opacity: [0.5, 1, 0.5],
           }}
           transition={{
-            delay: index * 0.3,
-            duration: 2,
+            delay: index * 0.2,
+            duration: 1.2,
             repeat: Infinity,
           }}
         />

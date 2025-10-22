@@ -16,7 +16,7 @@ export function FeatureCard({ icon: Icon, title, description, index }: FeatureCa
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
-      transition={{ delay: index * 0.1, duration: 0.5 }}
+      transition={{ delay: index * 0.08, duration: 0.4 }}
       className="group relative h-full"
     >
       <div className="relative h-full flex flex-col rounded-2xl border border-border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-lg cursor-default">
@@ -24,11 +24,11 @@ export function FeatureCard({ icon: Icon, title, description, index }: FeatureCa
         <motion.div
           className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary opacity-0 group-hover:opacity-100"
           animate={{
-            scale: [1, 1.5, 1],
-            opacity: [0.5, 1, 0.5],
+            scale: [1, 1.4, 1],
+            opacity: [0.6, 1, 0.6],
           }}
           transition={{
-            duration: 2,
+            duration: 1.2,
             repeat: Infinity,
           }}
         />

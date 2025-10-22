@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import { StepCard } from "./step-card"
+import { LandingHelpNote } from "./landing-help-note"
 
 export function HowToUseSection() {
   return (
@@ -60,6 +61,8 @@ export function HowToUseSection() {
             index={5}
           />
         </div>
+        {/* Small help note about tooltips/help page (moved to the end of the steps) */}
+        <LandingHelpNote />
       </div>
     </section>
   )
