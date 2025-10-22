@@ -463,6 +463,14 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                 </div>
               )}
 
+              {/* Event context (optional) */}
+              {!isEditing && event?.context && (
+                <div className="rounded-lg border border-border bg-muted/20 p-3">
+                  <h4 className="text-sm font-semibold text-foreground mb-1">Contexto</h4>
+                  <p className="text-sm text-foreground leading-relaxed break-words">{event.context}</p>
+                </div>
+              )}
+
               {event.isFixed && !isEditing && (
                 <div className="flex items-center gap-2 text-muted-foreground rounded-lg bg-muted/20 p-2.5">
                   <Lock className="w-4 h-4 flex-shrink-0" />
