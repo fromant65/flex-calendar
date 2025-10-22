@@ -52,7 +52,7 @@ export function EditOccurrenceDialog({
               type="number"
               step="0.5"
               min="0"
-              value={timeConsumed ?? ""}
+              value={timeConsumed != null ? timeConsumed : ""}
               onChange={(e) =>
                 setTimeConsumed(e.target.value ? parseFloat(e.target.value) : null)
               }

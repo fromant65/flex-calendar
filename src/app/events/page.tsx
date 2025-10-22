@@ -13,7 +13,6 @@ import { api } from "~/trpc/react"
 import { toast } from "sonner"
 import type { EventWithDetails, OccurrenceWithTask } from "~/types"
 
-// TODO: Modularizar más
 // Modularized events page
 // Main responsibilities:
 // - Data fetching (events and occurrences)

@@ -122,7 +122,7 @@ export function OccurrenceCard({
             {/* Row 1: Dates */}
             <div>
               <span className="font-medium text-muted-foreground">Inicio: </span>
-              <span className="text-foreground">{formatDate(occurrence.startDate)}</span>
+            <span className="text-foreground">{occurrence.startDate ? formatDate(occurrence.startDate) : "N/A"}</span>
             </div>
             {occurrence.targetDate && (
               <div>
@@ -130,7 +130,7 @@ export function OccurrenceCard({
                 <span className="text-foreground">{formatDate(occurrence.targetDate)}</span>
               </div>
             )}
-
+              
             {/* Row 2: Limit date and importance */}
             {occurrence.limitDate && (
               <div>
@@ -146,9 +146,7 @@ export function OccurrenceCard({
             {/* Row 3: Time metrics */}
             <div>
               <span className="font-medium text-muted-foreground">Tiempo dedicado: </span>
-              <span className="font-semibold text-foreground">
-                {occurrence.timeConsumed?.toFixed(1) ?? 0}h
-              </span>
+                <span className="font-semibold text-foreground">{occurrence.timeConsumed != null ? occurrence.timeConsumed.toFixed(1) + ' hs' : '—'}</span>
               {occurrence.targetTimeConsumption && (
                 <span className="text-muted-foreground">
                   {" / "}{occurrence.targetTimeConsumption}h
