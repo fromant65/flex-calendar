@@ -2,7 +2,6 @@
 
 import type { OccurrenceWithTask } from "~/types"
 import { AlertCircle, Calendar, Clock, Flag } from "lucide-react"
-import HelpTip from "~/components/ui/help-tip"
 import { cn } from "~/lib/utils"
 import { getTaskTypeClassName } from "~/lib/task-type-colors"
 import { TaskActionButtons } from "./task-action-buttons"
@@ -15,14 +14,6 @@ interface UrgentTasksListProps {
 }
 
 export function UrgentTasksList({ occurrences, onTaskClick, onCompleteTask, onSkipTask }: UrgentTasksListProps) {
-  const helpText = (
-    <>
-      Estas son tus tareas con mayor puntuación de urgencia. Se ordenan por prioridad (1 = más urgente). <br />
-      Puedes tocar el título para ver los detalles de la tarea. <br />
-      Desde los botones de acción puedes marcar como completada o saltar. <br />
-      Una tarea salteada será considerada incompleta.
-    </>
-  )
   if (occurrences.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -37,9 +28,6 @@ export function UrgentTasksList({ occurrences, onTaskClick, onCompleteTask, onSk
 
   return (
     <div className="space-y-2.5">
-      <div className="flex items-center justify-end">
-        <HelpTip title="Tareas urgentes">{helpText}</HelpTip>
-      </div>
       {occurrences.map((occurrence, index) => {
         const task = occurrence.task
         const urgency = occurrence.urgency ?? 0

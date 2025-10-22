@@ -10,6 +10,7 @@ import { LoadingPage } from "~/components/ui/loading-spinner"
 import { useState, useEffect } from "react"
 import type { OccurrenceWithTask, EventWithDetails } from "~/types"
 import { toast } from "sonner"
+import HelpTip from "../ui/help-tip"
 
 interface DashboardClientProps {
   userName: string
@@ -170,9 +171,17 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
         {/* Tareas Grid */}
         <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-2 mb-6">
           {/* Tareas Urgentes */}
-          <div className="group rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg">
+          <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Tareas Urgentes</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-foreground">Tareas Urgentes</h2>
+                <HelpTip title="Tareas urgentes">
+                  Estas son tus tareas con mayor puntuación de urgencia. Se ordenan por prioridad (1 = más urgente). <br />
+                  Puedes tocar el título para ver los detalles de la tarea. <br />
+                  Desde los botones de acción puedes marcar como completada o saltar. <br />
+                  Una tarea salteada será considerada incompleta.
+                </HelpTip>
+              </div>
               {topUrgentOccurrences.length > 0 && (
                 <span className="rounded-full bg-destructive/10 px-3 py-1 text-xs font-semibold text-destructive">
                   {topUrgentOccurrences.length}
@@ -190,7 +199,15 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
           {/* Tareas Importantes */}
           <div className="group rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Tareas Importantes</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-foreground">Tareas Importantes</h2>
+                <HelpTip title="Tareas importantes">
+                  Estas son tus tareas con mayor valor de importancia (mayor a 5). <br />
+                  Puedes tocar el título para ver los detalles de la tarea. <br />
+                  Desde los botones de acción puedes marcar como completada o saltar. <br />
+                  Las tareas importantes no urgentes son ideales para planificación a largo plazo.
+                </HelpTip>
+              </div>
               {topImportantOccurrences.length > 0 && (
                 <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                   {topImportantOccurrences.length}
@@ -208,7 +225,14 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
 
         {/* Próximos Eventos */}
         <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg">
-          <h2 className="mb-4 text-xl font-semibold text-foreground">Próximos Eventos</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-foreground">Próximos Eventos</h2>
+            <HelpTip title="Próximos Eventos">
+              Esta lista muestra eventos programados. Puedes tocar un evento para abrir sus detalles,
+              marcarlo como completado, o ver cuánto tiempo se dedicó. Los eventos pueden estar vinculados
+              a tareas (aparecerá el nombre de la tarea) y pueden ser fijos o flexibles.
+            </HelpTip>
+          </div>
           <DayWeekEvents
             todayEvents={todayEventsTyped}
             weekEvents={weekEventsTyped}

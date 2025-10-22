@@ -233,18 +233,17 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]" showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle className="text-2xl">{editingTask ? "Editar Tarea" : "Crear Nueva Tarea"}</DialogTitle>
-          <DialogDescription>
-            {editingTask
-              ? "Modifica los detalles de tu tarea"
-              : "Completa los campos para crear una nueva tarea o hábito"}
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="px-2">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1">
+              <DialogTitle className="text-2xl">{editingTask ? "Editar Tarea" : "Crear Nueva Tarea"}</DialogTitle>
+              <DialogDescription>
+                {editingTask
+                  ? "Modifica los detalles de tu tarea"
+                  : "Completa los campos para crear una nueva tarea o hábito"}
+              </DialogDescription>
+            </div>
             <HelpTip title="Tipos de tarea" side="bottom">
               <p className="mb-1">
                 Única: una sola ocurrencia. <br />
@@ -257,6 +256,9 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
               <p className="text-xs text-muted-foreground">El tipo determina qué campos adicionales aparecen en este formulario (fechas, recurrencia, horarios fijos).</p>
             </HelpTip>
           </div>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
           <TaskBasicInfo
             name={formData.name}

@@ -209,13 +209,15 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
         onNext={goToNext}
         onToday={goToToday}
         />
-        <HelpTip title="Vista Línea de Tiempo" side="left">
-          <p className="mb-1">
-            Usa la vista para cambiar la granularidad (horas/días/meses). <br />
-            También puedes ajustar qué periodo saltas al moverte con las flechas con la opción de salto. <br />
-            Haz click en una celda para ver ocurrencias y eventos.
-          </p>
-        </HelpTip>
+        <div className="ml-2">
+          <HelpTip title="Vista Línea de Tiempo" side="left">
+            <p className="mb-1">
+              Usa la vista para cambiar la granularidad (horas/días/meses). <br />
+              También puedes ajustar qué periodo saltas al moverte con las flechas con la opción de salto. <br />
+              Haz click en una celda para ver ocurrencias y eventos.
+            </p>
+          </HelpTip>
+        </div>
       </div>
 
       {/* Timeline Container */}

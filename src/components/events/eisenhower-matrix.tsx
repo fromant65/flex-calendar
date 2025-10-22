@@ -96,18 +96,20 @@ export function EisenhowerMatrix({
           </div>
         </div>
 
-        {/* Help tip */}
-        <HelpTip title="Matriz Eisenhower">
-          La matriz clasifica ocurrencias según urgencia e importancia. <br />
-          Haz doble click para ver detalles de la misma.
-          <div className="hidden lg:block">
-            Arrastra tareas al calendario para programar su ejecución.
-          </div>
-          <div className="lg:hidden">
-            Selecciona una tarea para programarla en el calendario.
-          </div>
-          Los inputs de fecha permiten filtrar las tareas mostradas en la matriz según su rango de fechas.
-        </HelpTip>
+        {/* Help tip integrated with date filters */}
+        <div className="flex-shrink-0">
+          <HelpTip title="Matriz Eisenhower">
+            La matriz clasifica ocurrencias según urgencia e importancia. <br />
+            Haz doble click para ver detalles de la misma.
+            <div className="hidden lg:block">
+              Arrastra tareas al calendario para programar su ejecución.
+            </div>
+            <div className="lg:hidden">
+              Selecciona una tarea para programarla en el calendario.
+            </div>
+            Los inputs de fecha permiten filtrar las tareas mostradas en la matriz según su rango de fechas.
+          </HelpTip>
+        </div>
       </div>
       <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-px bg-border p-px overflow-hidden">
         {/* Top Left: Not Urgent but Important */}

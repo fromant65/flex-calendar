@@ -2,9 +2,7 @@
 
 import type { OccurrenceWithTask } from "~/types"
 import { Star, Calendar, Clock, Flag, AlertCircle } from "lucide-react"
-import HelpTip from "~/components/ui/help-tip"
 import { cn } from "~/lib/utils"
-import { getTaskTypeClassName } from "~/lib/task-type-colors"
 import { TaskActionButtons } from "./task-action-buttons"
 
 interface ImportantTasksListProps {
@@ -15,13 +13,6 @@ interface ImportantTasksListProps {
 }
 
 export function ImportantTasksList({ occurrences, onTaskClick, onCompleteTask, onSkipTask }: ImportantTasksListProps) {
-  const helpText = (
-    <>
-      Aquí aparecen tareas con mayor importancia. Importancia &gt; 5 normalmente mostrará tareas aquí. <br />
-      Usa las acciones en cada tarjeta para completar o saltar. Una tarea salteada será considerada incompleta. <br />
-      La importancia afecta cómo se priorizan estas tareas frente a otras.
-    </>
-  )
   if (occurrences.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -36,9 +27,6 @@ export function ImportantTasksList({ occurrences, onTaskClick, onCompleteTask, o
 
   return (
     <div className="space-y-2.5">
-      <div className="flex items-center justify-end">
-        <HelpTip title="Tareas importantes">{helpText}</HelpTip>
-      </div>
       {occurrences.map((occurrence, index) => {
         const task = occurrence.task
         const urgency = occurrence.urgency ?? 0
