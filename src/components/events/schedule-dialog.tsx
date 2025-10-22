@@ -15,7 +15,7 @@ interface ScheduleDialogProps {
   event?: EventWithDetails | null
   selectedDate: Date | null
   selectedHour?: number
-  onSchedule: (start: Date, finish: Date) => void
+  onSchedule: (start: Date, finish: Date, context?: string) => void
 }
 
 export function ScheduleDialog({
@@ -29,6 +29,7 @@ export function ScheduleDialog({
 }: ScheduleDialogProps) {
   const [startTime, setStartTime] = useState("")
   const [endTime, setEndTime] = useState("")
+  const [context, setContext] = useState<string>("")
 
   useEffect(() => {
     if (event) {
@@ -37,6 +38,7 @@ export function ScheduleDialog({
       const end = new Date(event.finish)
       setStartTime(`${String(start.getHours()).padStart(2, "0")}:${String(start.getMinutes()).padStart(2, "0")}`)
       setEndTime(`${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`)
+      setContext(event.context ?? "")
     } else if (selectedHour !== undefined) {
       // New event with suggested hour
       setStartTime(`${String(selectedHour).padStart(2, "0")}:00`)
@@ -45,6 +47,7 @@ export function ScheduleDialog({
       const endHour = Math.floor((selectedHour * 60 + suggestedDurationMinutes) / 60)
       const endMinute = (selectedHour * 60 + suggestedDurationMinutes) % 60
       setEndTime(`${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`)
+      setContext("")
     } else {
       // Default times
       setStartTime("09:00")
@@ -53,6 +56,7 @@ export function ScheduleDialog({
       const endHour = Math.floor((9 * 60 + suggestedDurationMinutes) / 60)
       const endMinute = (9 * 60 + suggestedDurationMinutes) % 60
       setEndTime(`${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`)
+      setContext("")
     }
   }, [event, selectedHour, occurrence, open])
 
@@ -74,7 +78,7 @@ export function ScheduleDialog({
       return
     }
 
-    onSchedule(start, finish)
+    onSchedule(start, finish, context?.trim() ? context.trim() : undefined)
     onOpenChange(false)
   }
 
@@ -82,26 +86,42 @@ export function ScheduleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <DialogContent showCloseButton={false} className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{event ? "Reprogramar Evento" : "Programar Tarea"}</DialogTitle>
-          <DialogDescription>
-            {event ? "Actualiza el horario de este evento" : "Establece el rango de tiempo para esta tarea"}
-          </DialogDescription>
-        </DialogHeader>
+          <div className="w-full flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <DialogTitle className="truncate">{event ? "Reprogramar Evento" : "Programar Tarea"}</DialogTitle>
+              <DialogDescription className="!mt-1">
+                {event ? "Actualiza el horario de este evento" : "Establece el rango de tiempo para esta tarea"}
+              </DialogDescription>
+            </div>
 
-        <div className="px-4">
-          <HelpTip title="Sobre este formulario" side="bottom">
-            <p className="mb-1">Aquí defines la hora de inicio y fin del evento. Si editas un evento fijo, algunos campos pueden estar bloqueados.</p>
-            <p className="text-xs text-muted-foreground">La duración calculada se mostrará automáticamente. Asegúrate de que la hora de fin sea posterior a la de inicio.</p>
-          </HelpTip>
-        </div>
+            <div className="shrink-0">
+              <HelpTip title="Sobre este formulario" side="bottom">
+                <p className="mb-1">Aquí defines la hora de inicio y fin del evento. Si editas un evento fijo, algunos campos pueden estar bloqueados.</p>
+                <p className="text-xs text-muted-foreground">La duración calculada se mostrará automáticamente. Asegúrate de que la hora de fin sea posterior a la de inicio.</p>
+              </HelpTip>
+            </div>
+          </div>
+        </DialogHeader>
 
         {task && (
           <div className="space-y-4">
             <div>
               <h4 className="font-medium text-foreground mb-1">{task.name}</h4>
               {task.description && <p className="text-sm text-muted-foreground">{task.description}</p>}
+            </div>
+
+            <div className="mt-4">
+              <Label htmlFor="event-context" className="pb-2">Contexto (opcional)</Label>
+              <Input
+                id="event-context"
+                type="text"
+                value={context}
+                onChange={(e) => setContext(e.target.value)}
+                placeholder="Detalles adicionales, enlace o nota..."
+                className="bg-background [color-scheme:light] dark:[color-scheme:dark]"
+              />
             </div>
 
             {selectedDate && (

@@ -194,13 +194,14 @@ function EventsPageContent() {
     setDetailsModalOpen(true)
   }
 
-  const handleSchedule = (start: Date, finish: Date) => {
+  const handleSchedule = (start: Date, finish: Date, context?: string) => {
     if (eventToReschedule) {
       updateEventMutation.mutate({
         id: eventToReschedule.id,
         data: {
           start,
           finish,
+          ...(context ? { context } : {}),
         },
       })
     } else if (selectedTask) {
@@ -210,6 +211,7 @@ function EventsPageContent() {
         isFixed: false,
         start,
         finish,
+        ...(context ? { context } : {}),
       })
     }
   }
