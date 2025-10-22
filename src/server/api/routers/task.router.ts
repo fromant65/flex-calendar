@@ -14,7 +14,22 @@ const createRecurrenceSchema = z.object({
   maxOccurrences: z.number().positive().optional(),
   lastPeriodStart: z.date().optional(),
   endDate: z.date().optional(),
-});
+}).refine(
+  (data) => {
+    // Count how many recurrence types are defined
+    const hasInterval = data.interval !== undefined && data.interval !== null;
+    const hasDaysOfWeek = data.daysOfWeek !== undefined && data.daysOfWeek !== null && data.daysOfWeek.length > 0;
+    const hasDaysOfMonth = data.daysOfMonth !== undefined && data.daysOfMonth !== null && data.daysOfMonth.length > 0;
+    
+    const typesCount = [hasInterval, hasDaysOfWeek, hasDaysOfMonth].filter(Boolean).length;
+    
+    // Must have exactly one recurrence type
+    return typesCount === 1;
+  },
+  {
+    message: "Recurrence must have exactly one type: interval, daysOfWeek, or daysOfMonth (cannot mix types)",
+  }
+);
 
 const createTaskSchema = z.object({
   name: z.string().min(1).max(512),

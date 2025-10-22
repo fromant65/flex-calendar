@@ -6,6 +6,11 @@ import { TaskAdapter, OccurrenceAdapter, CalendarEventAdapter } from "../adapter
 import { TaskRecurrenceRepository } from "../repository";
 import type { CreateOccurrenceDTO, DayOfWeek, TaskRecurrence, CreateRecurrenceDTO } from "./types";
 import { TaskAnalyticsService } from "./task-analytics.service";
+import { RecurrenceDateCalculator } from "./recurrence-date-calculator.service";
+import { PeriodManager } from "./period-manager.service";
+import { OccurrenceCreationService } from "./occurrence-creation.service";
+import { OccurrencePreviewService } from "./occurrence-preview.service";
+import { FixedTaskService } from "./fixed-task.service";
 
 export class TaskSchedulerService {
   private taskAdapter: TaskAdapter;
@@ -13,6 +18,11 @@ export class TaskSchedulerService {
   private eventAdapter: CalendarEventAdapter;
   private recurrenceRepo: TaskRecurrenceRepository;
   private analyticsService: TaskAnalyticsService;
+  private dateCalculator: RecurrenceDateCalculator;
+  private periodManager: PeriodManager;
+  private occurrenceCreation: OccurrenceCreationService;
+  private occurrencePreview: OccurrencePreviewService;
+  private fixedTaskService: FixedTaskService;
 
   constructor() {
     this.taskAdapter = new TaskAdapter();
@@ -20,6 +30,25 @@ export class TaskSchedulerService {
     this.eventAdapter = new CalendarEventAdapter();
     this.recurrenceRepo = new TaskRecurrenceRepository();
     this.analyticsService = new TaskAnalyticsService();
+    this.dateCalculator = new RecurrenceDateCalculator();
+    this.periodManager = new PeriodManager(this.recurrenceRepo);
+    this.occurrenceCreation = new OccurrenceCreationService(
+      this.taskAdapter,
+      this.occurrenceAdapter,
+      this.recurrenceRepo,
+      this.dateCalculator,
+      this.periodManager
+    );
+    this.occurrencePreview = new OccurrencePreviewService(
+      this.taskAdapter,
+      this.occurrenceAdapter,
+      this.dateCalculator,
+      this.periodManager
+    );
+    this.fixedTaskService = new FixedTaskService(
+      this.occurrenceAdapter,
+      this.eventAdapter
+    );
   }
 
   /**
@@ -45,33 +74,6 @@ export class TaskSchedulerService {
   }
 
   /**
-   * Check if we need to start a new period
-   * Returns true if current date is beyond the period defined by interval
-   */
-  private shouldStartNewPeriod(
-    lastPeriodStart: Date | null,
-    interval: number | null,
-    currentDate: Date
-  ): boolean {
-    if (!lastPeriodStart || !interval) return false;
-
-    // Calculate period end (assuming interval is in days for now)
-    const periodEnd = new Date(lastPeriodStart);
-    periodEnd.setDate(periodEnd.getDate() + interval);
-
-    return currentDate >= periodEnd;
-  }
-
-  /**
-   * Calculate the start date of the next period
-   */
-  private getNextPeriodStart(lastPeriodStart: Date, interval: number): Date {
-    const nextPeriod = new Date(lastPeriodStart);
-    nextPeriod.setDate(nextPeriod.getDate() + interval);
-    return nextPeriod;
-  }
-
-  /**
    * Update recurrence period if needed
    * Resets completedOccurrences and updates lastPeriodStart
    */
@@ -81,18 +83,9 @@ export class TaskSchedulerService {
 
     const currentDate = new Date();
     
-    // Check if we need to start a new period
-    if (this.shouldStartNewPeriod(recurrence.lastPeriodStart, recurrence.interval, currentDate)) {
-      // Calculate next period start
-      const nextPeriodStart = recurrence.lastPeriodStart
-        ? this.getNextPeriodStart(recurrence.lastPeriodStart, recurrence.interval!)
-        : currentDate;
-
-      // Reset counter and update period start
-      await this.recurrenceRepo.updateById(recurrenceId, {
-        completedOccurrences: 0,
-        lastPeriodStart: nextPeriodStart,
-      });
+    // Delegate to PeriodManager
+    if (this.periodManager.shouldStartNewPeriod(recurrence, currentDate)) {
+      await this.periodManager.updateRecurrencePeriod(recurrence, currentDate);
     }
   }
 
@@ -103,48 +96,42 @@ export class TaskSchedulerService {
    * @param occurrenceStartDate - The startDate of the occurrence being completed
    */
   async incrementCompletedOccurrences(recurrenceId: number, occurrenceStartDate: Date): Promise<void> {
-    const recurrence = await this.recurrenceRepo.findById(recurrenceId);
-    if (!recurrence) return;
-
-    // Determine which period the occurrence belongs to
-    const currentPeriodStart = recurrence.lastPeriodStart ?? new Date();
-    const currentPeriodEnd = new Date(currentPeriodStart);
-    if (recurrence.interval) {
-      currentPeriodEnd.setDate(currentPeriodEnd.getDate() + recurrence.interval);
-    }
-
-    // Check if the occurrence belongs to the current period
-    const occurrenceInCurrentPeriod = 
-      occurrenceStartDate >= currentPeriodStart && 
-      occurrenceStartDate < currentPeriodEnd;
-
-    if (occurrenceInCurrentPeriod) {
-      // Increment in current period
-      await this.recurrenceRepo.updateById(recurrenceId, {
-        completedOccurrences: (recurrence.completedOccurrences ?? 0) + 1,
-      });
-    }
-    else if (occurrenceStartDate >= currentPeriodEnd) {
-      // The occurrence is in a future period, advance to that period and set count to 1
-      const nextPeriodStart = this.getNextPeriodStart(currentPeriodStart, recurrence.interval!);
-      await this.recurrenceRepo.updateById(recurrenceId, {
-        completedOccurrences: 1,
-        lastPeriodStart: nextPeriodStart,
-      });
-    }
-    else {
-      // Occurrence is from past period (backlog), don't increment counter
-      // No database update needed
-      return;
-    }
+    await this.periodManager.incrementCompletedOccurrences(recurrenceId, occurrenceStartDate);
   }
 
   /**
    * Check if max occurrences reached for current period
    */
   private hasReachedPeriodLimit(recurrence: TaskRecurrence): boolean {
-    if (!recurrence.maxOccurrences) return false;
-    return (recurrence.completedOccurrences ?? 0) >= recurrence.maxOccurrences;
+    return this.periodManager.hasReachedPeriodLimit(recurrence);
+  }
+
+  /**
+   * Get the end of the current period based on recurrence type
+   */
+  private getPeriodEnd(
+    periodStart: Date,
+    recurrence: {
+      interval?: number | null;
+      daysOfWeek?: string[] | null;
+      daysOfMonth?: number[] | null;
+    }
+  ): Date {
+    return this.periodManager.getPeriodEnd(periodStart, recurrence);
+  }
+
+  /**
+   * Get the start of the next period based on recurrence type
+   */
+  private getNextPeriodStartByType(
+    currentPeriodStart: Date,
+    recurrence: {
+      interval?: number | null;
+      daysOfWeek?: string[] | null;
+      daysOfMonth?: number[] | null;
+    }
+  ): Date {
+    return this.periodManager.getNextPeriodStartByType(currentPeriodStart, recurrence);
   }
 
   /**
@@ -160,34 +147,7 @@ export class TaskSchedulerService {
       completedOccurrences?: number | null;
     }
   ): Date {
-    const nextDate = new Date(lastOccurrenceDate);
-
-    // Case 1: Interval-based (every N days/weeks/months)
-    if (recurrence.interval) {
-      // For habits+ with maxOccurrences, distribute occurrences uniformly within the period
-      if (recurrence.maxOccurrences && recurrence.maxOccurrences > 1) {
-        const distributedInterval = Math.floor(recurrence.interval / recurrence.maxOccurrences);
-        nextDate.setDate(nextDate.getDate() + distributedInterval);
-      } else {
-        // For regular habits, use the full interval
-        nextDate.setDate(nextDate.getDate() + recurrence.interval);
-      }
-      return nextDate;
-    }
-
-    // Case 2: Specific days of week (e.g., every Monday and Thursday)
-    if (recurrence.daysOfWeek && recurrence.daysOfWeek.length > 0) {
-      return this.getNextDayOfWeek(lastOccurrenceDate, recurrence.daysOfWeek as DayOfWeek[]);
-    }
-
-    // Case 3: Specific days of month (e.g., 1st and 15th of each month)
-    if (recurrence.daysOfMonth && recurrence.daysOfMonth.length > 0) {
-      return this.getNextDayOfMonth(lastOccurrenceDate, recurrence.daysOfMonth);
-    }
-
-    // Default: next day
-    nextDate.setDate(nextDate.getDate() + 1);
-    return nextDate;
+    return this.dateCalculator.calculateNextOccurrenceDate(lastOccurrenceDate, recurrence);
   }
 
   /**
@@ -202,100 +162,7 @@ export class TaskSchedulerService {
       daysOfMonth?: number[] | null;
     }
   ): { targetDate: Date; limitDate: Date } {
-    const targetDate = new Date(startDate);
-    const limitDate = new Date(startDate);
-
-    // For interval-based tasks, set target at 60% and limit at 100% of interval
-    if (recurrence.interval) {
-      const targetDays = Math.floor(recurrence.interval * 0.6);
-      const limitDays = recurrence.interval;
-      
-      targetDate.setDate(targetDate.getDate() + targetDays);
-      limitDate.setDate(limitDate.getDate() + limitDays);
-    } 
-    // For day-of-week tasks, target is 3 days before next occurrence, limit is the next occurrence
-    else if (recurrence.daysOfWeek && recurrence.daysOfWeek.length > 0) {
-      const nextOccurrence = this.calculateNextOccurrenceDate(startDate, recurrence);
-      const daysUntilNext = Math.floor((nextOccurrence.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-      
-      targetDate.setDate(targetDate.getDate() + Math.max(1, Math.floor(daysUntilNext * 0.6)));
-      limitDate.setTime(nextOccurrence.getTime());
-    }
-    // For day-of-month tasks, similar logic
-    else if (recurrence.daysOfMonth && recurrence.daysOfMonth.length > 0) {
-      const nextOccurrence = this.calculateNextOccurrenceDate(startDate, recurrence);
-      const daysUntilNext = Math.floor((nextOccurrence.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-      
-      targetDate.setDate(targetDate.getDate() + Math.max(1, Math.floor(daysUntilNext * 0.6)));
-      limitDate.setTime(nextOccurrence.getTime());
-    }
-    // Default: target tomorrow, limit in 7 days
-    else {
-      targetDate.setDate(targetDate.getDate() + 1);
-      limitDate.setDate(limitDate.getDate() + 7);
-    }
-
-    return { targetDate, limitDate };
-  }
-
-  /**
-   * Get the next occurrence of specified days of week
-   */
-  private getNextDayOfWeek(fromDate: Date, daysOfWeek: DayOfWeek[]): Date {
-    const dayMap: Record<DayOfWeek, number> = {
-      Sun: 0,
-      Mon: 1,
-      Tue: 2,
-      Wed: 3,
-      Thu: 4,
-      Fri: 5,
-      Sat: 6,
-    };
-
-    const targetDays = daysOfWeek.map((day) => dayMap[day]).sort((a, b) => a - b);
-    const currentDay = fromDate.getDay();
-    const nextDate = new Date(fromDate);
-
-    // Find the next target day
-    let daysToAdd = 0;
-    let found = false;
-
-    for (const targetDay of targetDays) {
-      if (targetDay > currentDay) {
-        daysToAdd = targetDay - currentDay;
-        found = true;
-        break;
-      }
-    }
-
-    // If no day found in current week, get first day of next week
-    if (!found) {
-      daysToAdd = 7 - currentDay + targetDays[0]!;
-    }
-
-    nextDate.setDate(nextDate.getDate() + daysToAdd);
-    return nextDate;
-  }
-
-  /**
-   * Get the next occurrence of specified days of month
-   */
-  private getNextDayOfMonth(fromDate: Date, daysOfMonth: number[]): Date {
-    const sortedDays = [...daysOfMonth].sort((a, b) => a - b);
-    const currentDay = fromDate.getDate();
-    const currentMonth = fromDate.getMonth();
-    const currentYear = fromDate.getFullYear();
-
-    // Try to find a day in the current month
-    for (const day of sortedDays) {
-      if (day > currentDay) {
-        return new Date(currentYear, currentMonth, day);
-      }
-    }
-
-    // If no day found in current month, go to next month
-    const nextMonth = currentMonth + 1;
-    return new Date(currentYear, nextMonth, sortedDays[0]!);
+    return this.dateCalculator.calculateOccurrenceDates(startDate, recurrence);
   }
 
   /**
@@ -331,23 +198,19 @@ export class TaskSchedulerService {
       targetTimeConsumption?: number;
     }
   ): Promise<void> {
-    const task = await this.taskAdapter.getTaskWithRecurrence(taskId);
-    if (!task || !task.recurrence) {
-      throw new Error("Task does not have recurrence configured");
-    }
-
     // Check if we should create a new occurrence
     const shouldCreate = await this.shouldCreateNextOccurrence(taskId);
     if (!shouldCreate) {
       return; // Latest occurrence is still pending/in progress
     }
 
+    const task = await this.taskAdapter.getTaskWithRecurrence(taskId);
+    if (!task || !task.recurrence) {
+      throw new Error("Task does not have recurrence configured");
+    }
+
     // Update period if needed (auto-advance to next period)
     await this.updateRecurrencePeriod(task.recurrence.id);
-
-    // Refresh recurrence data after potential period update
-    const updatedRecurrence = await this.recurrenceRepo.findById(task.recurrence.id);
-    if (!updatedRecurrence) return;
 
     // Check if recurrence has ended
     const hasEnded = await this.hasRecurrenceEnded(taskId, task.recurrence.id);
@@ -356,91 +219,8 @@ export class TaskSchedulerService {
       return;
     }
 
-    // For unique tasks (maxOccurrences=1), create a single occurrence with provided dates
-    if (updatedRecurrence.maxOccurrences === 1) {
-      const startDate = new Date();
-      
-      // Use provided dates or defaults
-      const targetDate = initialDates?.targetDate ?? new Date(Date.now() + 24 * 60 * 60 * 1000); // Tomorrow
-      const limitDate = initialDates?.limitDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // In 7 days
-
-      const occurrenceData: CreateOccurrenceDTO = {
-        associatedTaskId: taskId,
-        startDate,
-        targetDate,
-        limitDate,
-        targetTimeConsumption: initialDates?.targetTimeConsumption,
-      };
-
-      await this.occurrenceAdapter.createOccurrence(occurrenceData);
-      return;
-    }
-
-    // Get the latest occurrence to calculate next date
-    const latestOccurrence = await this.occurrenceAdapter.getLatestOccurrenceByTaskId(taskId);
-    
-    // For the first occurrence, use current date. For subsequent ones, calculate next date
-    let nextDate: Date;
-    if (!latestOccurrence) {
-      // First occurrence - start now
-      nextDate = new Date();
-    } else {
-      // Subsequent occurrences - calculate next date based on the last occurrence's startDate
-      nextDate = this.calculateNextOccurrenceDate(latestOccurrence.startDate, updatedRecurrence);
-    }
-
-    // Check if nextDate is within the current period
-    const currentPeriodStart = updatedRecurrence.lastPeriodStart ?? new Date();
-    const currentPeriodEnd = new Date(currentPeriodStart);
-    if (updatedRecurrence.interval) {
-      currentPeriodEnd.setDate(currentPeriodEnd.getDate() + updatedRecurrence.interval);
-    }
-
-    // Check if we've completed all occurrences for this period
-    const hasCompletedAllInPeriod = this.hasReachedPeriodLimit(updatedRecurrence);
-    
-    // If we've completed all occurrences in the current period, move to next period
-    if (hasCompletedAllInPeriod && updatedRecurrence.interval) {
-      // All occurrences in current period are complete, move to next period
-      const nextPeriodStart = this.getNextPeriodStart(currentPeriodStart, updatedRecurrence.interval);
-
-      // Reset the occurrence counter and update lastPeriodStart
-      await this.recurrenceRepo.updateById(updatedRecurrence.id, {
-        completedOccurrences: 0,
-        lastPeriodStart: nextPeriodStart,
-      });
-      
-      // Update local copy for further calculations
-      updatedRecurrence.completedOccurrences = 0;
-      updatedRecurrence.lastPeriodStart = nextPeriodStart;
-
-      // Start from the new period
-      nextDate = nextPeriodStart;
-    }
-
-    // Calculate target and limit dates for this occurrence
-    // Use initial dates if provided (for first occurrence), otherwise calculate
-    let targetDate: Date;
-    let limitDate: Date;
-    
-    if (initialDates?.targetDate || initialDates?.limitDate) {
-      targetDate = initialDates.targetDate ?? this.calculateOccurrenceDates(nextDate, updatedRecurrence).targetDate;
-      limitDate = initialDates.limitDate ?? this.calculateOccurrenceDates(nextDate, updatedRecurrence).limitDate;
-    } else {
-      const calculated = this.calculateOccurrenceDates(nextDate, updatedRecurrence);
-      targetDate = calculated.targetDate;
-      limitDate = calculated.limitDate;
-    }
-
-    const occurrenceData: CreateOccurrenceDTO = {
-      associatedTaskId: taskId,
-      startDate: nextDate,
-      targetDate,
-      limitDate,
-      targetTimeConsumption: initialDates?.targetTimeConsumption ?? latestOccurrence?.targetTimeConsumption ?? undefined,
-    };
-
-    await this.occurrenceAdapter.createOccurrence(occurrenceData);
+    // Delegate to OccurrenceCreationService
+    await this.occurrenceCreation.createNextOccurrence(taskId, initialDates);
   }
 
   /**
@@ -448,60 +228,7 @@ export class TaskSchedulerService {
    * This is for UI preview purposes only, does not create the occurrence
    */
   async previewNextOccurrenceDate(taskId: number): Promise<Date | null> {
-    const task = await this.taskAdapter.getTaskWithRecurrence(taskId);
-    if (!task || !task.recurrence) {
-      return null;
-    }
-
-    const recurrence = task.recurrence;
-    const latestOccurrence = await this.occurrenceAdapter.getLatestOccurrenceByTaskId(taskId);
-
-    // Tarea Única: No next occurrence
-    if (recurrence.maxOccurrences === 1 && !recurrence.interval) {
-      return null;
-    }
-
-    // Recurrente Finita: Check if we've reached the limit
-    if (recurrence.maxOccurrences && recurrence.maxOccurrences > 1 && !recurrence.interval) {
-      const occurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
-      const completedCount = occurrences.filter(o => o.status === "Completed").length;
-      
-      if (completedCount >= recurrence.maxOccurrences - 1) {
-        // This is the last occurrence, no next one
-        return null;
-      }
-      
-      // Next occurrence would be created immediately after completing current
-      return new Date();
-    }
-
-    // Hábito or Hábito+: Calculate based on recurrence pattern
-    if (recurrence.interval) {
-      if (!latestOccurrence) {
-        return new Date(); // First occurrence
-      }
-
-      // Check if we need to wait for a new period
-      const currentDate = new Date();
-      if (this.shouldStartNewPeriod(recurrence.lastPeriodStart, recurrence.interval, currentDate)) {
-        // Next period
-        const nextPeriodStart = recurrence.lastPeriodStart
-          ? this.getNextPeriodStart(recurrence.lastPeriodStart, recurrence.interval)
-          : currentDate;
-        return nextPeriodStart;
-      } else if (this.hasReachedPeriodLimit(recurrence)) {
-        // Reached period limit, wait for next period
-        const nextPeriodStart = recurrence.lastPeriodStart
-          ? this.getNextPeriodStart(recurrence.lastPeriodStart, recurrence.interval)
-          : currentDate;
-        return nextPeriodStart;
-      } else {
-        // Calculate next occurrence date based on pattern
-        return this.calculateNextOccurrenceDate(latestOccurrence.startDate, recurrence);
-      }
-    }
-
-    return null;
+    return await this.occurrencePreview.previewNextOccurrenceDate(taskId);
   }
 
   /**
@@ -534,127 +261,6 @@ export class TaskSchedulerService {
       recurrence: CreateRecurrenceDTO;
     }
   ): Promise<void> {
-    const { fixedStartTime, fixedEndTime, recurrence } = config;
-
-    // Determine how many occurrences to create
-    let datesToCreate: Date[] = [];
-    const startDate = new Date();
-    
-    // Calculate period end
-    let periodEnd: Date;
-    if (recurrence.endDate) {
-      periodEnd = recurrence.endDate;
-    } else if (recurrence.interval) {
-      // If there's an interval, create for the next period
-      periodEnd = new Date(startDate);
-      periodEnd.setDate(periodEnd.getDate() + recurrence.interval);
-    } else {
-      // Default: create for next 30 days
-      periodEnd = new Date(startDate);
-      periodEnd.setDate(periodEnd.getDate() + 30);
-    }
-
-    // Generate all dates based on recurrence pattern
-    if (recurrence.daysOfWeek && recurrence.daysOfWeek.length > 0) {
-      datesToCreate = this.generateDatesForDaysOfWeek(
-        startDate,
-        periodEnd,
-        recurrence.daysOfWeek
-      );
-    } else if (recurrence.daysOfMonth && recurrence.daysOfMonth.length > 0) {
-      datesToCreate = this.generateDatesForDaysOfMonth(
-        startDate,
-        periodEnd,
-        recurrence.daysOfMonth
-      );
-    }
-
-    // Limit to maxOccurrences if specified
-    if (recurrence.maxOccurrences && datesToCreate.length > recurrence.maxOccurrences) {
-      datesToCreate = datesToCreate.slice(0, recurrence.maxOccurrences);
-    }
-
-    // Create occurrences and events for each date
-    for (const date of datesToCreate) {
-      // Create occurrence
-      const occurrence = await this.occurrenceAdapter.createOccurrence({
-        associatedTaskId: taskId,
-        startDate: date,
-        targetDate: date,
-        limitDate: date,
-      });
-
-      // Create calendar event with fixed times
-      const [startHours, startMinutes, startSeconds] = fixedStartTime.split(':').map(Number);
-      const [endHours, endMinutes, endSeconds] = fixedEndTime.split(':').map(Number);
-
-      const eventStart = new Date(date);
-      eventStart.setHours(startHours!, startMinutes!, startSeconds!);
-
-      const eventEnd = new Date(date);
-      eventEnd.setHours(endHours!, endMinutes!, endSeconds!);
-
-      await this.eventAdapter.createEvent(ownerId, {
-        associatedOccurrenceId: occurrence.id,
-        isFixed: true,
-        start: eventStart,
-        finish: eventEnd,
-      });
-    }
-  }
-
-  /**
-   * Generate dates for all occurrences of specified days of week in a date range
-   */
-  private generateDatesForDaysOfWeek(
-    startDate: Date,
-    endDate: Date,
-    daysOfWeek: DayOfWeek[]
-  ): Date[] {
-    const dayMap: Record<DayOfWeek, number> = {
-      Sun: 0,
-      Mon: 1,
-      Tue: 2,
-      Wed: 3,
-      Thu: 4,
-      Fri: 5,
-      Sat: 6,
-    };
-
-    const targetDays = daysOfWeek.map((day) => dayMap[day]);
-    const dates: Date[] = [];
-    const current = new Date(startDate);
-    current.setHours(0, 0, 0, 0);
-
-    while (current <= endDate) {
-      if (targetDays.includes(current.getDay())) {
-        dates.push(new Date(current));
-      }
-      current.setDate(current.getDate() + 1);
-    }
-
-    return dates;
-  }
-
-  /**
-   * Generate dates for all occurrences of specified days of month in a date range
-   */
-  private generateDatesForDaysOfMonth(
-    startDate: Date,
-    endDate: Date,
-    daysOfMonth: number[]
-  ): Date[] {
-    const dates: Date[] = [];
-    const current = new Date(startDate);
-    current.setHours(0, 0, 0, 0);
-
-    while (current <= endDate) {
-      if (daysOfMonth.includes(current.getDate())) {
-        dates.push(new Date(current));
-      }
-      current.setDate(current.getDate() + 1);
-    }
-
-    return dates;
+    await this.fixedTaskService.createFixedTaskEvents(taskId, ownerId, config);
   }
 }
