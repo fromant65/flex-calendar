@@ -150,9 +150,12 @@ function EventsPageContent() {
   }
 
   const handleEventDragStart = (event: EventWithDetails) => {
-    if (!event.isFixed) {
-      setDraggedEvent(event)
-    }
+    // Don't allow dragging of fixed events, completed events, or events tied to skipped occurrences
+    if (event.isFixed) return
+    if (event.isCompleted) return
+    if (event.occurrence?.status === "Skipped") return
+
+    setDraggedEvent(event)
   }
 
   const handleCalendarDrop = (date: Date, hour?: number) => {

@@ -106,11 +106,11 @@ export function WeekView({
                 return (
                   <div
                     key={event.id}
-                    draggable={!event.isFixed}
+                    draggable={!event.isFixed && !event.isCompleted && event.occurrence?.status !== "Skipped"}
                     onDragStart={() => onEventDragStart(event)}
                     className={`absolute left-0.5 lg:left-1 right-0.5 lg:right-1 rounded p-0.5 lg:p-1 transition-colors overflow-hidden ${taskTypeClassName} ${
-                      event.isFixed ? "cursor-pointer" : "cursor-move"
-                    } ${event.isCompleted ? "event--completed" : ""}`}
+                          (event.isCompleted || event.isFixed) ? "cursor-pointer" : "cursor-move"
+                        } ${event.isCompleted ? "event--completed" : ""}`}
                     style={{
                       top: `calc(${startHour} * var(--cell-height))`,
                       height: `calc(${duration} * var(--cell-height))`,

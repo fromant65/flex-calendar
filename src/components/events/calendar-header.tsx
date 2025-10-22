@@ -46,7 +46,7 @@ export function CalendarHeader({
 
       <div className="flex items-center gap-2 w-full sm:w-auto">
         <div className="hidden lg:block">
-          <HelpTip title="Leyenda de colores">
+          <HelpTip title="Ayuda del calendario">
             <div className="text-sm font-medium mb-1">¿Qué significan los colores?</div>
             <div className="text-xs text-muted-foreground space-y-1">
               <div className="flex items-center gap-2">
@@ -74,6 +74,7 @@ export function CalendarHeader({
                 <span>Fija (única o repetitiva)</span>
               </div>
               <div className="mt-2 text-[11px] text-muted-foreground">Puedes arrastrar eventos para reubicarlos. Haz clic en un evento para ver detalles.</div>
+              <div className="mt-1 text-[11px] text-muted-foreground">Los eventos completados no se pueden reprogramar, recuerda colocar el evento en el rango horario correcto antes de completarlo o saltearlo.</div>
             </div>
           </HelpTip>
         </div>

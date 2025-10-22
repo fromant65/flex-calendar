@@ -96,10 +96,10 @@ export function DayView({
             return (
               <div
                 key={event.id}
-                draggable={!event.isFixed}
+                draggable={!event.isFixed && !event.isCompleted && event.occurrence?.status !== "Skipped"}
                 onDragStart={() => onEventDragStart(event)}
                 className={`absolute left-1 lg:left-2 right-1 lg:right-2 border-l-2 lg:border-l-4 rounded p-1 lg:p-2 transition-colors ${taskTypeClassName} ${
-                  event.isFixed ? "cursor-pointer" : "cursor-move"
+                  (event.isCompleted || event.isFixed) ? "cursor-pointer" : "cursor-move"
                 } ${event.isCompleted ? "event--completed" : ""}`}
                 style={{
                   top: `calc(${startHour} * var(--cell-height))`,
