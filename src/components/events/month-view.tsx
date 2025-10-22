@@ -80,7 +80,9 @@ export function MonthView({ date, events, onTimeSlotClick, onEventClick, onDrop 
                   return (
                     <div
                       key={event.id}
-                      className={`text-[8px] lg:text-xs rounded px-0.5 lg:px-1 py-0.5 truncate cursor-pointer ${taskTypeClassName}`}
+                      className={`text-[8px] lg:text-xs rounded px-0.5 lg:px-1 py-0.5 truncate cursor-pointer ${taskTypeClassName} ${
+                        event.isCompleted ? "event--completed" : ""
+                      }`}
                       onClick={(e) => {
                         e.stopPropagation()
                         onEventClick(event)

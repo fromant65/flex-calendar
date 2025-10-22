@@ -100,7 +100,7 @@ export function DayView({
                 onDragStart={() => onEventDragStart(event)}
                 className={`absolute left-1 lg:left-2 right-1 lg:right-2 border-l-2 lg:border-l-4 rounded p-1 lg:p-2 transition-colors ${taskTypeClassName} ${
                   event.isFixed ? "cursor-pointer" : "cursor-move"
-                }`}
+                } ${event.isCompleted ? "event--completed" : ""}`}
                 style={{
                   top: `calc(${startHour} * var(--cell-height))`,
                   height: `calc(${duration} * var(--cell-height))`,

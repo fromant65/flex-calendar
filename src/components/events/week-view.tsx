@@ -110,7 +110,7 @@ export function WeekView({
                     onDragStart={() => onEventDragStart(event)}
                     className={`absolute left-0.5 lg:left-1 right-0.5 lg:right-1 rounded p-0.5 lg:p-1 transition-colors overflow-hidden ${taskTypeClassName} ${
                       event.isFixed ? "cursor-pointer" : "cursor-move"
-                    }`}
+                    } ${event.isCompleted ? "event--completed" : ""}`}
                     style={{
                       top: `calc(${startHour} * var(--cell-height))`,
                       height: `calc(${duration} * var(--cell-height))`,

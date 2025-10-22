@@ -254,3 +254,18 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Visual treatment for completed events: slightly desaturated / grayed and reduced opacity
+   - Keeps text readable (contrast) but visually de-emphasized
+   - Preserves hover/interactive affordances by only reducing background and foreground saturation
+*/
+.event--completed {
+  /* Use color-mix to blend the element with the muted foreground for a soft gray */
+  color: color-mix(in srgb, var(--muted-foreground) 60%, var(--foreground));
+  background-color: color-mix(in srgb, var(--muted) 48%, transparent);
+  /* Slightly reduce emphasis */
+  opacity: 0.92;
+}
+.event--completed .text-foreground {
+  color: color-mix(in srgb, var(--muted-foreground) 55%, var(--foreground));
+}
