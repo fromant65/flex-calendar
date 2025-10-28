@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { api } from "~/trpc/react"
 import type { TaskGetMyTasksOutput } from "~/server/api/routers/derived-endpoint-types"
 import { TaskFormModal } from "~/components/tasks/tasks-form-modal"
@@ -10,6 +10,7 @@ import { TaskCard } from "~/components/tasks/task-card"
 import { TaskStats } from "~/components/tasks/task-stats"
 import { TasksHeader } from "~/components/tasks/tasks-header"
 import { EmptyState } from "~/components/tasks/empty-state"
+import { TaskFilterBar, type TaskFilter } from "~/components/tasks/task-filter-bar"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +31,12 @@ export default function TasksPage() {
   const [viewingTask, setViewingTask] = useState<TaskFromList | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState<number | null>(null)
+  const [filters, setFilters] = useState<TaskFilter>({
+    searchQuery: "",
+    statusFilter: "all",
+    taskTypeFilter: "all",
+    fixedFilter: "all",
+  })
 
   const { data: tasks = [], isLoading, error: tasksError } = api.task.getMyTasks.useQuery()
   const utils = api.useUtils()
@@ -84,9 +91,35 @@ export default function TasksPage() {
   const activeTasks = tasks.filter((t) => t.isActive).length
   const fixedTasks = tasks.filter((t) => t.isFixed).length
 
+  // Filter tasks based on search and filters
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      // Search filter
+      if (filters.searchQuery) {
+        const searchLower = filters.searchQuery.toLowerCase();
+        const matchesName = task.name.toLowerCase().includes(searchLower);
+        const matchesDescription = task.description?.toLowerCase().includes(searchLower);
+        if (!matchesName && !matchesDescription) return false;
+      }
+
+      // Status filter
+      if (filters.statusFilter === "active" && !task.isActive) return false;
+      if (filters.statusFilter === "inactive" && task.isActive) return false;
+
+      // Task type filter
+      if (filters.taskTypeFilter !== "all" && task.taskType !== filters.taskTypeFilter) return false;
+
+      // Fixed filter
+      if (filters.fixedFilter === "fixed" && !task.isFixed) return false;
+      if (filters.fixedFilter === "flexible" && task.isFixed) return false;
+
+      return true;
+    });
+  }, [tasks, filters]);
+
   // Separate active and inactive tasks
-  const activeTasksList = tasks.filter((t) => t.isActive)
-  const inactiveTasksList = tasks.filter((t) => !t.isActive)
+  const activeTasksList = filteredTasks.filter((t) => t.isActive)
+  const inactiveTasksList = filteredTasks.filter((t) => !t.isActive)
 
   if (isLoading) {
     return <LoadingPage text="Cargando tareas..." />
@@ -99,10 +132,41 @@ export default function TasksPage() {
 
       {/* Content */}
       <div className="container mx-auto px-6 py-8">
-        {tasks.length > 0 && <TaskStats totalTasks={tasks.length} activeTasks={activeTasks} fixedTasks={fixedTasks} />}
+        {tasks.length > 0 && (
+          <>
+            <TaskStats totalTasks={tasks.length} activeTasks={activeTasks} fixedTasks={fixedTasks} />
+            
+            {/* Filter Bar */}
+            <div className="mt-6 mb-6">
+              <TaskFilterBar
+                filters={filters}
+                onFiltersChange={setFilters}
+                totalTasks={tasks.length}
+                filteredCount={filteredTasks.length}
+              />
+            </div>
+          </>
+        )}
 
         {tasks.length === 0 ? (
           <EmptyState onCreateClick={() => setIsFormOpen(true)} />
+        ) : filteredTasks.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No se encontraron tareas con los filtros aplicados.</p>
+            <button
+              onClick={() =>
+                setFilters({
+                  searchQuery: "",
+                  statusFilter: "all",
+                  taskTypeFilter: "all",
+                  fixedFilter: "all",
+                })
+              }
+              className="mt-4 text-primary hover:underline"
+            >
+              Limpiar filtros
+            </button>
+          </div>
         ) : (
           <div className="space-y-8">
             {/* Active Tasks Section */}

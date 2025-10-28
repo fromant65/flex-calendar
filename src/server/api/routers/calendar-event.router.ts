@@ -126,11 +126,12 @@ export const calendarEventRouter = createTRPCRouter({
     .input(z.object({ 
       id: z.number(),
       dedicatedTime: z.number().optional(), // Time in hours
-      completeOccurrence: z.boolean().optional() // Also complete the associated occurrence
+      completeOccurrence: z.boolean().optional(), // Also complete the associated occurrence
+      completedAt: z.date().optional() // Custom completion date/time
     }))
     .mutation(async ({ input }) => {
       const service = new TaskLifecycleService();
-      return await service.completeCalendarEvent(input.id, input.dedicatedTime, input.completeOccurrence);
+      return await service.completeCalendarEvent(input.id, input.dedicatedTime, input.completeOccurrence, input.completedAt);
     }),
 
   /**

@@ -26,6 +26,8 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
   const [confirmSkipOpen, setConfirmSkipOpen] = useState(false)
   const [occurrenceToComplete, setOccurrenceToComplete] = useState<OccurrenceWithTask | null>(null)
   const [occurrenceToSkip, setOccurrenceToSkip] = useState<OccurrenceWithTask | null>(null)
+  const [eventsView, setEventsView] = useState<"list" | "calendar">("list")
+  const [calendarView, setCalendarView] = useState<import("~/types").CalendarView>("week")
 
   // Fetch data
   const { data: urgentOccurrences = [], isLoading: urgentLoading, error: urgentError } = api.task.getByUrgency.useQuery()
@@ -115,9 +117,12 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
     setConfirmSkipOpen(true)
   }
 
-  const confirmCompleteTask = () => {
+  const confirmCompleteTask = (completedAt?: Date) => {
     if (!occurrenceToComplete) return
-    completeOccurrenceMutation.mutate({ id: occurrenceToComplete.id })
+    completeOccurrenceMutation.mutate({ 
+      id: occurrenceToComplete.id,
+      completedAt 
+    })
   }
 
   const confirmSkipTask = () => {
@@ -154,8 +159,6 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
   const topImportantOccurrences = importantOccurrences.slice(0, 5) as OccurrenceWithTask[]
   const todayEventsTyped = todayEvents as EventWithDetails[]
   const weekEventsTyped = weekEvents as EventWithDetails[]
-  const [eventsView, setEventsView] = useState<"list" | "calendar">("list")
-  const [calendarView, setCalendarView] = useState<import("~/types").CalendarView>("week")
 
   return (
     <div className="flex flex-col h-full bg-background">

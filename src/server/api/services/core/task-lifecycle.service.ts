@@ -165,8 +165,8 @@ export class TaskLifecycleService {
   /**
    * Complete an occurrence and trigger next occurrence creation if recurring
    */
-  async completeOccurrence(occurrenceId: number) {
-    return await this.occurrenceCompletion.completeOccurrence(occurrenceId);
+  async completeOccurrence(occurrenceId: number, completedAt?: Date) {
+    return await this.occurrenceCompletion.completeOccurrence(occurrenceId, completedAt);
   }
 
   /**
@@ -296,8 +296,8 @@ export class TaskLifecycleService {
   /**
    * Complete a calendar event and handle task lifecycle based on task type
    */
-  async completeCalendarEvent(eventId: number, dedicatedTime?: number, completeOccurrence?: boolean) {
-    return await this.eventCompletion.completeCalendarEvent(eventId, dedicatedTime, completeOccurrence);
+  async completeCalendarEvent(eventId: number, dedicatedTime?: number, completeOccurrence?: boolean, completedAt?: Date) {
+    return await this.eventCompletion.completeCalendarEvent(eventId, dedicatedTime, completeOccurrence, completedAt);
   }
 
   /**

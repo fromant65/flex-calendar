@@ -188,16 +188,16 @@ export function TaskStatsSection({ data }: TaskStatsSectionProps) {
               <div>
                 <CardTitle>Distribución por Importancia</CardTitle>
                 <CardDescription>
-                  Porcentaje de completación de ocurrencias por nivel de importancia
+                  Porcentaje de finalización de ocurrencias por nivel de importancia
                 </CardDescription>
               </div>
               {data.insights && (
                 <InsightsModal
                   title="Análisis de Tareas"
-                  description="Análisis detallado de la distribución y completación de tareas por importancia"
+                  description="Análisis detallado de la distribución y finalización de tareas por importancia"
                   insights={[
                     {
-                      title: "Tendencia de Completación",
+                      title: "Tendencia de Finalización",
                       message: data.insights.completionTrendMessage,
                       type: "info",
                     },
@@ -228,7 +228,7 @@ export function TaskStatsSection({ data }: TaskStatsSectionProps) {
                   />
                   <YAxis
                     label={{ 
-                      value: "% Completación", 
+                      value: "% Finalización", 
                       angle: -90, 
                       position: "insideLeft",
                       style: { textAnchor: 'middle', fill: chartColors.text }

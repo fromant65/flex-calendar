@@ -1,13 +1,32 @@
 "use client"
 
 import { DialogFooter } from "~/components/ui/dialog"
-import { Clock } from "lucide-react"
+import { Clock, Calendar as CalendarIcon } from "lucide-react"
 import { Button } from "~/components/ui/button"
 import { LoadingSpinner } from "~/components/ui/loading-spinner"
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "~/components/ui/alert-dialog"
 import { Checkbox } from "~/components/ui/checkbox"
+import { Input } from "~/components/ui/input"
+import { Label } from "~/components/ui/label"
 
-export function CompleteFooter({ event, eventHasStarted, completeEventMutation, completeEventHandler, skipEventMutation, skipEventHandler, completeOccurrence, setCompleteOccurrence, skipOccurrence, setSkipOccurrence }: any) {
+export function CompleteFooter({ 
+  event, 
+  eventHasStarted, 
+  completeEventMutation, 
+  completeEventHandler, 
+  skipEventMutation, 
+  skipEventHandler, 
+  completeOccurrence, 
+  setCompleteOccurrence, 
+  skipOccurrence, 
+  setSkipOccurrence,
+  dedicatedTime,
+  setDedicatedTime,
+  completionDate,
+  setCompletionDate,
+  completionTime,
+  setCompletionTime
+}: any) {
   if (!event || event.isCompleted) return null
 
   return (
@@ -26,8 +45,18 @@ export function CompleteFooter({ event, eventHasStarted, completeEventMutation, 
         )}
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Tiempo Dedicado (horas)</label>
-          <input className="w-full bg-muted/20 border-border p-2 rounded" placeholder="ej: 2.5" />
+          <Label htmlFor="dedicated-time" className="text-xs font-medium text-muted-foreground">
+            Tiempo Dedicado (horas)
+          </Label>
+          <Input 
+            id="dedicated-time"
+            type="number"
+            step="0.5"
+            value={dedicatedTime}
+            onChange={(e) => setDedicatedTime(e.target.value)}
+            className="w-full bg-muted/20 border-border" 
+            placeholder="ej: 2.5" 
+          />
           <p className="text-xs text-muted-foreground">Deja vacío para usar la duración programada</p>
         </div>
 
@@ -38,7 +67,7 @@ export function CompleteFooter({ event, eventHasStarted, completeEventMutation, 
                 {skipEventMutation.isPending ? (<><LoadingSpinner size="xs" /><span className="ml-2">Saltando...</span></>) : ("Saltar")}
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="border-border bg-card">
+            <AlertDialogContent className="border-border bg-card sm:max-w-md">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-foreground">Saltar evento</AlertDialogTitle>
                 <AlertDialogDescription className="text-muted-foreground">¿Estás seguro de que deseas saltar este evento programado?</AlertDialogDescription>
@@ -62,15 +91,46 @@ export function CompleteFooter({ event, eventHasStarted, completeEventMutation, 
                 )}
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="border-border bg-card">
+            <AlertDialogContent className="border-border bg-card sm:max-w-md">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-foreground">Completar evento</AlertDialogTitle>
-                <AlertDialogDescription className="text-muted-foreground">¿Estás seguro de que deseas marcar este evento como completado?</AlertDialogDescription>
+                <AlertDialogDescription className="text-muted-foreground">
+                  ¿Estás seguro de que deseas marcar este evento como completado?
+                </AlertDialogDescription>
               </AlertDialogHeader>
-              <div className="flex items-center space-x-2 px-6">
-                <Checkbox id="completeOccurrence" checked={completeOccurrence} onCheckedChange={(checked) => setCompleteOccurrence(checked === true)} />
-                <label htmlFor="completeOccurrence" className="text-sm leading-none text-foreground">También completar la ocurrencia asociada</label>
+              
+              {/* Completion date/time inputs */}
+              <div className="space-y-3 px-6">
+                <div className="space-y-2">
+                  <Label htmlFor="completion-date" className="text-sm font-medium">
+                    Fecha de finalización
+                  </Label>
+                  <Input
+                    id="completion-date"
+                    type="date"
+                    value={completionDate}
+                    onChange={(e) => setCompletionDate(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="completion-time" className="text-sm font-medium">
+                    Hora de finalización
+                  </Label>
+                  <Input
+                    id="completion-time"
+                    type="time"
+                    value={completionTime}
+                    onChange={(e) => setCompletionTime(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="completeOccurrence" checked={completeOccurrence} onCheckedChange={(checked) => setCompleteOccurrence(checked === true)} />
+                  <label htmlFor="completeOccurrence" className="text-sm leading-none text-foreground">También completar la ocurrencia asociada</label>
+                </div>
               </div>
+              
               <AlertDialogFooter>
                 <AlertDialogCancel onClick={() => setCompleteOccurrence(false)} className="hover:bg-accent">Cancelar</AlertDialogCancel>
                 <AlertDialogAction onClick={completeEventHandler} className="bg-primary hover:bg-primary/90 text-primary-foreground">Completar</AlertDialogAction>

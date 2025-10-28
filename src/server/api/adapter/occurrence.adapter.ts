@@ -169,10 +169,10 @@ export class OccurrenceAdapter {
   /**
    * Mark occurrence as completed
    */
-  async completeOccurrence(occurrenceId: number) {
+  async completeOccurrence(occurrenceId: number, completedAt?: Date) {
     return await this.occurrenceRepo.updateById(occurrenceId, {
       status: "Completed",
-      completedAt: new Date(),
+      completedAt: completedAt ?? new Date(),
     });
   }
 

@@ -40,6 +40,17 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
   const [editDate, setEditDate] = useState<string>("")
   const [editStartTime, setEditStartTime] = useState<string>("")
   const [editEndTime, setEditEndTime] = useState<string>("")
+  
+  // Completion date/time states
+  const [completionDate, setCompletionDate] = useState<string>("")
+  const [completionTime, setCompletionTime] = useState<string>("")
+  
+  // Initialize completion date/time with current date/time
+  useState(() => {
+    const now = new Date()
+    setCompletionDate(now.toISOString().split('T')[0] ?? "")
+    setCompletionTime(`${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`)
+  })
 
   // Initialize edit fields when entering edit mode
   const startEditMode = () => {
@@ -182,11 +193,20 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
     if (!event?.id) return
 
     const timeInHours = dedicatedTime ? parseFloat(dedicatedTime) : undefined
+    
+    // Parse completion date and time
+    let completedAt: Date | undefined = undefined
+    if (completionDate && completionTime) {
+      const [year, month, day] = completionDate.split('-').map(Number)
+      const [hours, minutes] = completionTime.split(':').map(Number)
+      completedAt = new Date(year!, month! - 1, day, hours, minutes)
+    }
 
     completeEventMutation.mutate({
       id: event.id,
       dedicatedTime: timeInHours,
-      completeOccurrence: completeOccurrence
+      completeOccurrence: completeOccurrence,
+      completedAt
     })
   }
 
@@ -322,6 +342,12 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
             setCompleteOccurrence={setCompleteOccurrence}
             skipOccurrence={skipOccurrence}
             setSkipOccurrence={setSkipOccurrence}
+            dedicatedTime={dedicatedTime}
+            setDedicatedTime={setDedicatedTime}
+            completionDate={completionDate}
+            setCompletionDate={setCompletionDate}
+            completionTime={completionTime}
+            setCompletionTime={setCompletionTime}
           />
         )}
 

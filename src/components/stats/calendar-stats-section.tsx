@@ -113,10 +113,10 @@ export function CalendarStatsSection({ data }: CalendarStatsSectionProps) {
               <div className="mt-3">
                 <InsightsModal
                   title="Análisis de Calendario"
-                  description="Análisis detallado de la completación de eventos y patrones temporales"
+                  description="Análisis detallado de la finalización de eventos y patrones temporales"
                   insights={[
                     {
-                      title: "Análisis de Completación General",
+                      title: "Análisis de Finalización General",
                       message: data.insights.overallCompletionAnalysis,
                       type: complianceRate >= 70 ? 'success' : complianceRate >= 50 ? 'info' : 'warning',
                     },
@@ -293,7 +293,7 @@ export function CalendarStatsSection({ data }: CalendarStatsSectionProps) {
         <CardHeader>
           <CardTitle>Análisis Detallado por Hora</CardTitle>
           <CardDescription>
-            Número de eventos y tasa de completación por franja horaria
+            Número de eventos y tasa de finalización por franja horaria
           </CardDescription>
         </CardHeader>
         <CardContent>

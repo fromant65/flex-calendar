@@ -30,6 +30,8 @@ export default function TaskManagerPage() {
   const [editingOccurrence, setEditingOccurrence] = useState<{
     id: number;
     timeConsumed: number | null;
+    targetDate: Date | null;
+    limitDate: Date | null;
   } | null>(null);
   
   // Fetch all occurrences with task details (filtered by backend when in list view)
@@ -120,10 +122,18 @@ export default function TaskManagerPage() {
     }
   };
 
-  const handleSaveOccurrence = (id: number, timeConsumed: number | null) => {
+  const handleSaveOccurrence = (id: number, data: { 
+    timeConsumed: number | null;
+    targetDate?: Date | null;
+    limitDate?: Date | null;
+  }) => {
     updateOccurrence.mutate({
       id,
-      data: { timeConsumed: timeConsumed ?? undefined },
+      data: {
+        timeConsumed: data.timeConsumed ?? undefined,
+        targetDate: data.targetDate === null ? undefined : data.targetDate,
+        limitDate: data.limitDate === null ? undefined : data.limitDate,
+      },
     });
   };
   
@@ -186,7 +196,9 @@ export default function TaskManagerPage() {
   const handleTimelineEdit = (occurrence: OccurrenceWithTask) => {
     setEditingOccurrence({
       id: occurrence.id,
-      timeConsumed: occurrence.timeConsumed
+      timeConsumed: occurrence.timeConsumed,
+      targetDate: occurrence.targetDate,
+      limitDate: occurrence.limitDate,
     });
   };
   
@@ -347,8 +359,8 @@ export default function TaskManagerPage() {
                     isExpanded={isExpanded}
                     nextOccurrenceDate={isExpanded ? nextOccurrenceDate : null}
                     onToggle={() => setSelectedTaskId(isExpanded ? null : taskId)}
-                    onEditOccurrence={(id, timeConsumed) =>
-                      setEditingOccurrence({ id, timeConsumed })
+                    onEditOccurrence={(id, timeConsumed, targetDate, limitDate) =>
+                      setEditingOccurrence({ id, timeConsumed, targetDate, limitDate })
                     }
                     onCompleteOccurrence={(id, taskName) =>
                       setConfirmAction({ type: "complete", occurrenceId: id, taskName })

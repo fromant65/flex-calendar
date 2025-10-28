@@ -26,7 +26,7 @@ export class EventCompletionService {
   /**
    * Complete a calendar event and handle task lifecycle based on task type
    */
-  async completeCalendarEvent(eventId: number, dedicatedTime?: number, completeOccurrence?: boolean) {
+  async completeCalendarEvent(eventId: number, dedicatedTime?: number, completeOccurrence?: boolean, completedAt?: Date) {
     const eventDetails = await this.eventAdapter.getEventWithDetails(eventId);
     if (!eventDetails) {
       throw new Error("Event not found");
@@ -46,12 +46,12 @@ export class EventCompletionService {
     const event = await this.eventAdapter.updateEvent(eventId, {
       isCompleted: true,
       dedicatedTime: calculatedTime,
-      completedAt: new Date(),
+      completedAt: completedAt ?? new Date(),
     });
 
     // Handle occurrence and task lifecycle if event is associated with an occurrence
     if (eventDetails.associatedOccurrenceId) {
-      await this.handleOccurrenceCompletion(eventDetails, completeOccurrence);
+      await this.handleOccurrenceCompletion(eventDetails, completeOccurrence, completedAt);
     }
     
     return event;
@@ -84,7 +84,8 @@ export class EventCompletionService {
    */
   private async handleOccurrenceCompletion(
     eventDetails: any,
-    completeOccurrence?: boolean
+    completeOccurrence?: boolean,
+    completedAt?: Date
   ): Promise<void> {
     const occurrence = eventDetails.occurrence;
     const task = occurrence?.task;
@@ -94,11 +95,11 @@ export class EventCompletionService {
 
     // FIXED TASKS: Completing event always completes the occurrence
     if (task?.isFixed) {
-      await this.completeFixedTaskOccurrence(eventDetails.associatedOccurrenceId, task, occurrence);
+      await this.completeFixedTaskOccurrence(eventDetails.associatedOccurrenceId, task, occurrence, completedAt);
     }
     // NON-FIXED TASKS: Complete occurrence only if requested
     else if (completeOccurrence && occurrence) {
-      await this.completeOccurrence(eventDetails.associatedOccurrenceId);
+      await this.completeOccurrence(eventDetails.associatedOccurrenceId, completedAt);
     }
   }
 
@@ -108,9 +109,10 @@ export class EventCompletionService {
   private async completeFixedTaskOccurrence(
     occurrenceId: number,
     task: any,
-    occurrence: any
+    occurrence: any,
+    completedAt?: Date
   ): Promise<void> {
-    await this.occurrenceAdapter.completeOccurrence(occurrenceId);
+    await this.occurrenceAdapter.completeOccurrence(occurrenceId, completedAt);
 
     if (task.recurrenceId) {
       const recurrence = await this.schedulerService.getRecurrence(task.recurrenceId);
@@ -146,7 +148,7 @@ export class EventCompletionService {
   /**
    * Complete an occurrence (delegates to OccurrenceCompletionService logic)
    */
-  private async completeOccurrence(occurrenceId: number): Promise<void> {
+  private async completeOccurrence(occurrenceId: number, completedAt?: Date): Promise<void> {
     const occurrence = await this.occurrenceAdapter.getOccurrenceWithTask(occurrenceId);
     if (!occurrence) return;
 
@@ -157,11 +159,11 @@ export class EventCompletionService {
     const events = await this.eventAdapter.getEventsByOccurrenceId(occurrenceId);
     for (const event of events) {
       if (!event.isCompleted) {
-        await this.eventAdapter.completeEvent(event.id);
+        await this.eventAdapter.completeEvent(event.id, completedAt);
       }
     }
 
-    await this.occurrenceAdapter.completeOccurrence(occurrenceId);
+    await this.occurrenceAdapter.completeOccurrence(occurrenceId, completedAt);
 
     if (task.recurrence) {
       const recurrence = task.recurrence;

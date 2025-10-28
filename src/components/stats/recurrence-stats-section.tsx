@@ -229,7 +229,7 @@ export function RecurrenceStatsSection({ data }: RecurrenceStatsSectionProps) {
                   />
                   <YAxis
                     label={{ 
-                      value: "% Completación", 
+                      value: "% Finalización", 
                       angle: -90, 
                       position: "insideLeft",
                       style: { textAnchor: 'middle', fill: chartColors.text }
@@ -282,9 +282,9 @@ export function RecurrenceStatsSection({ data }: RecurrenceStatsSectionProps) {
         {/* Frequent Days Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Días Más Frecuentes de Cumplimiento</CardTitle>
+            <CardTitle>Días Más Frecuentes de Finalización</CardTitle>
             <CardDescription>
-              Tasa de completación por día de la semana
+              Tasa de finalización por día de la semana
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -299,7 +299,7 @@ export function RecurrenceStatsSection({ data }: RecurrenceStatsSectionProps) {
                   />
                   <YAxis
                     label={{ 
-                      value: "% Completación", 
+                      value: "% finalización", 
                       angle: -90, 
                       position: "insideLeft",
                       style: { textAnchor: 'middle', fill: chartColors.text }

@@ -155,7 +155,7 @@ export class CalendarEventAdapter {
   /**
    * Mark event as completed and update dedicated time
    */
-  async completeEvent(eventId: number) {
+  async completeEvent(eventId: number, completedAt?: Date) {
     const event = await this.eventRepo.findById(eventId);
     if (!event) return undefined;
 
@@ -166,7 +166,7 @@ export class CalendarEventAdapter {
     return await this.eventRepo.updateById(eventId, {
       isCompleted: true,
       dedicatedTime,
-      completedAt: new Date(),
+      completedAt: completedAt ?? new Date(),
     });
   }
 

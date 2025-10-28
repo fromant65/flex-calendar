@@ -71,7 +71,7 @@ export function OccurrenceAccordion({
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="h-4 w-4 mt-0.5 text-green-600 dark:text-green-400" />
                 <div>
-                  <span className="font-medium text-indigo-900 dark:text-indigo-100">Fecha de Completación:</span>
+                  <span className="font-medium text-indigo-900 dark:text-indigo-100">Fecha de Finalización:</span>
                   <div className="text-indigo-700 dark:text-indigo-300">
                     {formatDateTime(occurrence.completedAt)}
                   </div>

@@ -137,7 +137,7 @@ export function InsightsSection({ data }: InsightsSectionProps) {
                 />
                 <YAxis
                   label={{ 
-                    value: "% Completación", 
+                    value: "% Finalización", 
                     angle: -90, 
                     position: "insideLeft",
                     style: { textAnchor: 'middle', fill: chartColors.text }

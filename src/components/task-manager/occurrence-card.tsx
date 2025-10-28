@@ -8,7 +8,7 @@ interface OccurrenceCardProps {
   occurrence: any;
   taskName: string;
   taskImportance: number;
-  onEdit: (id: number, timeConsumed: number | null) => void;
+  onEdit: (id: number, timeConsumed: number | null, targetDate: Date | null, limitDate: Date | null) => void;
   onComplete: (id: number, taskName: string) => void;
   onSkip: (id: number, taskName: string) => void;
   isCompleting?: boolean;
@@ -171,7 +171,7 @@ export function OccurrenceCard({
               size="sm"
               variant="outline"
               className="cursor-pointer flex-1 sm:flex-none"
-              onClick={() => onEdit(occurrence.id, occurrence.timeConsumed)}
+              onClick={() => onEdit(occurrence.id, occurrence.timeConsumed, occurrence.targetDate, occurrence.limitDate)}
             >
               <Edit className="mr-1 h-3.5 w-3.5" />
               Editar

@@ -2,10 +2,11 @@
 
 import type { OccurrenceWithTask, QuadrantPosition } from "~/types"
 import { calculateQuadrant, getQuadrantLabel } from "~/lib/eisenhower-utils"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { QuadrantPanel } from "./quadrant-panel"
 import HelpTip from "~/components/ui/help-tip"
 import { Input } from "~/components/ui/input"
+import { Search, X } from "lucide-react"
 import { useEventsContext } from "./events-context"
 
 // Modularized component - EisenhowerMatrix
@@ -27,6 +28,7 @@ export function EisenhowerMatrix({
   selectedTaskId,
 }: EisenhowerMatrixProps) {
   const { filterStartDate, setFilterStartDate, filterEndDate, setFilterEndDate } = useEventsContext()
+  const [searchQuery, setSearchQuery] = useState("")
 
   const quadrants = useMemo(() => {
     const grouped: Record<QuadrantPosition["quadrant"], OccurrenceWithTask[]> = {
@@ -36,13 +38,23 @@ export function EisenhowerMatrix({
       "not-urgent-not-important": [] as OccurrenceWithTask[],
     }
 
-    occurrences.forEach((occurrence) => {
+    // Filter by search query
+    const filtered = searchQuery
+      ? occurrences.filter((occ) => {
+          const taskName = occ.task.name.toLowerCase()
+          const taskDescription = occ.task.description?.toLowerCase() ?? ""
+          const query = searchQuery.toLowerCase()
+          return taskName.includes(query) || taskDescription.includes(query)
+        })
+      : occurrences
+
+    filtered.forEach((occurrence) => {
       const quadrant = calculateQuadrant(occurrence).quadrant as keyof typeof grouped
       grouped[quadrant].push(occurrence)
     })
 
     return grouped
-  }, [occurrences])
+  }, [occurrences, searchQuery])
 
   // Format dates for input value (YYYY-MM-DD)
   const formatDateForInput = (date: Date) => {
@@ -71,44 +83,67 @@ export function EisenhowerMatrix({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex justify-between items-start gap-4 p-2">
-        {/* Date range filters */}
-        <div className="flex flex-col sm:flex-row gap-2 flex-1">
-          <div className="flex flex-col gap-1">
-            <label htmlFor="start-date" className="text-xs text-muted-foreground">Desde</label>
-            <Input
-              id="start-date"
-              type="date"
-              value={formatDateForInput(filterStartDate)}
-              onChange={handleStartDateChange}
-              className="h-8 text-xs w-full sm:w-auto"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="end-date" className="text-xs text-muted-foreground">Hasta</label>
-            <Input
-              id="end-date"
-              type="date"
-              value={formatDateForInput(filterEndDate)}
-              onChange={handleEndDateChange}
-              className="h-8 text-xs w-full sm:w-auto"
-            />
-          </div>
+      {/* Filters section */}
+      <div className="flex flex-col gap-3 p-2 border-b border-border bg-card/50">
+        {/* Search bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar tareas por nombre o descripción..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-10 h-9 text-sm"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Limpiar búsqueda"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
-        {/* Help tip integrated with date filters */}
-        <div className="flex-shrink-0">
-          <HelpTip title="Matriz Eisenhower">
-            La matriz clasifica ocurrencias según urgencia e importancia. <br />
-            Haz doble click para ver detalles de la misma.
-            <div className="hidden lg:block">
-              Arrastra tareas al calendario para programar su ejecución.
+        {/* Date range filters and help */}
+        <div className="flex justify-between items-start gap-4">
+          <div className="flex flex-col sm:flex-row gap-2 flex-1">
+            <div className="flex flex-col gap-1">
+              <label htmlFor="start-date" className="text-xs text-muted-foreground">Desde</label>
+              <Input
+                id="start-date"
+                type="date"
+                value={formatDateForInput(filterStartDate)}
+                onChange={handleStartDateChange}
+                className="h-8 text-xs w-full sm:w-auto"
+              />
             </div>
-            <div className="lg:hidden">
-              Selecciona una tarea para programarla en el calendario.
+            <div className="flex flex-col gap-1">
+              <label htmlFor="end-date" className="text-xs text-muted-foreground">Hasta</label>
+              <Input
+                id="end-date"
+                type="date"
+                value={formatDateForInput(filterEndDate)}
+                onChange={handleEndDateChange}
+                className="h-8 text-xs w-full sm:w-auto"
+              />
             </div>
-            Los inputs de fecha permiten filtrar las tareas mostradas en la matriz según su rango de fechas.
-          </HelpTip>
+          </div>
+
+          {/* Help tip */}
+          <div className="flex-shrink-0">
+            <HelpTip title="Matriz Eisenhower">
+              La matriz clasifica ocurrencias según urgencia e importancia. <br />
+              Haz doble click para ver detalles de la misma.
+              <div className="hidden lg:block">
+                Arrastra tareas al calendario para programar su ejecución.
+              </div>
+              <div className="lg:hidden">
+                Selecciona una tarea para programarla en el calendario.
+              </div>
+              Usa el buscador y los filtros de fecha para encontrar tareas específicas.
+            </HelpTip>
+          </div>
         </div>
       </div>
       <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-px bg-border p-px overflow-hidden">

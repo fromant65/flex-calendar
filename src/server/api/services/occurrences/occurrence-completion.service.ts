@@ -26,7 +26,7 @@ export class OccurrenceCompletionService {
   /**
    * Complete an occurrence and trigger next occurrence creation if recurring
    */
-  async completeOccurrence(occurrenceId: number) {
+  async completeOccurrence(occurrenceId: number, completedAt?: Date) {
     const occurrence = await this.occurrenceAdapter.getOccurrenceWithTask(occurrenceId);
     if (!occurrence) {
       throw new Error("Occurrence not found");
@@ -41,12 +41,12 @@ export class OccurrenceCompletionService {
     const events = await this.eventAdapter.getEventsByOccurrenceId(occurrenceId);
     for (const event of events) {
       if (!event.isCompleted) {
-        await this.eventAdapter.completeEvent(event.id);
+        await this.eventAdapter.completeEvent(event.id, completedAt);
       }
     }
 
     // Mark occurrence as completed with completedAt timestamp
-    await this.occurrenceAdapter.completeOccurrence(occurrenceId);
+    await this.occurrenceAdapter.completeOccurrence(occurrenceId, completedAt);
 
     // Handle task lifecycle based on recurrence
     if (task.recurrence) {
