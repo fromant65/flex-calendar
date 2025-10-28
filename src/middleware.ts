@@ -19,6 +19,7 @@ function isPublicRoute(pathname: string): boolean {
 }
 
 export default auth((req) => {
+    console.log(req.auth);
     const { nextUrl } = req;
     const isLoggedIn = !!req.auth;
     const isPublic = isPublicRoute(nextUrl.pathname);
