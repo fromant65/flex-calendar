@@ -4,7 +4,7 @@
  */
 
 import './mocks';
-import { TaskSchedulerService } from '../task-scheduler.service';
+import { TaskSchedulerService } from '../scheduling/task-scheduler.service';
 import type { MockTask } from './test-types';
 
 describe('Habit+ Counter Increment Logic', () => {

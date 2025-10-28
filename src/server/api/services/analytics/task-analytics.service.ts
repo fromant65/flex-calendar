@@ -5,10 +5,10 @@
 import type {
   TaskStatistics,
   TaskOccurrence,
-} from "./types";
-import { UrgencyCalculator } from "../utils/urgency-calculator";
-import { OccurrenceAdapter } from "../adapter";
-import { TaskRepository, TaskOccurrenceRepository } from "../repository";
+} from "../types";
+import { UrgencyCalculator } from "../../utils/urgency-calculator";
+import { OccurrenceAdapter } from "../../adapter";
+import { TaskRepository, TaskOccurrenceRepository } from "../../repository";
 
 export class TaskAnalyticsService {
   private occurrenceAdapter: OccurrenceAdapter;

@@ -4,7 +4,7 @@
  */
 
 import './mocks';
-import { TaskSchedulerService } from '../task-scheduler.service';
+import { TaskSchedulerService } from '../scheduling/task-scheduler.service';
 import type { MockTask, MockOccurrence, CreateOccurrenceDTO } from './test-types';
 
 describe('Habit+ Second Occurrence Completion', () => {

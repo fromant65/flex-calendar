@@ -31,7 +31,7 @@ jest.mock('../../repository', () => ({
 }));
 
 // Mock services
-jest.mock('../task-analytics.service', () => ({
+jest.mock('../analytics/task-analytics.service', () => ({
   TaskAnalyticsService: jest.fn().mockImplementation(() => ({})),
 }));
 

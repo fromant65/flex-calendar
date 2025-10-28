@@ -5,10 +5,10 @@
  * Used for UI display purposes - does not create actual occurrences.
  */
 
-import type { TaskAdapter, OccurrenceAdapter } from "../adapter";
+import type { TaskAdapter, OccurrenceAdapter } from "../../adapter";
 import type { RecurrenceDateCalculator } from "./recurrence-date-calculator.service";
 import type { PeriodManager } from "./period-manager.service";
-import type { TaskRecurrence } from "./types";
+import type { TaskRecurrence } from "../types";
 
 export class OccurrencePreviewService {
   constructor(

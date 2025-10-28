@@ -7,7 +7,7 @@
  * - Days of month (e.g., 1st, 15th, 30th)
  */
 
-import type { DayOfWeek } from "./types";
+import type { DayOfWeek } from "../types";
 
 export class RecurrenceDateCalculator {
   private readonly DAY_MAP: Record<DayOfWeek, number> = {

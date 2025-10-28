@@ -5,9 +5,9 @@
  * Extracted from TaskSchedulerService to reduce file size and improve maintainability.
  */
 
-import type { TaskAdapter, OccurrenceAdapter } from "../adapter";
-import type { TaskRecurrenceRepository } from "../repository/task-recurrence.repository";
-import type { CreateOccurrenceDTO, DayOfWeek, TaskRecurrence } from "./types";
+import type { TaskAdapter, OccurrenceAdapter } from "../../adapter";
+import type { TaskRecurrenceRepository } from "../../repository/task-recurrence.repository";
+import type { CreateOccurrenceDTO, DayOfWeek, TaskRecurrence } from "../types";
 import type { RecurrenceDateCalculator } from "./recurrence-date-calculator.service";
 import type { PeriodManager } from "./period-manager.service";
 

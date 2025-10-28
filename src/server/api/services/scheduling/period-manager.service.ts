@@ -5,8 +5,8 @@
  * for recurring tasks with maxOccurrences.
  */
 
-import type { TaskRecurrence } from "./types";
-import type { TaskRecurrenceRepository } from "../repository/task-recurrence.repository";
+import type { TaskRecurrence } from "../types";
+import type { TaskRecurrenceRepository } from "../../repository/task-recurrence.repository";
 
 export class PeriodManager {
   constructor(private recurrenceRepo: TaskRecurrenceRepository) {}

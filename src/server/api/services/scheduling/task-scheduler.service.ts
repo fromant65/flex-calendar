@@ -2,10 +2,10 @@
  * Task Scheduler Service - handles recurrence logic and automatic occurrence creation
  */
 
-import { TaskAdapter, OccurrenceAdapter, CalendarEventAdapter } from "../adapter";
-import { TaskRecurrenceRepository } from "../repository";
-import type { CreateOccurrenceDTO, DayOfWeek, TaskRecurrence, CreateRecurrenceDTO } from "./types";
-import { TaskAnalyticsService } from "./task-analytics.service";
+import { TaskAdapter, OccurrenceAdapter, CalendarEventAdapter } from "../../adapter";
+import { TaskRecurrenceRepository } from "../../repository";
+import type { CreateOccurrenceDTO, DayOfWeek, TaskRecurrence, CreateRecurrenceDTO } from "../types";
+import { TaskAnalyticsService } from "../analytics/task-analytics.service";
 import { RecurrenceDateCalculator } from "./recurrence-date-calculator.service";
 import { PeriodManager } from "./period-manager.service";
 import { OccurrenceCreationService } from "./occurrence-creation.service";

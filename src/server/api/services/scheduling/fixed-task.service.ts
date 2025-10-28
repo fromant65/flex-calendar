@@ -5,8 +5,8 @@
  * Fixed tasks have predetermined start/end times and create multiple events in advance.
  */
 
-import type { OccurrenceAdapter, CalendarEventAdapter } from "../adapter";
-import type { DayOfWeek, CreateRecurrenceDTO } from "./types";
+import type { OccurrenceAdapter, CalendarEventAdapter } from "../../adapter";
+import type { DayOfWeek, CreateRecurrenceDTO } from "../types";
 
 export class FixedTaskService {
   constructor(
