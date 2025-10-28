@@ -62,7 +62,7 @@ export function HelpTip({
             {icon}
           </button>
         </TooltipTrigger>
-        <TooltipContent side={side} sideOffset={6} className="max-w-xs">
+        <TooltipContent side={side} sideOffset={6} className="max-w-xs max-h-[80vh] overflow-y-auto">
           {title && <div className="font-semibold text-sm mb-1">{title}</div>}
           <div className="text-xs text-muted-foreground" id={id}>
             {children}
@@ -82,11 +82,11 @@ export function HelpTip({
           </button>
         </DialogTrigger>
 
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-[85vh] flex flex-col">
           <DialogHeader>
             {title && <DialogTitle>{title}</DialogTitle>}
           </DialogHeader>
-          <DialogDescription className="text-sm text-muted-foreground">
+          <DialogDescription className="text-sm text-muted-foreground overflow-y-auto flex-1">
             {children}
           </DialogDescription>
         </DialogContent>
