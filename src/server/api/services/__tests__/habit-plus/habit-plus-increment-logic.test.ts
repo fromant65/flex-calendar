@@ -3,9 +3,9 @@
  * Verifies that completedOccurrences is incremented correctly based on occurrence date
  */
 
-import './mocks';
-import { TaskSchedulerService } from '../scheduling/task-scheduler.service';
-import type { MockTask } from './test-types';
+import '../mocks';
+import { TaskSchedulerService } from '../../scheduling/task-scheduler.service';
+import type { MockTask } from '../test-types';
 
 describe('Habit+ Counter Increment Logic', () => {
   let schedulerService: TaskSchedulerService;

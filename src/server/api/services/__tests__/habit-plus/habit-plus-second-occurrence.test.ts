@@ -3,9 +3,9 @@
  * Verifies that the third occurrence is scheduled in the same period
  */
 
-import './mocks';
-import { TaskSchedulerService } from '../scheduling/task-scheduler.service';
-import type { MockTask, MockOccurrence, CreateOccurrenceDTO } from './test-types';
+import '../mocks';
+import { TaskSchedulerService } from '../../scheduling/task-scheduler.service';
+import type { MockTask, MockOccurrence, CreateOccurrenceDTO } from '../test-types';
 
 describe('Habit+ Second Occurrence Completion', () => {
   let schedulerService: TaskSchedulerService;

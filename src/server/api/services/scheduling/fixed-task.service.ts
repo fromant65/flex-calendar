@@ -66,6 +66,17 @@ export class FixedTaskService {
         periodEnd,
         recurrence.daysOfMonth
       );
+    } else {
+      // For tasks without specific days pattern (Fija Única, Repetitiva Fija)
+      // Create N consecutive occurrences based on maxOccurrences
+      const count = recurrence.maxOccurrences ?? 1;
+      const interval = recurrence.interval ?? 1; // Default to 1 day between occurrences
+      
+      for (let i = 0; i < count; i++) {
+        const date = new Date(startDate);
+        date.setDate(date.getDate() + (i * interval));
+        datesToCreate.push(date);
+      }
     }
 
     // Limit to maxOccurrences if specified

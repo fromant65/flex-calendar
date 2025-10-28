@@ -62,9 +62,10 @@ export class OccurrenceCompletionService {
       // Recurrente Finita: maxOccurrences > 1, no interval
       else if (recurrence.maxOccurrences && recurrence.maxOccurrences > 1 && !recurrence.interval) {
         const occurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(task.id);
-        const completedCount = occurrences.filter(o => o.status === "Completed").length;
+        // Count both completed and skipped occurrences as "discarded"
+        const discardedCount = occurrences.filter(o => o.status === "Completed" || o.status === "Skipped").length;
         
-        if (completedCount < recurrence.maxOccurrences) {
+        if (discardedCount < recurrence.maxOccurrences) {
           await this.schedulerService.createNextOccurrence(task.id, {
             targetTimeConsumption: occurrence.targetTimeConsumption ?? undefined,
           });
@@ -99,14 +100,33 @@ export class OccurrenceCompletionService {
     // Mark as skipped
     await this.occurrenceAdapter.skipOccurrence(occurrenceId);
 
-    // If the task is recurring, increment counter (skipped counts too) and create the next occurrence
+    // Handle task lifecycle based on recurrence (same logic as completion)
     const task = await this.taskAdapter.getTaskWithRecurrence(occurrence.task.id);
     if (task?.recurrence) {
+      const recurrence = task.recurrence;
+
       // Increment completed occurrences counter for the period (skipped counts)
-      await this.schedulerService.incrementCompletedOccurrences(task.recurrence.id, occurrence.startDate);
+      await this.schedulerService.incrementCompletedOccurrences(recurrence.id, occurrence.startDate);
       
-      // Create next occurrence
-      await this.schedulerService.createNextOccurrence(task.id);
+      // Tarea Única: maxOccurrences = 1, no interval
+      if (recurrence.maxOccurrences === 1 && !recurrence.interval) {
+        await this.taskAdapter.completeTask(task.id);
+      }
+      // Recurrente Finita: maxOccurrences > 1, no interval
+      else if (recurrence.maxOccurrences && recurrence.maxOccurrences > 1 && !recurrence.interval) {
+        const occurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(task.id);
+        const discardedCount = occurrences.filter(o => o.status === "Completed" || o.status === "Skipped").length;
+        
+        if (discardedCount < recurrence.maxOccurrences) {
+          await this.schedulerService.createNextOccurrence(task.id);
+        } else {
+          await this.taskAdapter.completeTask(task.id);
+        }
+      }
+      // Hábito or Hábito+: has interval (infinite recurrence)
+      else if (recurrence.interval) {
+        await this.schedulerService.createNextOccurrence(task.id);
+      }
     }
 
     return true;

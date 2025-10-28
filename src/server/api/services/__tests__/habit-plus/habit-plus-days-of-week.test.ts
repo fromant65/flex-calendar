@@ -3,9 +3,9 @@
  * Verifies scheduling behavior when using specific days of the week
  */
 
-import './mocks';
-import { TaskSchedulerService } from '../scheduling/task-scheduler.service';
-import type { MockTask, MockOccurrence, CreateOccurrenceDTO } from './test-types';
+import '../mocks';
+import { TaskSchedulerService } from '../../scheduling/task-scheduler.service';
+import type { MockTask, MockOccurrence, CreateOccurrenceDTO } from '../test-types';
 
 describe('Habit+ with daysOfWeek Recurrence', () => {
   let schedulerService: TaskSchedulerService;
