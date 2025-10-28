@@ -4,6 +4,7 @@ import { api } from "~/trpc/react"
 import { UrgentTasksList } from "~/components/dashboard/urgent-tasks-list"
 import { ImportantTasksList } from "~/components/dashboard/important-tasks-list"
 import { DayWeekEvents } from "~/components/dashboard/events-list"
+import { CalendarViewComponent } from "~/components/events/calendar-view"
 import { TaskDetailsModal } from "~/components/events/task-details-modal"
 import { TaskConfirmationDialogs } from "~/components/dashboard/task-confirmation-dialogs"
 import { LoadingPage } from "~/components/ui/loading-spinner"
@@ -153,6 +154,8 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
   const topImportantOccurrences = importantOccurrences.slice(0, 5) as OccurrenceWithTask[]
   const todayEventsTyped = todayEvents as EventWithDetails[]
   const weekEventsTyped = weekEvents as EventWithDetails[]
+  const [eventsView, setEventsView] = useState<"list" | "calendar">("list")
+  const [calendarView, setCalendarView] = useState<import("~/types").CalendarView>("week")
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -225,19 +228,75 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
 
         {/* Próximos Eventos */}
         <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-foreground">Próximos Eventos</h2>
-            <HelpTip title="Próximos Eventos">
-              Esta lista muestra eventos programados. Puedes tocar un evento para abrir sus detalles,
-              marcarlo como completado, o ver cuánto tiempo se dedicó. Los eventos pueden estar vinculados
-              a tareas (aparecerá el nombre de la tarea) y pueden ser fijos o flexibles.
-            </HelpTip>
+          <div className="flex flex-col gap-3 mb-4">
+            {/* Title and Help - Always on top */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-foreground">Próximos Eventos</h2>
+              <HelpTip title="Próximos Eventos">
+                Esta lista muestra eventos programados. Puedes tocar un evento para abrir sus detalles,
+                marcarlo como completado, o ver cuánto tiempo se dedicó. Los eventos pueden estar vinculados
+                a tareas (aparecerá el nombre de la tarea) y pueden ser fijos o flexibles.
+              </HelpTip>
+            </div>
+            
+            {/* View Buttons - Separate row on mobile, inline on desktop */}
+            <div className="flex items-center gap-2 sm:justify-end">
+              <span className="text-sm text-muted-foreground">Vista:</span>
+              <div className="flex items-center gap-2 border border-border rounded-md p-1 bg-background/50">
+                <button
+                  className={`px-3 py-1.5 rounded text-sm font-medium transition-all cursor-pointer ${
+                    eventsView === "list" 
+                      ? "bg-primary text-primary-foreground shadow-sm" 
+                      : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent"
+                  }`}
+                  onClick={() => setEventsView("list")}
+                >
+                  Lista
+                </button>
+                <button
+                  className={`px-3 py-1.5 rounded text-sm font-medium transition-all cursor-pointer ${
+                    eventsView === "calendar" 
+                      ? "bg-primary text-primary-foreground shadow-sm" 
+                      : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent"
+                  }`}
+                  onClick={() => setEventsView("calendar")}
+                >
+                  Calendario
+                </button>
+              </div>
+            </div>
           </div>
-          <DayWeekEvents
-            todayEvents={todayEventsTyped}
-            weekEvents={weekEventsTyped}
-            onEventClick={handleEventClick}
-          />
+
+          {/* Content: list or calendar */}
+          <div className="min-h-[200px]">
+            {eventsView === "list" ? (
+              <DayWeekEvents
+                todayEvents={todayEventsTyped}
+                weekEvents={weekEventsTyped}
+                onEventClick={handleEventClick}
+              />
+            ) : (
+              // Calendar: use week view by default on larger screens, hide heavy calendar on very small screens
+              <div className="w-full h-[420px] sm:h-[520px]">
+                <CalendarViewComponent
+                  events={[...todayEventsTyped, ...weekEventsTyped]}
+                  view={calendarView}
+                  onViewChange={(v) => setCalendarView(v)}
+                  onTimeSlotClick={(date, hour) => {
+                    // open schedule dialog via modal flow used in events page is not available here;
+                    // Instead, reuse event click to show details if clicking an existing event, otherwise noop
+                    // We'll call handleEventClick for existing events via onEventClick below.
+                  }}
+                  onEventClick={handleEventClick}
+                  onDrop={(date, hour) => {
+                    // Dropping scheduling isn't available from dashboard; show info toast
+                    toast("Arrastra para reprogramar desde la página de eventos.")
+                  }}
+                  onEventDragStart={() => { /* noop on dashboard */ }}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
