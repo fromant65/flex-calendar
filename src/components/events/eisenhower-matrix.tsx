@@ -49,7 +49,7 @@ export function EisenhowerMatrix({
       : occurrences
 
     filtered.forEach((occurrence) => {
-      const quadrant = calculateQuadrant(occurrence).quadrant as keyof typeof grouped
+      const quadrant = calculateQuadrant(occurrence).quadrant
       grouped[quadrant].push(occurrence)
     })
 

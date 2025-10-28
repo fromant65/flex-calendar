@@ -29,7 +29,7 @@ export class BacklogDetectionService {
     pendingOccurrences: Array<{ id: number; startDate: Date; status: string }>;
   }> {
     const task = await this.taskAdapter.getTaskWithRecurrence(taskId);
-    if (!task || !task.recurrence) {
+    if (!task?.recurrence) {
       return {
         hasSevereBacklog: false,
         pendingCount: 0,

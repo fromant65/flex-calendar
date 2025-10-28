@@ -84,7 +84,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
         description: editingTask.description || "",
         importance: editingTask.importance,
         interval: editingTask.recurrence?.interval || 1,
-        daysOfWeek: (editingTask.recurrence?.daysOfWeek as string[]) || [],
+        daysOfWeek: (editingTask.recurrence?.daysOfWeek!) || [],
         daysOfMonth: editingTask.recurrence?.daysOfMonth || [],
         maxOccurrences: editingTask.recurrence?.maxOccurrences || undefined,
         endDate: editingTask.recurrence?.endDate

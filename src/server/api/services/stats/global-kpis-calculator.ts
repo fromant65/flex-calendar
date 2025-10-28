@@ -139,7 +139,7 @@ export class GlobalKPIsCalculator {
       if (!event?.associatedOccurrenceId || !event?.dedicatedTime) continue;
 
       const occ = validOccurrences.find((o) => o?.id === event.associatedOccurrenceId);
-      if (!occ || !occ.timeConsumed || occ.timeConsumed === 0) continue;
+      if (!occ?.timeConsumed || occ.timeConsumed === 0) continue;
 
       // Validate values
       if (

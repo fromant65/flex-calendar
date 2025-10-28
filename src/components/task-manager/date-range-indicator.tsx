@@ -138,7 +138,7 @@ export function DateRangeIndicator({
           {isPastDeadline ? (
             <span className="font-medium text-red-600 dark:text-red-400">⚠️ Fecha límite pasada</span>
           ) : isBeforeTarget ? (
-            <span>Faltan {differenceInDays(targetDate!, today)} día{differenceInDays(targetDate!, today) !== 1 ? 's' : ''} para el objetivo</span>
+            <span>Faltan {differenceInDays(targetDate, today)} día{differenceInDays(targetDate, today) !== 1 ? 's' : ''} para el objetivo</span>
           ) : limitDate ? (
             <span>Quedan {differenceInDays(limitDate, today)} día{differenceInDays(limitDate, today) !== 1 ? 's' : ''} hasta el límite</span>
           ) : null}

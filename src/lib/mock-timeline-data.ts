@@ -173,7 +173,7 @@ const generateOccurrences = (): OccurrenceWithTask[] => {
   const allDates = generateDateRange(yearStart, 365)
 
   mockTasks.forEach((task) => {
-    if (task.recurrence && task.recurrence.daysOfWeek) {
+    if (task.recurrence?.daysOfWeek) {
       // Weekly recurring tasks
       const dayMap: Record<string, number> = {
         Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6
@@ -202,10 +202,10 @@ const generateOccurrences = (): OccurrenceWithTask[] => {
           })
         }
       })
-    } else if (task.recurrence && task.recurrence.daysOfMonth) {
+    } else if (task.recurrence?.daysOfMonth) {
       // Monthly recurring tasks
       for (let month = 0; month < 12; month++) {
-        const date = new Date(2025, month, task.recurrence.daysOfMonth[0]!)
+        const date = new Date(2025, month, task.recurrence.daysOfMonth[0])
         // Randomly skip some monthly tasks (5% chance)
         const shouldSkip = Math.random() < 0.05
         

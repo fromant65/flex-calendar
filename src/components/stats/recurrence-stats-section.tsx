@@ -240,7 +240,7 @@ export function RecurrenceStatsSection({ data }: RecurrenceStatsSectionProps) {
                   />
                   <Tooltip
                     content={({ active, payload }) => {
-                      if (active && payload && payload.length && payload[0]) {
+                      if (active && payload?.length && payload[0]) {
                         const data = payload[0].payload
                         return (
                           <div className="rounded-lg border bg-popover p-2 shadow-sm">
@@ -310,7 +310,7 @@ export function RecurrenceStatsSection({ data }: RecurrenceStatsSectionProps) {
                   />
                   <Tooltip
                     content={({ active, payload }) => {
-                      if (active && payload && payload.length && payload[0]) {
+                      if (active && payload?.length && payload[0]) {
                         const data = payload[0].payload
                         return (
                           <div className="rounded-lg border bg-popover p-2 shadow-sm">

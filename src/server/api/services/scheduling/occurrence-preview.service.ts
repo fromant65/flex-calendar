@@ -24,7 +24,7 @@ export class OccurrencePreviewService {
    */
   async previewNextOccurrenceDate(taskId: number): Promise<Date | null> {
     const task = await this.taskAdapter.getTaskWithRecurrence(taskId);
-    if (!task || !task.recurrence) {
+    if (!task?.recurrence) {
       return null;
     }
 

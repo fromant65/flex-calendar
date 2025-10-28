@@ -241,7 +241,7 @@ export function OccurrenceStatsSection({ data }: OccurrenceStatsSectionProps) {
                   />
                   <Tooltip
                     content={({ active, payload }) => {
-                      if (active && payload && payload.length && payload[0]) {
+                      if (active && payload?.length && payload[0]) {
                         const data = payload[0].payload
                         return (
                           <div className="rounded-lg border bg-popover p-2 shadow-sm">
@@ -320,7 +320,7 @@ export function OccurrenceStatsSection({ data }: OccurrenceStatsSectionProps) {
                     />
                     <Tooltip 
                       content={({ active, payload }) => {
-                        if (active && payload && payload.length && payload[0]) {
+                        if (active && payload?.length && payload[0]) {
                           return (
                             <div className="rounded-lg border bg-popover p-2 shadow-sm">
                               <div className="flex flex-col gap-1">

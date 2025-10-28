@@ -109,7 +109,7 @@ export function TaskManagerTimeline({
 
   // Group occurrences by date and optionally by task or status
   const groupedOccurrences = useMemo(() => {
-    const groups: Map<string, OccurrenceWithTask[]> = new Map()
+    const groups = new Map<string, OccurrenceWithTask[]>()
 
     filteredOccurrences.forEach((occurrence) => {
       let groupKey = ""

@@ -185,10 +185,10 @@ export class FixedTaskService {
 
     // Create calendar event with fixed times
     const eventStart = new Date(date);
-    eventStart.setHours(startHours!, startMinutes!, startSeconds!);
+    eventStart.setHours(startHours!, startMinutes, startSeconds);
 
     const eventEnd = new Date(date);
-    eventEnd.setHours(endHours!, endMinutes!, endSeconds!);
+    eventEnd.setHours(endHours!, endMinutes, endSeconds);
 
     await this.eventAdapter.createEvent(ownerId, {
       associatedOccurrenceId: occurrence.id,

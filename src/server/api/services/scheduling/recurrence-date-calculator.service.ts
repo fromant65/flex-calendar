@@ -179,7 +179,7 @@ export class RecurrenceDateCalculator {
     }
 
     // Fallback
-    return new Date(Date.UTC(currentYear, currentMonth + 2, sortedDays[0]!));
+    return new Date(Date.UTC(currentYear, currentMonth + 2, sortedDays[0]));
   }
 
   /**
@@ -211,6 +211,6 @@ export class RecurrenceDateCalculator {
     }
 
     // Fallback
-    return new Date(Date.UTC(periodStartYear, periodStartMonth + 2, sortedDays[0]!));
+    return new Date(Date.UTC(periodStartYear, periodStartMonth + 2, sortedDays[0]));
   }
 }

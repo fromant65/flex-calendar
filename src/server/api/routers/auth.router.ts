@@ -64,7 +64,7 @@ export const authRouter = createTRPCRouter({
         where: eq(users.id, ctx.session.user.id),
       });
 
-      if (!user || !user.password) {
+      if (!user?.password) {
         throw new Error("Usuario no encontrado");
       }
 

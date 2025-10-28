@@ -205,7 +205,7 @@ export class TaskSchedulerService {
     }
 
     const task = await this.taskAdapter.getTaskWithRecurrence(taskId);
-    if (!task || !task.recurrence) {
+    if (!task?.recurrence) {
       throw new Error("Task does not have recurrence configured");
     }
 
