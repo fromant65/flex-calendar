@@ -309,9 +309,6 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
           />
         )}
 
-        {/* Info message for fixed tasks (modular) */}
-        {event && event.isFixed && !event.isCompleted && !isEditing && <FixedInfo />}
-
         {/* Complete Event Section (modular) */}
         {event && !event.isCompleted && !isEditing && (
           <CompleteFooter

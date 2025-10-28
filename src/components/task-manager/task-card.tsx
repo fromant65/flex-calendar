@@ -6,6 +6,7 @@ import { CheckCircle2, Circle, Clock, TrendingUp, Calendar, ChevronDown, Chevron
 import type { TaskType } from "~/server/api/services/types";
 import { OccurrenceCard } from "./occurrence-card";
 import { BacklogAlert } from "./backlog-alert";
+import { CompletionStreakBadge } from "./completion-streak-badge";
 import { api } from "~/trpc/react";
 
 interface TaskCardProps {
@@ -105,6 +106,11 @@ export function TaskCard({
             {task.description && (
               <p className="mt-2 ml-6 text-sm text-muted-foreground">{task.description}</p>
             )}
+
+            {/* Completion Streak Badge - Only show for tasks with multiple occurrences */}
+            <div className="mt-3 ml-6">
+              <CompletionStreakBadge taskId={task.id} />
+            </div>
 
             <div className="mt-3 ml-6 flex flex-wrap gap-3 text-xs">
               <div className="flex items-center gap-1 text-muted-foreground">

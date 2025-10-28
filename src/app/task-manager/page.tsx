@@ -10,12 +10,18 @@ import { HelpTip } from "~/components/ui/help-tip";
 import { ConfirmActionDialog } from "~/components/task-manager/confirm-action-dialog";
 import { EditOccurrenceDialog } from "~/components/task-manager/edit-occurrence-dialog";
 import { TaskManagerTimeline } from "~/components/task-manager/task-manager-timeline";
+import { TaskManagerFilterBar, type TaskManagerFilter } from "~/components/task-manager/task-manager-filter-bar";
 import { Button } from "~/components/ui/button";
 import type { OccurrenceWithTask } from "~/types";
 
 export default function TaskManagerPage() {
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "timeline">("list");
+  const [filters, setFilters] = useState<TaskManagerFilter>({
+    searchQuery: "",
+    statusFilter: "all",
+    taskTypeFilter: "all",
+  });
   const [confirmAction, setConfirmAction] = useState<{
     type: "complete" | "skip";
     occurrenceId: number;
@@ -26,8 +32,11 @@ export default function TaskManagerPage() {
     timeConsumed: number | null;
   } | null>(null);
   
-  // Fetch all occurrences with task details
-  const { data: occurrences, isLoading, error: occurrencesError } = api.occurrence.getMyOccurrencesWithTask.useQuery()
+  // Fetch all occurrences with task details (filtered by backend when in list view)
+  const { data: occurrences, isLoading, error: occurrencesError } = api.occurrence.getMyOccurrencesWithTask.useQuery(
+    viewMode === "list" ? filters : undefined,
+    { enabled: true }
+  )
   
   // Get next occurrence preview for selected task
   const { data: nextOccurrenceDate, error: nextOccurrenceError } = api.task.previewNextOccurrence.useQuery(
@@ -119,6 +128,7 @@ export default function TaskManagerPage() {
   };
   
   // Group occurrences by task (filter out inactive tasks)
+  // Note: Filtering by search/status/type is now done in the backend
   const groupedOccurrences = useMemo(() => {
     if (!occurrences) return new Map();
     
@@ -296,38 +306,65 @@ export default function TaskManagerPage() {
       ) : (
         /* Content - List View */
         <div className="container mx-auto px-4 lg:px-6 py-6 flex-1 overflow-y-auto">
-          <div className="space-y-4">
-            {Array.from(groupedOccurrences.entries()).map(([taskId, taskOccurrences]) => {
-              const task = taskOccurrences[0]!.task;
-              const taskType = task.taskType as TaskType;
-              const isExpanded = selectedTaskId === taskId;
-
-              return (
-                <TaskCard
-                  key={taskId}
-                  task={task}
-                  taskType={taskType}
-                  occurrences={taskOccurrences}
-                  isExpanded={isExpanded}
-                  nextOccurrenceDate={isExpanded ? nextOccurrenceDate : null}
-                  onToggle={() => setSelectedTaskId(isExpanded ? null : taskId)}
-                  onEditOccurrence={(id, timeConsumed) =>
-                    setEditingOccurrence({ id, timeConsumed })
-                  }
-                  onCompleteOccurrence={(id, taskName) =>
-                    setConfirmAction({ type: "complete", occurrenceId: id, taskName })
-                  }
-                  onSkipOccurrence={(id, taskName) =>
-                    setConfirmAction({ type: "skip", occurrenceId: id, taskName })
-                  }
-                  onSkipBacklog={(taskId) => skipBacklog.mutate({ taskId })}
-                  isCompleting={completeOccurrence.isPending}
-                  isSkipping={skipOccurrence.isPending}
-                  isSkippingBacklog={skipBacklog.isPending}
-                />
-              );
-            })}
+          {/* Filter Bar */}
+          <div className="mb-6">
+            <TaskManagerFilterBar
+              filters={filters}
+              onFiltersChange={setFilters}
+              totalTasks={groupedOccurrences.size}
+              filteredCount={groupedOccurrences.size}
+            />
           </div>
+
+          {/* Tasks List */}
+          {groupedOccurrences.size === 0 ? (
+            <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-8">
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-muted/50">
+                  <AlertCircle className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <p className="text-lg font-semibold text-foreground mb-1">
+                  No se encontraron tareas
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Intenta ajustar los filtros de búsqueda
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {Array.from(groupedOccurrences.entries()).map(([taskId, taskOccurrences]) => {
+                const task = taskOccurrences[0]!.task;
+                const taskType = task.taskType as TaskType;
+                const isExpanded = selectedTaskId === taskId;
+
+                return (
+                  <TaskCard
+                    key={taskId}
+                    task={task}
+                    taskType={taskType}
+                    occurrences={taskOccurrences}
+                    isExpanded={isExpanded}
+                    nextOccurrenceDate={isExpanded ? nextOccurrenceDate : null}
+                    onToggle={() => setSelectedTaskId(isExpanded ? null : taskId)}
+                    onEditOccurrence={(id, timeConsumed) =>
+                      setEditingOccurrence({ id, timeConsumed })
+                    }
+                    onCompleteOccurrence={(id, taskName) =>
+                      setConfirmAction({ type: "complete", occurrenceId: id, taskName })
+                    }
+                    onSkipOccurrence={(id, taskName) =>
+                      setConfirmAction({ type: "skip", occurrenceId: id, taskName })
+                    }
+                    onSkipBacklog={(taskId) => skipBacklog.mutate({ taskId })}
+                    isCompleting={completeOccurrence.isPending}
+                    isSkipping={skipOccurrence.isPending}
+                    isSkippingBacklog={skipBacklog.isPending}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

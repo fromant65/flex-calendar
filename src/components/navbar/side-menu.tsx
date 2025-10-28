@@ -8,14 +8,15 @@ import { Button } from "~/components/ui/button"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LogoutButton } from "./logout-button"
+import { featureFlags } from "~/lib/feature-flags"
 
 const menuItems = [
   { href: "/dashboard", label: "Inicio", icon: Home },
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/task-manager", label: "Gestor de Tareas", icon: BookmarkCheck },
   { href: "/events", label: "Calendario", icon: Calendar },
-  { href: "/timeline", label: "Línea de Tiempo", icon: GanttChart },
-  { href: "/stats", label: "Estadísticas", icon: BarChart3 },
+  { href: "/timeline", label: "Línea de Tiempo", icon: GanttChart, featureFlag: "timeline" as const },
+  { href: "/stats", label: "Estadísticas", icon: BarChart3, featureFlag: "stats" as const },
 ]
 
 export function SideMenu() {
@@ -72,7 +73,9 @@ export function SideMenu() {
               <div className="flex-1 p-4 bg-card">
                 <nav className="space-y-2">
                   {/* Navigation Links */}
-                  {menuItems.map((item) => {
+                  {menuItems
+                    .filter(item => !item.featureFlag || featureFlags[item.featureFlag])
+                    .map((item) => {
                     const Icon = item.icon
                     const isActive = pathname === item.href
                     

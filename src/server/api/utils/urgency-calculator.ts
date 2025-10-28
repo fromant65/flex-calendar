@@ -18,6 +18,9 @@ export class UrgencyCalculator {
    * - Urgency 0-5: Before target date (based on progress: time elapsed / time remaining)
    * - Urgency 5-10: Between target and limit date
    * - Urgency > 10: Past limit date (overdue)
+   * 
+   * Special case: If target and limit are very close (distance target->limit < half of start->target),
+   * use proportional calculation from start to limit for more accurate urgency.
    *
    * @param input - The urgency calculation parameters
    * @returns The calculated urgency and metadata
@@ -49,11 +52,37 @@ export class UrgencyCalculator {
     let urgency = 0;
     let isOverdue = false;
 
+    // Check if we should use alternative calculation method
+    // When target and limit dates are very close, use proportional calculation
+    const useAlternativeCalculation = target && limit && 
+      (limit - target) < (target - created) / 2;
+
     // Case 1: Past limit date - OVERDUE
     if (limit && now > limit) {
       const daysOverdue = Math.abs(daysUntilLimit ?? 0);
       urgency = 10 + Math.min(daysOverdue * 0.5, 10); // Max urgency of 20
       isOverdue = true;
+    }
+    // Alternative calculation: When target-limit distance is very small
+    // Use proportional calculation from start to limit with x*ln(1+x) function
+    // This accelerates as deadline approaches (similar to Case 2)
+    else if (useAlternativeCalculation && target && limit && now < limit) {
+      const dayMs = 1000 * 60 * 60 * 24;
+      const daysPassed = Math.max(0, (now - created) / dayMs);
+      const totalDays = Math.max(0, (limit - created) / dayMs);
+
+      if (totalDays <= 0) {
+        urgency = 10;
+      } else if (daysPassed <= 0) {
+        urgency = 0.5;
+      } else {
+        // Use x*ln(1+x) scaled to [0,10]
+        // At x=1: f(1) = 1*ln(2) ≈ 0.693
+        const fraction = Math.min(1, daysPassed / totalDays); // x in [0,1]
+        const score = fraction * Math.log(1 + fraction);
+        const maxScore = Math.log(2); // ≈ 0.693 when fraction = 1
+        urgency = Math.min(10, (score / maxScore) * 10);
+      }
     }
     // Case 2: Between target and limit
     else if (target && limit && now >= target && now <= limit) {

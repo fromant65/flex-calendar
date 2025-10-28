@@ -26,7 +26,9 @@ export {
   OccurrenceCreationService,
   OccurrencePreviewService 
 } from "./scheduling";
-export { TaskAnalyticsService } from "./analytics";
+export { TaskAnalyticsService, TaskStreakService } from "./analytics";
+export type { TaskStreakInfo } from "./analytics";
+
 
 // Stats and Timeline services (separate modules)
 export { TimelineService } from "./timeline.service";

@@ -4,7 +4,7 @@
 
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { TaskLifecycleService, TaskAnalyticsService } from "../services";
+import { TaskLifecycleService, TaskAnalyticsService, TaskStreakService } from "../services";
 
 const createOccurrenceSchema = z.object({
   associatedTaskId: z.number(),
@@ -149,11 +149,53 @@ export const occurrenceRouter = createTRPCRouter({
   /**
    * Get all occurrences for the current user with task details
    * Useful for task-manager page to show all occurrences grouped by task
+   * Now supports filtering by search query, status, and task type
    */
-  getMyOccurrencesWithTask: protectedProcedure.query(async ({ ctx }) => {
-    const service = new TaskLifecycleService();
-    return await service.getUserOccurrencesWithTask(ctx.session.user.id);
-  }),
+  getMyOccurrencesWithTask: protectedProcedure
+    .input(
+      z.object({
+        searchQuery: z.string().optional(),
+        statusFilter: z.enum(["Pending", "In Progress", "Completed", "Skipped", "all"]).optional(),
+        taskTypeFilter: z.enum([
+          "Única",
+          "Recurrente Finita",
+          "Hábito",
+          "Hábito +",
+          "Fija Única",
+          "Fija Repetitiva",
+          "all",
+        ]).optional(),
+      }).optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const service = new TaskLifecycleService();
+      const allOccurrences = await service.getUserOccurrencesWithTask(ctx.session.user.id);
+
+      // Apply filters if provided
+      if (!input) return allOccurrences;
+
+      let filtered = allOccurrences;
+
+      // Filter by search query (task name)
+      if (input.searchQuery) {
+        const query = input.searchQuery.toLowerCase();
+        filtered = filtered.filter((occ) =>
+          occ.task.name.toLowerCase().includes(query)
+        );
+      }
+
+      // Filter by status
+      if (input.statusFilter && input.statusFilter !== "all") {
+        filtered = filtered.filter((occ) => occ.status === input.statusFilter);
+      }
+
+      // Filter by task type
+      if (input.taskTypeFilter && input.taskTypeFilter !== "all") {
+        filtered = filtered.filter((occ) => occ.task.taskType === input.taskTypeFilter);
+      }
+
+      return filtered;
+    }),
 
   /**
    * Get all events associated with a specific occurrence
@@ -187,4 +229,36 @@ export const occurrenceRouter = createTRPCRouter({
       const skippedCount = await service.skipBacklogOccurrences(input.taskId);
       return { success: true, skippedCount };
     }),
+
+  /**
+   * Get completion streak for a specific task
+   * Returns current streak, total completed, and completion rate
+   */
+  getTaskStreak: protectedProcedure
+    .input(z.object({ taskId: z.number() }))
+    .query(async ({ input }) => {
+      const streakService = new TaskStreakService();
+      return await streakService.getTaskStreak(input.taskId);
+    }),
+
+  /**
+   * Get completion streaks for multiple tasks
+   * Returns a map of task ID to streak info
+   */
+  getTaskStreaks: protectedProcedure
+    .input(z.object({ taskIds: z.array(z.number()) }))
+    .query(async ({ input }) => {
+      const streakService = new TaskStreakService();
+      const streaksMap = await streakService.getTaskStreaks(input.taskIds);
+      // Convert Map to object for JSON serialization
+      return Object.fromEntries(streaksMap);
+    }),
+
+  /**
+   * Get completion streaks for all user's tasks
+   */
+  getUserTaskStreaks: protectedProcedure.query(async ({ ctx }) => {
+    const streakService = new TaskStreakService();
+    return await streakService.getUserTaskStreaks(ctx.session.user.id);
+  }),
 });
