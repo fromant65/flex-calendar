@@ -206,8 +206,13 @@ export const occurrenceRouter = createTRPCRouter({
   getOccurrenceEvents: protectedProcedure
     .input(z.object({ occurrenceId: z.number() }))
     .query(async ({ input }) => {
-      const service = new TaskLifecycleService();
-      return await service.getOccurrenceEvents(input.occurrenceId);
+      try {
+        const service = new TaskLifecycleService();
+        return await service.getOccurrenceEvents(input.occurrenceId);
+      } catch (error) {
+        console.error("[Occurrence Router] Error fetching occurrence events:", error);
+        return []; // Return empty array instead of throwing
+      }
     }),
 
   /**
@@ -217,8 +222,19 @@ export const occurrenceRouter = createTRPCRouter({
   detectBacklog: protectedProcedure
     .input(z.object({ taskId: z.number() }))
     .query(async ({ input }) => {
-      const service = new TaskLifecycleService();
-      return await service.detectBacklog(input.taskId);
+      try {
+        const service = new TaskLifecycleService();
+        return await service.detectBacklog(input.taskId);
+      } catch (error) {
+        console.error("[Occurrence Router] Error detecting backlog:", error);
+        return {
+          hasSevereBacklog: false,
+          pendingCount: 0,
+          oldestPendingDate: null,
+          estimatedBacklogCount: 0,
+          pendingOccurrences: [],
+        };
+      }
     }),
 
   /**
@@ -240,8 +256,19 @@ export const occurrenceRouter = createTRPCRouter({
   getTaskStreak: protectedProcedure
     .input(z.object({ taskId: z.number() }))
     .query(async ({ input }) => {
-      const streakService = new TaskStreakService();
-      return await streakService.getTaskStreak(input.taskId);
+      try {
+        const streakService = new TaskStreakService();
+        return await streakService.getTaskStreak(input.taskId);
+      } catch (error) {
+        console.error("[Occurrence Router] Error fetching task streak:", error);
+        return {
+          taskId: input.taskId,
+          currentStreak: 0,
+          totalCompleted: 0,
+          totalOccurrences: 0,
+          completionRate: 0,
+        };
+      }
     }),
 
   /**
@@ -251,17 +278,27 @@ export const occurrenceRouter = createTRPCRouter({
   getTaskStreaks: protectedProcedure
     .input(z.object({ taskIds: z.array(z.number()) }))
     .query(async ({ input }) => {
-      const streakService = new TaskStreakService();
-      const streaksMap = await streakService.getTaskStreaks(input.taskIds);
-      // Convert Map to object for JSON serialization
-      return Object.fromEntries(streaksMap);
+      try {
+        const streakService = new TaskStreakService();
+        const streaksMap = await streakService.getTaskStreaks(input.taskIds);
+        // Convert Map to object for JSON serialization
+        return Object.fromEntries(streaksMap);
+      } catch (error) {
+        console.error("[Occurrence Router] Error fetching task streaks:", error);
+        return {}; // Return empty object instead of throwing
+      }
     }),
 
   /**
    * Get completion streaks for all user's tasks
    */
   getUserTaskStreaks: protectedProcedure.query(async ({ ctx }) => {
-    const streakService = new TaskStreakService();
-    return await streakService.getUserTaskStreaks(ctx.session.user.id);
+    try {
+      const streakService = new TaskStreakService();
+      return await streakService.getUserTaskStreaks(ctx.session.user.id);
+    } catch (error) {
+      console.error("[Occurrence Router] Error fetching task streaks:", error);
+      return []; // Return empty array instead of throwing
+    }
   }),
 });

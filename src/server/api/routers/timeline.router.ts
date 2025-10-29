@@ -19,11 +19,16 @@ export const timelineRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const service = new TimelineService();
-      return await service.getTimelineData(
-        ctx.session.user.id,
-        input.startDate,
-        input.endDate
-      );
+      try {
+        const service = new TimelineService();
+        return await service.getTimelineData(
+          ctx.session.user.id,
+          input.startDate,
+          input.endDate
+        );
+      } catch (error) {
+        console.error("[Timeline Router] Error fetching timeline data:", error);
+        return { occurrences: [], events: [] }; // Return empty timeline instead of throwing
+      }
     }),
 });

@@ -50,9 +50,13 @@ export function RecurrenceOptions({
 
       {taskType === "finite" && (
         <>
+          <div className="rounded-md bg-blue-50 dark:bg-blue-950/30 p-3 text-sm text-blue-900 dark:text-blue-200">
+            <strong>Nota:</strong> Usa solo UNO de los siguientes patrones: días de la semana O días del mes (no ambos).
+          </div>
+
           <div>
             <Label htmlFor="maxOccurrences" className="text-foreground">
-              Número de Ocurrencias
+              Número de Ocurrencias *
             </Label>
             <Input
               id="maxOccurrences"
@@ -62,13 +66,26 @@ export function RecurrenceOptions({
               onChange={(e) => onMaxOccurrencesChange(Number.parseInt(e.target.value))}
               placeholder="Ej: 10"
               className="mt-1.5"
+              required
             />
           </div>
 
           <div>
             <Label className="text-foreground">Días de la Semana (Opcional)</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Selecciona días específicos de la semana
+            </p>
             <div className="mt-2">
-              <DaySelector selectedDays={daysOfWeek} onToggleDay={toggleDayOfWeek} />
+              <DaySelector 
+                selectedDays={daysOfWeek} 
+                onToggleDay={(day) => {
+                  // Clear daysOfMonth when selecting daysOfWeek
+                  if (daysOfMonth.length > 0) {
+                    onDaysOfMonthChange([]);
+                  }
+                  toggleDayOfWeek(day);
+                }} 
+              />
             </div>
           </div>
 
@@ -76,6 +93,9 @@ export function RecurrenceOptions({
             <Label htmlFor="daysOfMonth" className="text-foreground">
               Días del Mes (separados por coma, opcional)
             </Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Ej: 1, 15, 30 para el 1, 15 y 30 de cada mes
+            </p>
             <Input
               id="daysOfMonth"
               value={daysOfMonth.join(", ")}
@@ -84,6 +104,10 @@ export function RecurrenceOptions({
                   .split(",")
                   .map((d) => Number.parseInt(d.trim()))
                   .filter((d) => !isNaN(d) && d >= 1 && d <= 31)
+                // Clear daysOfWeek when entering daysOfMonth
+                if (days.length > 0 && daysOfWeek.length > 0) {
+                  onDaysOfWeekChange([]);
+                }
                 onDaysOfMonthChange(days)
               }}
               placeholder="Ej: 1, 15, 30"
@@ -110,8 +134,11 @@ export function RecurrenceOptions({
         <>
           <div>
             <Label htmlFor="interval" className="text-foreground">
-              Intervalo (días)
+              Intervalo (días) *
             </Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Duración del período en días
+            </p>
             <Input
               id="interval"
               type="number"
@@ -119,15 +146,29 @@ export function RecurrenceOptions({
               value={interval}
               onChange={(e) => onIntervalChange(Number.parseInt(e.target.value))}
               className="mt-1.5"
+              required
             />
           </div>
 
           {taskType === "habit-plus" && (
             <>
+              <div className="rounded-md bg-blue-50 dark:bg-blue-950/30 p-3 text-sm text-blue-900 dark:text-blue-200">
+                <strong>Hábito+ permite tres modos:</strong>
+                <ol className="list-decimal ml-5 mt-2 space-y-1">
+                  <li><strong>Solo intervalo:</strong> N ocurrencias cada X días</li>
+                  <li><strong>Intervalo + días de semana:</strong> Ocurrencias en días específicos de la semana</li>
+                  <li><strong>Intervalo + días del mes:</strong> Ocurrencias en días específicos del mes</li>
+                </ol>
+                <p className="mt-2 text-xs">⚠️ No puedes combinar días de semana Y días del mes</p>
+              </div>
+
               <div>
                 <Label htmlFor="maxOccurrences" className="text-foreground">
                   Ocurrencias por Periodo
                 </Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Cuántas veces debe completarse por período
+                </p>
                 <Input
                   id="maxOccurrences"
                   type="number"
@@ -147,15 +188,27 @@ export function RecurrenceOptions({
                 className="flex items-center gap-2 text-sm font-medium text-primary hover:underline"
               >
                 {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                Opciones Avanzadas
+                Configuración de Días Específicos
               </button>
 
               {showAdvanced && (
                 <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
                   <div>
                     <Label className="text-foreground">Días de la Semana</Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Selecciona días específicos para las ocurrencias
+                    </p>
                     <div className="mt-2">
-                      <DaySelector selectedDays={daysOfWeek} onToggleDay={toggleDayOfWeek} />
+                      <DaySelector 
+                        selectedDays={daysOfWeek} 
+                        onToggleDay={(day) => {
+                          // Clear daysOfMonth when selecting daysOfWeek
+                          if (daysOfMonth.length > 0) {
+                            onDaysOfMonthChange([]);
+                          }
+                          toggleDayOfWeek(day);
+                        }} 
+                      />
                     </div>
                   </div>
 
@@ -163,6 +216,9 @@ export function RecurrenceOptions({
                     <Label htmlFor="daysOfMonth" className="text-foreground">
                       Días del Mes (separados por coma)
                     </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Ej: 1, 15, 30 para el 1, 15 y 30 de cada mes
+                    </p>
                     <Input
                       id="daysOfMonth"
                       value={daysOfMonth.join(", ")}
@@ -171,6 +227,10 @@ export function RecurrenceOptions({
                           .split(",")
                           .map((d) => Number.parseInt(d.trim()))
                           .filter((d) => !isNaN(d) && d >= 1 && d <= 31)
+                        // Clear daysOfWeek when entering daysOfMonth
+                        if (days.length > 0 && daysOfWeek.length > 0) {
+                          onDaysOfWeekChange([]);
+                        }
                         onDaysOfMonthChange(days)
                       }}
                       placeholder="Ej: 1, 15, 30"

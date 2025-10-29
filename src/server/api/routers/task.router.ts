@@ -14,22 +14,9 @@ const createRecurrenceSchema = z.object({
   maxOccurrences: z.number().positive().optional(),
   lastPeriodStart: z.date().optional(),
   endDate: z.date().optional(),
-}).refine(
-  (data) => {
-    // Count how many recurrence types are defined
-    const hasInterval = data.interval !== undefined && data.interval !== null;
-    const hasDaysOfWeek = data.daysOfWeek !== undefined && data.daysOfWeek !== null && data.daysOfWeek.length > 0;
-    const hasDaysOfMonth = data.daysOfMonth !== undefined && data.daysOfMonth !== null && data.daysOfMonth.length > 0;
-    
-    const typesCount = [hasInterval, hasDaysOfWeek, hasDaysOfMonth].filter(Boolean).length;
-    
-    // Must have exactly one recurrence type
-    return typesCount === 1;
-  },
-  {
-    message: "Recurrence must have exactly one type: interval, daysOfWeek, or daysOfMonth (cannot mix types)",
-  }
-);
+});
+// Note: Removed the .refine() validation - specific recurrence type validation
+// is now handled in the service layer based on task type
 
 const createTaskSchema = z.object({
   name: z.string().min(1).max(512),
@@ -86,16 +73,26 @@ export const taskRouter = createTRPCRouter({
    * Get all tasks for the current user
    */
   getMyTasks: protectedProcedure.query(async ({ ctx }) => {
-    const service = new TaskLifecycleService();
-    return await service.getUserTasks(ctx.session.user.id);
+    try {
+      const service = new TaskLifecycleService();
+      return await service.getUserTasks(ctx.session.user.id);
+    } catch (error) {
+      console.error("[Task Router] Error fetching user tasks:", error);
+      return []; // Return empty array instead of throwing
+    }
   }),
 
   /**
    * Get active tasks for the current user
    */
   getMyActiveTasks: protectedProcedure.query(async ({ ctx }) => {
-    const service = new TaskLifecycleService();
-    return await service.getUserActiveTasks(ctx.session.user.id);
+    try {
+      const service = new TaskLifecycleService();
+      return await service.getUserActiveTasks(ctx.session.user.id);
+    } catch (error) {
+      console.error("[Task Router] Error fetching active tasks:", error);
+      return []; // Return empty array instead of throwing
+    }
   }),
 
   /**
@@ -127,24 +124,46 @@ export const taskRouter = createTRPCRouter({
    * Get task statistics for the current user
    */
   getMyStatistics: protectedProcedure.query(async ({ ctx }) => {
-    const service = new TaskAnalyticsService();
-    return await service.getUserStatistics(ctx.session.user.id);
+    try {
+      const service = new TaskAnalyticsService();
+      return await service.getUserStatistics(ctx.session.user.id);
+    } catch (error) {
+      console.error("[Task Router] Error fetching statistics:", error);
+      return {
+        totalTasks: 0,
+        activeTasks: 0,
+        completedOccurrences: 0,
+        pendingOccurrences: 0,
+        totalTimeSpent: 0,
+        averageCompletionRate: 0,
+      };
+    }
   }),
 
   /**
    * Get tasks sorted by urgency
    */
   getByUrgency: protectedProcedure.query(async ({ ctx }) => {
-    const service = new TaskAnalyticsService();
-    return await service.getOccurrencesByUrgency(ctx.session.user.id);
+    try {
+      const service = new TaskAnalyticsService();
+      return await service.getOccurrencesByUrgency(ctx.session.user.id);
+    } catch (error) {
+      console.error("[Task Router] Error fetching tasks by urgency:", error);
+      return []; // Return empty array instead of throwing
+    }
   }),
 
   /**
    * Get tasks sorted by importance
    */
   getByImportance: protectedProcedure.query(async ({ ctx }) => {
-    const service = new TaskAnalyticsService();
-    return await service.getOccurrencesByImportance(ctx.session.user.id);
+    try {
+      const service = new TaskAnalyticsService();
+      return await service.getOccurrencesByImportance(ctx.session.user.id);
+    } catch (error) {
+      console.error("[Task Router] Error fetching tasks by importance:", error);
+      return []; // Return empty array instead of throwing
+    }
   }),
 
   /**

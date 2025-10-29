@@ -16,6 +16,8 @@ import { FixedUniqueForm } from "./form/fixed-unique-form"
 import { FixedRepetitiveForm } from "./form/fixed-repetitive-form"
 import { TargetLimitDates } from "./form/target-limit-dates"
 import { RecurrenceOptions } from "./form/recurrence-options"
+import { HabitPlusRecurrence } from "./form/habit-plus-recurrence"
+import { FiniteRecurrence } from "./form/finite-recurrence"
 
 interface TaskFormModalProps {
   open: boolean
@@ -150,54 +152,64 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
       }
     }
 
-    const recurrence =
-      taskType === "unique"
-        ? {
-            maxOccurrences: 1, // Unique tasks have exactly 1 occurrence
-          }
-        : taskType === "finite"
-          ? {
-              maxOccurrences: formData.maxOccurrences,
-              daysOfWeek:
-                formData.daysOfWeek.length > 0
-                  ? (formData.daysOfWeek as Array<"Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun">)
-                  : undefined,
-              daysOfMonth: formData.daysOfMonth.length > 0 ? formData.daysOfMonth : undefined,
-              endDate: formData.endDate ? new Date(formData.endDate) : undefined,
-            }
-          : taskType === "habit"
-            ? {
-                interval: formData.interval,
-                maxOccurrences: 1, // 1 occurrence per period
-                lastPeriodStart: new Date(), // Start period now
-              }
-            : taskType === "habit-plus"
-              ? {
-                  // habit-plus
-                  interval: formData.interval,
-                  daysOfWeek:
-                    formData.daysOfWeek.length > 0
-                      ? (formData.daysOfWeek as Array<"Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun">)
-                      : undefined,
-                  daysOfMonth: formData.daysOfMonth.length > 0 ? formData.daysOfMonth : undefined,
-                  maxOccurrences: formData.maxOccurrences,
-                  endDate: formData.endDate ? new Date(formData.endDate) : undefined,
-                  lastPeriodStart: new Date(), // Start period now
-                }
-              : taskType === "fixed-unique"
-                ? {
-                    maxOccurrences: 1,
-                    // Fixed unique tasks don't need daysOfWeek - they use targetDate instead
-                  }
-                : {
-                    // fixed-repetitive
-                    daysOfWeek:
-                      formData.daysOfWeek.length > 0
-                        ? (formData.daysOfWeek as Array<"Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun">)
-                        : undefined,
-                    daysOfMonth: formData.daysOfMonth.length > 0 ? formData.daysOfMonth : undefined,
-                    endDate: new Date(formData.endDate!), // Required for fixed-repetitive
-                  }
+    // Build recurrence object based on task type, ensuring only ONE type of recurrence is set
+    let recurrence: Record<string, any> | undefined;
+    
+    if (taskType === "unique") {
+      recurrence = {
+        maxOccurrences: 1, // Unique tasks have exactly 1 occurrence
+      };
+    } else if (taskType === "finite") {
+      recurrence = {
+        maxOccurrences: formData.maxOccurrences,
+        endDate: formData.endDate ? new Date(formData.endDate) : undefined,
+      };
+      
+      // Only set ONE type of recurrence pattern (daysOfWeek OR daysOfMonth, never both or with interval)
+      if (formData.daysOfWeek.length > 0) {
+        recurrence.daysOfWeek = formData.daysOfWeek as Array<"Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun">;
+      } else if (formData.daysOfMonth.length > 0) {
+        recurrence.daysOfMonth = formData.daysOfMonth;
+      }
+    } else if (taskType === "habit") {
+      // Habit only uses interval, no daysOfWeek or daysOfMonth
+      recurrence = {
+        interval: formData.interval,
+        maxOccurrences: 1, // 1 occurrence per period
+        lastPeriodStart: new Date(), // Start period now
+      };
+    } else if (taskType === "habit-plus") {
+      // Habit+ uses interval AND (daysOfWeek OR daysOfMonth), but never both
+      recurrence = {
+        interval: formData.interval,
+        maxOccurrences: formData.maxOccurrences,
+        endDate: formData.endDate ? new Date(formData.endDate) : undefined,
+        lastPeriodStart: new Date(), // Start period now
+      };
+      
+      // Only set ONE type of day pattern
+      if (formData.daysOfWeek.length > 0) {
+        recurrence.daysOfWeek = formData.daysOfWeek as Array<"Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun">;
+      } else if (formData.daysOfMonth.length > 0) {
+        recurrence.daysOfMonth = formData.daysOfMonth;
+      }
+    } else if (taskType === "fixed-unique") {
+      // Fixed unique tasks don't need daysOfWeek - they use targetDate instead
+      recurrence = {
+        maxOccurrences: 1,
+      };
+    } else if (taskType === "fixed-repetitive") {
+      recurrence = {
+        endDate: new Date(formData.endDate!), // Required for fixed-repetitive
+      };
+      
+      // Only set ONE type of recurrence pattern
+      if (formData.daysOfWeek.length > 0) {
+        recurrence.daysOfWeek = formData.daysOfWeek as Array<"Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun">;
+      } else if (formData.daysOfMonth.length > 0) {
+        recurrence.daysOfMonth = formData.daysOfMonth;
+      }
+    }
 
     if (editingTask) {
       updateMutation.mutate({
@@ -310,7 +322,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
           )}
 
           {/* Target and limit dates for unique/finite when creating */}
-          {!editingTask && (taskType === "unique" || taskType === "finite") && (
+          {!editingTask && taskType === "unique" && (
             <TargetLimitDates
               targetDate={formData.targetDate}
               limitDate={formData.limitDate}
@@ -319,8 +331,30 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
             />
           )}
 
-          {/* Recurrence Options */}
-          {!editingTask && taskType !== "unique" && taskType !== "fixed-unique" && taskType !== "fixed-repetitive" && (
+          {/* Finite Recurrence with pattern selection */}
+          {!editingTask && taskType === "finite" && (
+            <>
+              <TargetLimitDates
+                targetDate={formData.targetDate}
+                limitDate={formData.limitDate}
+                onTargetDateChange={(value) => setFormData({ ...formData, targetDate: value })}
+                onLimitDateChange={(value) => setFormData({ ...formData, limitDate: value })}
+              />
+              <FiniteRecurrence
+                maxOccurrences={formData.maxOccurrences}
+                daysOfWeek={formData.daysOfWeek}
+                daysOfMonth={formData.daysOfMonth}
+                endDate={formData.endDate}
+                onMaxOccurrencesChange={(value) => setFormData({ ...formData, maxOccurrences: value })}
+                onDaysOfWeekChange={(days) => setFormData({ ...formData, daysOfWeek: days })}
+                onDaysOfMonthChange={(days) => setFormData({ ...formData, daysOfMonth: days })}
+                onEndDateChange={(value) => setFormData({ ...formData, endDate: value })}
+              />
+            </>
+          )}
+
+          {/* Habit Recurrence (simple interval) */}
+          {!editingTask && taskType === "habit" && (
             <RecurrenceOptions
               taskType={taskType}
               interval={formData.interval}
@@ -335,6 +369,22 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
               onDaysOfMonthChange={(days) => setFormData({ ...formData, daysOfMonth: days })}
               onEndDateChange={(value) => setFormData({ ...formData, endDate: value })}
               onToggleAdvanced={() => setShowAdvanced(!showAdvanced)}
+            />
+          )}
+
+          {/* Habit+ Recurrence with mode selection */}
+          {!editingTask && taskType === "habit-plus" && (
+            <HabitPlusRecurrence
+              interval={formData.interval}
+              maxOccurrences={formData.maxOccurrences}
+              daysOfWeek={formData.daysOfWeek}
+              daysOfMonth={formData.daysOfMonth}
+              endDate={formData.endDate}
+              onIntervalChange={(value) => setFormData({ ...formData, interval: value })}
+              onMaxOccurrencesChange={(value) => setFormData({ ...formData, maxOccurrences: value })}
+              onDaysOfWeekChange={(days) => setFormData({ ...formData, daysOfWeek: days })}
+              onDaysOfMonthChange={(days) => setFormData({ ...formData, daysOfMonth: days })}
+              onEndDateChange={(value) => setFormData({ ...formData, endDate: value })}
             />
           )}
 

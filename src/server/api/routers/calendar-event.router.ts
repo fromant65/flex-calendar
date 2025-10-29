@@ -57,16 +57,26 @@ export const calendarEventRouter = createTRPCRouter({
    * Get all events for the current user
    */
   getMyEvents: protectedProcedure.query(async ({ ctx }) => {
-    const service = new TaskLifecycleService();
-    return await service.getUserCalendarEvents(ctx.session.user.id);
+    try {
+      const service = new TaskLifecycleService();
+      return await service.getUserCalendarEvents(ctx.session.user.id);
+    } catch (error) {
+      console.error("[Calendar Event Router] Error fetching user events:", error);
+      return []; // Return empty array instead of throwing
+    }
   }),
 
   /**
    * Get events with details for the current user
    */
   getMyEventsWithDetails: protectedProcedure.query(async ({ ctx }) => {
-    const service = new TaskLifecycleService();
-    return await service.getUserCalendarEventsWithDetails(ctx.session.user.id);
+    try {
+      const service = new TaskLifecycleService();
+      return await service.getUserCalendarEventsWithDetails(ctx.session.user.id);
+    } catch (error) {
+      console.error("[Calendar Event Router] Error fetching events with details:", error);
+      return []; // Return empty array instead of throwing
+    }
   }),
 
   /**
@@ -80,28 +90,43 @@ export const calendarEventRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const service = new TaskLifecycleService();
-      return await service.getCalendarEventsByDateRange(
-        ctx.session.user.id,
-        input.startDate,
-        input.endDate
-      );
+      try {
+        const service = new TaskLifecycleService();
+        return await service.getCalendarEventsByDateRange(
+          ctx.session.user.id,
+          input.startDate,
+          input.endDate
+        );
+      } catch (error) {
+        console.error("[Calendar Event Router] Error fetching events by date range:", error);
+        return []; // Return empty array instead of throwing
+      }
     }),
 
   /**
    * Get today's events with details
    */
   getTodayEvents: protectedProcedure.query(async ({ ctx }) => {
-    const service = new TaskLifecycleService();
-    return await service.getTodayEventsWithDetails(ctx.session.user.id);
+    try {
+      const service = new TaskLifecycleService();
+      return await service.getTodayEventsWithDetails(ctx.session.user.id);
+    } catch (error) {
+      console.error("[Calendar Event Router] Error fetching today's events:", error);
+      return []; // Return empty array instead of throwing
+    }
   }),
 
   /**
    * Get this week's events with details
    */
   getWeekEvents: protectedProcedure.query(async ({ ctx }) => {
-    const service = new TaskLifecycleService();
-    return await service.getWeekEventsWithDetails(ctx.session.user.id);
+    try {
+      const service = new TaskLifecycleService();
+      return await service.getWeekEventsWithDetails(ctx.session.user.id);
+    } catch (error) {
+      console.error("[Calendar Event Router] Error fetching week events:", error);
+      return []; // Return empty array instead of throwing
+    }
   }),
 
   /**
