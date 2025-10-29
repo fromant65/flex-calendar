@@ -152,52 +152,17 @@ export const occurrenceRouter = createTRPCRouter({
   /**
    * Get all occurrences for the current user with task details
    * Useful for task-manager page to show all occurrences grouped by task
-   * Now supports filtering by search query, status, and task type
+   * Filtering is done on the frontend for better UX (no loading on every keystroke)
    */
   getMyOccurrencesWithTask: protectedProcedure
-    .input(
-      z.object({
-        searchQuery: z.string().optional(),
-        statusFilter: z.enum(["Pending", "In Progress", "Completed", "Skipped", "all"]).optional(),
-        taskTypeFilter: z.enum([
-          "Única",
-          "Recurrente Finita",
-          "Hábito",
-          "Hábito +",
-          "Fija Única",
-          "Fija Repetitiva",
-          "all",
-        ]).optional(),
-      }).optional()
-    )
-    .query(async ({ ctx, input }) => {
-      const service = new TaskLifecycleService();
-      const allOccurrences = await service.getUserOccurrencesWithTask(ctx.session.user.id);
-
-      // Apply filters if provided
-      if (!input) return allOccurrences;
-
-      let filtered = allOccurrences;
-
-      // Filter by search query (task name)
-      if (input.searchQuery) {
-        const query = input.searchQuery.toLowerCase();
-        filtered = filtered.filter((occ) =>
-          occ.task.name.toLowerCase().includes(query)
-        );
+    .query(async ({ ctx }) => {
+      try {
+        const service = new TaskLifecycleService();
+        return await service.getUserOccurrencesWithTask(ctx.session.user.id);
+      } catch (error) {
+        console.error("[Occurrence Router] Error fetching user occurrences:", error);
+        return []; // Return empty array instead of throwing
       }
-
-      // Filter by status
-      if (input.statusFilter && input.statusFilter !== "all") {
-        filtered = filtered.filter((occ) => occ.status === input.statusFilter);
-      }
-
-      // Filter by task type
-      if (input.taskTypeFilter && input.taskTypeFilter !== "all") {
-        filtered = filtered.filter((occ) => occ.task.taskType === input.taskTypeFilter);
-      }
-
-      return filtered;
     }),
 
   /**

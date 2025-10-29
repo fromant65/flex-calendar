@@ -37,7 +37,12 @@ export const statsRouter = createTRPCRouter({
       return await service.getTaskStats(ctx.session.user.id);
     } catch (error) {
       console.error("[Stats Router] Error fetching task stats:", error);
-      return { totalTasks: 0, activeTasks: 0, completedTasks: 0, importanceDistribution: [], completionRateByImportance: [], taskTypeDistribution: { fixed: 0, flexible: 0 } };
+      return { 
+        averageCompletionTime: null,
+        importanceDistribution: [], 
+        fixedVsFlexible: { fixed: 0, flexible: 0 },
+        recurringVsUnique: { recurring: 0, unique: 0 }
+      };
     }
   }),
 
@@ -50,7 +55,12 @@ export const statsRouter = createTRPCRouter({
       return await service.getRecurrenceStats(ctx.session.user.id);
     } catch (error) {
       console.error("[Stats Router] Error fetching recurrence stats:", error);
-      return { habitCompliance: [], maxStreak: 0, currentStreak: 0, completionByDayOfWeek: [] };
+      return { 
+        habitCompliance: [], 
+        maxStreak: 0, 
+        currentStreak: 0, 
+        frequentDays: [] 
+      };
     }
   }),
 
@@ -63,7 +73,13 @@ export const statsRouter = createTRPCRouter({
       return await service.getOccurrenceStats(ctx.session.user.id);
     } catch (error) {
       console.error("[Stats Router] Error fetching occurrence stats:", error);
-      return { occurrencesByPeriod: [], statusDistribution: { pending: 0, inProgress: 0, completed: 0, skipped: 0 }, averageTimeDeviation: null, averageUrgency: null, averageResolutionTime: null };
+      return { 
+        occurrencesByPeriod: [], 
+        statusDistribution: { pending: 0, inProgress: 0, completed: 0, skipped: 0 }, 
+        averageTimeDeviation: null, 
+        averageUrgency: null, 
+        averageResolutionTime: null 
+      };
     }
   }),
 
@@ -76,7 +92,11 @@ export const statsRouter = createTRPCRouter({
       return await service.getCalendarStats(ctx.session.user.id);
     } catch (error) {
       console.error("[Stats Router] Error fetching calendar stats:", error);
-      return { totalEvents: 0, completedEvents: 0, totalDedicatedTime: 0, averageEventDuration: 0 };
+      return { 
+        completedVsIncomplete: { completed: 0, incomplete: 0 },
+        hourlyDistribution: [], 
+        complianceRate: 0 
+      };
     }
   }),
 
@@ -89,7 +109,14 @@ export const statsRouter = createTRPCRouter({
       return await service.getGlobalKPIs(ctx.session.user.id);
     } catch (error) {
       console.error("[Stats Router] Error fetching global KPIs:", error);
-      return { productivityScore: 0, consistencyScore: 0, efficiencyScore: 0 };
+      return { 
+        completionRate: 0, 
+        totalTimeInvested: 0,
+        planningEfficiency: null,
+        averageWorkload: { hoursPerDay: 0, hoursPerWeek: 0 },
+        importanceBalance: { lowImportanceCompletionRate: 0, mediumImportanceCompletionRate: 0, highImportanceCompletionRate: 0 },
+        urgencyBalance: { earlyCompletionRate: 0, onTimeCompletionRate: 0, lateCompletionRate: 0 }
+      };
     }
   }),
 
@@ -103,21 +130,10 @@ export const statsRouter = createTRPCRouter({
     } catch (error) {
       console.error("[Stats Router] Error fetching insights:", error);
       return { 
-        taskInsights: { 
-          completionRateAnalysis: "Sin datos suficientes para analizar.", 
-          importanceAnalysis: "Sin datos suficientes para analizar.", 
-          recommendation: "Comienza creando algunas tareas para obtener insights." 
-        }, 
-        recurrenceInsights: { 
-          complianceAnalysis: "Sin datos suficientes para analizar.", 
-          evolutionAnalysis: "Sin datos suficientes para analizar.", 
-          recommendation: "Crea hábitos para comenzar a rastrear tu consistencia." 
-        }, 
-        occurrenceInsights: { 
-          resolutionTimeAnalysis: "Sin datos suficientes para analizar.", 
-          timeDeviationAnalysis: "Sin datos suficientes para analizar.", 
-          recommendation: "Completa algunas ocurrencias para obtener insights." 
-        } 
+        lowComplianceHabits: [],
+        completionTrend: [],
+        recurringVsUniqueComparison: { recurringCompletionRate: 0, uniqueCompletionRate: 0 },
+        bottlenecks: []
       };
     }
   }),

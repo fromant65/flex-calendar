@@ -28,7 +28,7 @@ export const timelineRouter = createTRPCRouter({
         );
       } catch (error) {
         console.error("[Timeline Router] Error fetching timeline data:", error);
-        return { occurrences: [], events: [] }; // Return empty timeline instead of throwing
+        return { tasks: [], occurrences: [], events: [] }; // Return empty timeline with all required fields
       }
     }),
 });

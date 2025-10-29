@@ -34,11 +34,34 @@ export default function TaskManagerPage() {
     limitDate: Date | null;
   } | null>(null);
   
-  // Fetch all occurrences with task details (filtered by backend when in list view)
-  const { data: occurrences, isLoading, error: occurrencesError } = api.occurrence.getMyOccurrencesWithTask.useQuery(
-    viewMode === "list" ? filters : undefined,
-    { enabled: true }
-  )
+  // Fetch all occurrences with task details (no filters - get all data)
+  const { data: allOccurrences, isLoading, error: occurrencesError } = api.occurrence.getMyOccurrencesWithTask.useQuery()
+  
+  // Apply filters on the frontend
+  const occurrences = useMemo(() => {
+    if (!allOccurrences) return [];
+    
+    return allOccurrences.filter((occ) => {
+      // Search filter
+      if (filters.searchQuery) {
+        const searchLower = filters.searchQuery.toLowerCase();
+        const matchesName = occ.task.name.toLowerCase().includes(searchLower);
+        if (!matchesName) return false;
+      }
+      
+      // Status filter
+      if (filters.statusFilter !== "all" && occ.status !== filters.statusFilter) {
+        return false;
+      }
+      
+      // Task type filter
+      if (filters.taskTypeFilter !== "all" && occ.task.taskType !== filters.taskTypeFilter) {
+        return false;
+      }
+      
+      return true;
+    });
+  }, [allOccurrences, filters]);
   
   // Get next occurrence preview for selected task
   const { data: nextOccurrenceDate, error: nextOccurrenceError } = api.task.previewNextOccurrence.useQuery(
@@ -138,7 +161,7 @@ export default function TaskManagerPage() {
   };
   
   // Group occurrences by task (filter out inactive tasks)
-  // Note: Filtering by search/status/type is now done in the backend
+  // Filtering by search/status/type is done in the frontend for better UX
   const groupedOccurrences = useMemo(() => {
     if (!occurrences) return new Map();
     
@@ -162,6 +185,17 @@ export default function TaskManagerPage() {
     
     return grouped;
   }, [occurrences]);
+
+  // Calculate total tasks count (before filtering)
+  const totalTasksCount = useMemo(() => {
+    if (!allOccurrences) return 0;
+    const uniqueTaskIds = new Set(
+      allOccurrences
+        .filter(occ => occ.task.isActive)
+        .map(occ => occ.task.id)
+    );
+    return uniqueTaskIds.size;
+  }, [allOccurrences]);
 
   // Handler for timeline occurrence click
   const handleTimelineOccurrenceClick = (occurrence: OccurrenceWithTask) => {
@@ -202,7 +236,8 @@ export default function TaskManagerPage() {
     });
   };
   
-  if (isLoading) {
+  // Only show loading spinner on initial load (when there's no data yet)
+  if (isLoading && !occurrences) {
     return (
       <div className="flex h-full items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -323,7 +358,7 @@ export default function TaskManagerPage() {
             <TaskManagerFilterBar
               filters={filters}
               onFiltersChange={setFilters}
-              totalTasks={groupedOccurrences.size}
+              totalTasks={totalTasksCount}
               filteredCount={groupedOccurrences.size}
             />
           </div>

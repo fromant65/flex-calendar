@@ -219,7 +219,10 @@ function EventsPageContent() {
     }
   }
 
-  if (eventsLoading || occurrencesLoading) {
+  // Only show full-page loading on initial load (when there's no data yet)
+  const isInitialLoad = (eventsLoading && events.length === 0) || (occurrencesLoading && occurrences.length === 0)
+  
+  if (isInitialLoad) {
     return <LoadingPage text="Cargando eventos y tareas..." />
   }
 

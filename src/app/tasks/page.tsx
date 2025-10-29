@@ -121,7 +121,8 @@ export default function TasksPage() {
   const activeTasksList = filteredTasks.filter((t) => t.isActive)
   const inactiveTasksList = filteredTasks.filter((t) => !t.isActive)
 
-  if (isLoading) {
+  // Only show full-page loading on initial load (when there's no data yet)
+  if (isLoading && tasks.length === 0) {
     return <LoadingPage text="Cargando tareas..." />
   }
 
