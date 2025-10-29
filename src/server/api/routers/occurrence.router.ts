@@ -5,6 +5,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { TaskLifecycleService, TaskAnalyticsService, TaskStreakService } from "../services";
+import { verifyOccurrenceOwnership, verifyTaskOwnership } from "../helpers";
 
 const createOccurrenceSchema = z.object({
   associatedTaskId: z.number(),
@@ -29,7 +30,10 @@ export const occurrenceRouter = createTRPCRouter({
    */
   create: protectedProcedure
     .input(createOccurrenceSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Verify that the task belongs to the user
+      await verifyTaskOwnership(input.associatedTaskId, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       return await service.createOccurrence(input);
     }),
@@ -39,7 +43,10 @@ export const occurrenceRouter = createTRPCRouter({
    */
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      // Verify ownership before fetching
+      await verifyOccurrenceOwnership(input.id, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       const analyticsService = new TaskAnalyticsService();
       const occurrence = await service.getOccurrence(input.id);
@@ -51,7 +58,10 @@ export const occurrenceRouter = createTRPCRouter({
    */
   getWithTask: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      // Verify ownership before fetching
+      await verifyOccurrenceOwnership(input.id, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       const analyticsService = new TaskAnalyticsService();
       const occurrence = await service.getOccurrenceWithTask(input.id);
@@ -63,7 +73,10 @@ export const occurrenceRouter = createTRPCRouter({
    */
   getByTaskId: protectedProcedure
     .input(z.object({ taskId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      // Verify that the task belongs to the user
+      await verifyTaskOwnership(input.taskId, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       const analyticsService = new TaskAnalyticsService();
       const occurrences = await service.getTaskOccurrences(input.taskId);
@@ -80,12 +93,17 @@ export const occurrenceRouter = createTRPCRouter({
         endDate: z.date(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const service = new TaskLifecycleService();
       const analyticsService = new TaskAnalyticsService();
-      const occurrences = await service.getOccurrencesByDateRange(input.startDate, input.endDate);
+      const occurrences = await service.getOccurrencesByDateRange(
+        input.startDate, 
+        input.endDate,
+        ctx.session.user.id
+      );
       
       console.log("=== DEBUG getByDateRange ===");
+      console.log("User ID:", ctx.session.user.id);
       console.log("Total occurrences from DB:", occurrences.length);
       if (occurrences.length > 0) {
         const sample = occurrences[0];
@@ -121,7 +139,10 @@ export const occurrenceRouter = createTRPCRouter({
         data: updateOccurrenceSchema,
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Verify ownership before updating
+      await verifyOccurrenceOwnership(input.id, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       return await service.updateOccurrence(input.id, input.data);
     }),
@@ -134,7 +155,10 @@ export const occurrenceRouter = createTRPCRouter({
       id: z.number(),
       completedAt: z.date().optional() // Custom completion date/time
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Verify ownership before completing
+      await verifyOccurrenceOwnership(input.id, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       return await service.completeOccurrence(input.id, input.completedAt);
     }),
@@ -144,7 +168,10 @@ export const occurrenceRouter = createTRPCRouter({
    */
   skip: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Verify ownership before skipping
+      await verifyOccurrenceOwnership(input.id, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       return await service.skipOccurrence(input.id);
     }),
@@ -170,13 +197,16 @@ export const occurrenceRouter = createTRPCRouter({
    */
   getOccurrenceEvents: protectedProcedure
     .input(z.object({ occurrenceId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       try {
+        // Verify ownership before fetching events
+        await verifyOccurrenceOwnership(input.occurrenceId, ctx.session.user.id);
+        
         const service = new TaskLifecycleService();
         return await service.getOccurrenceEvents(input.occurrenceId);
       } catch (error) {
         console.error("[Occurrence Router] Error fetching occurrence events:", error);
-        return []; // Return empty array instead of throwing
+        throw error; // Re-throw to properly handle FORBIDDEN/NOT_FOUND errors
       }
     }),
 
@@ -186,19 +216,16 @@ export const occurrenceRouter = createTRPCRouter({
    */
   detectBacklog: protectedProcedure
     .input(z.object({ taskId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       try {
+        // Verify that the task belongs to the user
+        await verifyTaskOwnership(input.taskId, ctx.session.user.id);
+        
         const service = new TaskLifecycleService();
         return await service.detectBacklog(input.taskId);
       } catch (error) {
         console.error("[Occurrence Router] Error detecting backlog:", error);
-        return {
-          hasSevereBacklog: false,
-          pendingCount: 0,
-          oldestPendingDate: null,
-          estimatedBacklogCount: 0,
-          pendingOccurrences: [],
-        };
+        throw error; // Re-throw to properly handle FORBIDDEN/NOT_FOUND errors
       }
     }),
 
@@ -208,7 +235,10 @@ export const occurrenceRouter = createTRPCRouter({
    */
   skipBacklog: protectedProcedure
     .input(z.object({ taskId: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Verify that the task belongs to the user
+      await verifyTaskOwnership(input.taskId, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       const skippedCount = await service.skipBacklogOccurrences(input.taskId);
       return { success: true, skippedCount };
@@ -220,19 +250,16 @@ export const occurrenceRouter = createTRPCRouter({
    */
   getTaskStreak: protectedProcedure
     .input(z.object({ taskId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       try {
+        // Verify that the task belongs to the user
+        await verifyTaskOwnership(input.taskId, ctx.session.user.id);
+        
         const streakService = new TaskStreakService();
         return await streakService.getTaskStreak(input.taskId);
       } catch (error) {
         console.error("[Occurrence Router] Error fetching task streak:", error);
-        return {
-          taskId: input.taskId,
-          currentStreak: 0,
-          totalCompleted: 0,
-          totalOccurrences: 0,
-          completionRate: 0,
-        };
+        throw error; // Re-throw to properly handle FORBIDDEN/NOT_FOUND errors
       }
     }),
 

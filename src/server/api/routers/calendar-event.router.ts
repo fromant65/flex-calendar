@@ -5,6 +5,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { TaskLifecycleService } from "../services";
+import { verifyCalendarEventOwnership, verifyOccurrenceOwnership } from "../helpers";
 
 const createCalendarEventSchema = z.object({
   context: z.string().optional(),
@@ -29,6 +30,11 @@ export const calendarEventRouter = createTRPCRouter({
   create: protectedProcedure
     .input(createCalendarEventSchema)
     .mutation(async ({ ctx, input }) => {
+      // If associatedOccurrenceId is provided, verify ownership
+      if (input.associatedOccurrenceId) {
+        await verifyOccurrenceOwnership(input.associatedOccurrenceId, ctx.session.user.id);
+      }
+      
       const service = new TaskLifecycleService();
       return await service.createCalendarEvent(ctx.session.user.id, input);
     }),
@@ -38,7 +44,10 @@ export const calendarEventRouter = createTRPCRouter({
    */
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      // Verify ownership before fetching
+      await verifyCalendarEventOwnership(input.id, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       return await service.getCalendarEvent(input.id);
     }),
@@ -48,7 +57,10 @@ export const calendarEventRouter = createTRPCRouter({
    */
   getWithDetails: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      // Verify ownership before fetching
+      await verifyCalendarEventOwnership(input.id, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       return await service.getCalendarEventWithDetailsEnriched(input.id);
     }),
@@ -139,7 +151,10 @@ export const calendarEventRouter = createTRPCRouter({
         data: updateCalendarEventSchema,
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Verify ownership before updating
+      await verifyCalendarEventOwnership(input.id, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       return await service.updateCalendarEvent(input.id, input.data);
     }),
@@ -154,7 +169,10 @@ export const calendarEventRouter = createTRPCRouter({
       completeOccurrence: z.boolean().optional(), // Also complete the associated occurrence
       completedAt: z.date().optional() // Custom completion date/time
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Verify ownership before completing
+      await verifyCalendarEventOwnership(input.id, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       return await service.completeCalendarEvent(input.id, input.dedicatedTime, input.completeOccurrence, input.completedAt);
     }),
@@ -167,7 +185,10 @@ export const calendarEventRouter = createTRPCRouter({
       id: z.number(),
       skipOccurrence: z.boolean().optional() // Also skip the associated occurrence
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Verify ownership before skipping
+      await verifyCalendarEventOwnership(input.id, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       return await service.skipCalendarEvent(input.id, input.skipOccurrence);
     }),
@@ -177,7 +198,10 @@ export const calendarEventRouter = createTRPCRouter({
    */
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Verify ownership before deleting
+      await verifyCalendarEventOwnership(input.id, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       return await service.deleteCalendarEvent(input.id);
     }),

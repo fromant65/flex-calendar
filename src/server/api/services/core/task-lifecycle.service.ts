@@ -151,8 +151,8 @@ export class TaskLifecycleService {
   /**
    * Get occurrences in a date range
    */
-  async getOccurrencesByDateRange(startDate: Date, endDate: Date) {
-    return await this.occurrenceManagement.getOccurrencesByDateRange(startDate, endDate);
+  async getOccurrencesByDateRange(startDate: Date, endDate: Date, userId?: string) {
+    return await this.occurrenceManagement.getOccurrencesByDateRange(startDate, endDate, userId);
   }
 
   /**

@@ -71,8 +71,8 @@ export class OccurrenceAdapter {
   /**
    * Get occurrences in a date range
    */
-  async getOccurrencesByDateRange(startDate: Date, endDate: Date) {
-    const occurrences = await this.occurrenceRepo.findByDateRange(startDate, endDate);
+  async getOccurrencesByDateRange(startDate: Date, endDate: Date, userId?: string) {
+    const occurrences = await this.occurrenceRepo.findByDateRange(startDate, endDate, userId);
     
     // Enrich each occurrence's task with taskType
     const enrichedOccurrences = await Promise.all(

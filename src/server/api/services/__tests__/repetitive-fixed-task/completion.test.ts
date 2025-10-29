@@ -131,7 +131,8 @@ describe('Repetitive Fixed Task Completion', () => {
     expect(mockTaskAdapter.completeTask).not.toHaveBeenCalled();
     
     // Assert: Event was completed
-    expect(mockEventAdapter.completeEvent).toHaveBeenCalledWith(1);
+    expect(mockEventAdapter.completeEvent).toHaveBeenCalledTimes(1);
+    expect(mockEventAdapter.completeEvent.mock.calls[0]![0]).toBe(1);
   });
 
   it('should deactivate task after completing all N occurrences', async () => {
@@ -204,7 +205,8 @@ describe('Repetitive Fixed Task Completion', () => {
     expect(mockTaskAdapter.completeTask).toHaveBeenCalledWith(taskId);
     
     // Assert: Event was completed
-    expect(mockEventAdapter.completeEvent).toHaveBeenCalledWith(3);
+    expect(mockEventAdapter.completeEvent).toHaveBeenCalledTimes(1);
+    expect(mockEventAdapter.completeEvent.mock.calls[0]![0]).toBe(3);
   });
 
   it('should complete associated calendar events for each occurrence', async () => {
@@ -268,7 +270,8 @@ describe('Repetitive Fixed Task Completion', () => {
     await completionService.completeOccurrence(occurrenceId);
 
     // Assert: Event was completed
-    expect(mockEventAdapter.completeEvent).toHaveBeenCalledWith(10);
+    expect(mockEventAdapter.completeEvent).toHaveBeenCalledTimes(1);
+    expect(mockEventAdapter.completeEvent.mock.calls[0]![0]).toBe(10);
   });
 
   it('should not create additional occurrences for fixed repetitive tasks', async () => {

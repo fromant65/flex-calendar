@@ -235,7 +235,8 @@ describe('Habit Completion', () => {
     await completionService.completeOccurrence(occurrenceId);
 
     // Assert: Occurrence completed
-    expect(mockOccurrenceAdapter.completeOccurrence).toHaveBeenCalledWith(occurrenceId);
+    expect(mockOccurrenceAdapter.completeOccurrence).toHaveBeenCalledTimes(1);
+    expect(mockOccurrenceAdapter.completeOccurrence.mock.calls[0]![0]).toBe(occurrenceId);
     
     // Assert: Next occurrence created
     expect(mockOccurrenceAdapter.createOccurrence).toHaveBeenCalledTimes(1);

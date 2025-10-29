@@ -3,3 +3,12 @@
  */
 
 export { calculateTaskType } from "./task-type.helper";
+export {
+  verifyTaskOwnership,
+  verifyOccurrenceOwnership,
+  verifyCalendarEventOwnership,
+  getTaskWithOwnership,
+  getOccurrenceWithOwnership,
+  getCalendarEventWithOwnership,
+} from "./ownership.helper";
+

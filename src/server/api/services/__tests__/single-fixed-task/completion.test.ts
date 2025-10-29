@@ -97,10 +97,12 @@ describe('Single Fixed Task Completion', () => {
     await completionService.completeOccurrence(occurrenceId);
 
     // Assert: Occurrence was completed
-    expect(mockOccurrenceAdapter.completeOccurrence).toHaveBeenCalledWith(occurrenceId);
+    expect(mockOccurrenceAdapter.completeOccurrence).toHaveBeenCalledTimes(1);
+    expect(mockOccurrenceAdapter.completeOccurrence.mock.calls[0]![0]).toBe(occurrenceId);
 
     // Assert: Associated event was completed
-    expect(mockEventAdapter.completeEvent).toHaveBeenCalledWith(event.id);
+    expect(mockEventAdapter.completeEvent).toHaveBeenCalledTimes(1);
+    expect(mockEventAdapter.completeEvent.mock.calls[0]![0]).toBe(event.id);
 
     // Assert: Task was deactivated (isActive = false)
     expect(mockTaskAdapter.completeTask).toHaveBeenCalledWith(taskId);
@@ -156,7 +158,8 @@ describe('Single Fixed Task Completion', () => {
     await completionService.completeOccurrence(occurrenceId);
 
     // Assert: Event was completed
-    expect(mockEventAdapter.completeEvent).toHaveBeenCalledWith(eventId);
+    expect(mockEventAdapter.completeEvent).toHaveBeenCalledTimes(1);
+    expect(mockEventAdapter.completeEvent.mock.calls[0]![0]).toBe(eventId);
   });
 
   it('should not create next occurrence when completing or skipping single fixed task', async () => {

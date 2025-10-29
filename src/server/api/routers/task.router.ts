@@ -5,6 +5,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { TaskLifecycleService, TaskAnalyticsService } from "../services";
+import { verifyTaskOwnership } from "../helpers";
 
 // Validation schemas
 const createRecurrenceSchema = z.object({
@@ -54,7 +55,10 @@ export const taskRouter = createTRPCRouter({
    */
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      // Verify ownership before fetching
+      await verifyTaskOwnership(input.id, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       return await service.getTask(input.id);
     }),
@@ -64,7 +68,10 @@ export const taskRouter = createTRPCRouter({
    */
   getWithDetails: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      // Verify ownership before fetching
+      await verifyTaskOwnership(input.id, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       return await service.getTaskWithDetails(input.id);
     }),
@@ -105,7 +112,10 @@ export const taskRouter = createTRPCRouter({
         data: updateTaskSchema,
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Verify ownership before updating
+      await verifyTaskOwnership(input.id, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       return await service.updateTask(input.id, input.data);
     }),
@@ -115,7 +125,10 @@ export const taskRouter = createTRPCRouter({
    */
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Verify ownership before deleting
+      await verifyTaskOwnership(input.id, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       return await service.deleteTask(input.id);
     }),
@@ -172,7 +185,10 @@ export const taskRouter = createTRPCRouter({
    */
   previewNextOccurrence: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      // Verify ownership before previewing
+      await verifyTaskOwnership(input.id, ctx.session.user.id);
+      
       const service = new TaskLifecycleService();
       return await service.previewNextOccurrence(input.id);
     }),

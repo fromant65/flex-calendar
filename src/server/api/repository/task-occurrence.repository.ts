@@ -44,7 +44,7 @@ export class TaskOccurrenceRepository extends BaseRepository<typeof taskOccurren
   /**
    * Find occurrences within a date range and include the associated task
    */
-  async findByDateRange(startDate: Date, endDate: Date): Promise<(OccurrenceSelect & { task?: any | null })[]> {
+  async findByDateRange(startDate: Date, endDate: Date, userId?: string): Promise<(OccurrenceSelect & { task?: any | null })[]> {
     const results = await db.query.taskOccurrences.findMany({
       where: and(
         gte(taskOccurrences.startDate, startDate),
@@ -55,8 +55,13 @@ export class TaskOccurrenceRepository extends BaseRepository<typeof taskOccurren
       },
     });
 
+    // Filter by userId if provided
+    const filtered = userId 
+      ? results.filter(occ => occ.task?.ownerId === userId)
+      : results;
+
     // Ensure consistent ordering by startDate
-    return results.sort((a, b) => {
+    return filtered.sort((a, b) => {
       const aTime = a.startDate instanceof Date ? a.startDate.getTime() : new Date(a.startDate).getTime();
       const bTime = b.startDate instanceof Date ? b.startDate.getTime() : new Date(b.startDate).getTime();
       return aTime - bTime;

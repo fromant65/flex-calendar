@@ -90,7 +90,8 @@ describe('Single Task Completion', () => {
     await completionService.completeOccurrence(occurrenceId);
 
     // Assert: Occurrence was completed
-    expect(mockOccurrenceAdapter.completeOccurrence).toHaveBeenCalledWith(occurrenceId);
+    expect(mockOccurrenceAdapter.completeOccurrence).toHaveBeenCalledTimes(1);
+    expect(mockOccurrenceAdapter.completeOccurrence.mock.calls[0]![0]).toBe(occurrenceId);
     
     // Assert: Task was deactivated (isActive = false)
     expect(mockTaskAdapter.completeTask).toHaveBeenCalledWith(taskId);

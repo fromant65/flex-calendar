@@ -51,8 +51,8 @@ export class OccurrenceManagementService {
   /**
    * Get occurrences in a date range
    */
-  async getOccurrencesByDateRange(startDate: Date, endDate: Date) {
-    return await this.occurrenceAdapter.getOccurrencesByDateRange(startDate, endDate);
+  async getOccurrencesByDateRange(startDate: Date, endDate: Date, userId?: string) {
+    return await this.occurrenceAdapter.getOccurrencesByDateRange(startDate, endDate, userId);
   }
 
   /**
