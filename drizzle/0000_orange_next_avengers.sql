@@ -23,6 +23,7 @@ CREATE TABLE "flex-calendar_calendar_event" (
 	"finish" timestamp with time zone NOT NULL,
 	"isCompleted" boolean DEFAULT false NOT NULL,
 	"dedicatedTime" real DEFAULT 0,
+	"completedAt" timestamp with time zone,
 	"createdAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	"updatedAt" timestamp with time zone
 );
@@ -51,6 +52,7 @@ CREATE TABLE "flex-calendar_task_occurrence" (
 	"timeConsumed" real DEFAULT 0,
 	"status" varchar(50) DEFAULT 'Pending' NOT NULL,
 	"urgency" real DEFAULT 0,
+	"completedAt" timestamp with time zone,
 	"createdAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	"updatedAt" timestamp with time zone
 );
@@ -75,6 +77,10 @@ CREATE TABLE "flex-calendar_task" (
 	"recurrenceId" integer,
 	"importance" integer DEFAULT 5 NOT NULL,
 	"isActive" boolean DEFAULT true NOT NULL,
+	"isFixed" boolean DEFAULT false NOT NULL,
+	"fixedStartTime" time,
+	"fixedEndTime" time,
+	"completedAt" timestamp with time zone,
 	"createdAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	"updatedAt" timestamp with time zone
 );

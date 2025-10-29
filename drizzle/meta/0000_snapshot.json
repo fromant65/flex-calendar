@@ -1,5 +1,5 @@
 {
-  "id": "f3e68b00-3785-4530-b9a0-bc264503d5a4",
+  "id": "946275cd-7621-4bbb-bf0e-ae81041f4570",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -192,6 +192,12 @@
           "primaryKey": false,
           "notNull": false,
           "default": 0
+        },
+        "completedAt": {
+          "name": "completedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         },
         "createdAt": {
           "name": "createdAt",
@@ -521,6 +527,12 @@
           "notNull": false,
           "default": 0
         },
+        "completedAt": {
+          "name": "completedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "createdAt": {
           "name": "createdAt",
           "type": "timestamp with time zone",
@@ -741,6 +753,31 @@
           "primaryKey": false,
           "notNull": true,
           "default": true
+        },
+        "isFixed": {
+          "name": "isFixed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "fixedStartTime": {
+          "name": "fixedStartTime",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fixedEndTime": {
+          "name": "fixedEndTime",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completedAt": {
+          "name": "completedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         },
         "createdAt": {
           "name": "createdAt",
