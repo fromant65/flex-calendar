@@ -5,14 +5,18 @@
  * Extracted from TaskLifecycleService for better modularity.
  */
 
-import { TaskAdapter } from "../../adapter";
+import { TaskAdapter, OccurrenceAdapter, CalendarEventAdapter } from "../../adapter";
 import type { CreateTaskDTO, UpdateTaskDTO } from "../types";
 
 export class TaskManagementService {
   private taskAdapter: TaskAdapter;
+  private occurrenceAdapter: OccurrenceAdapter;
+  private eventAdapter: CalendarEventAdapter;
 
   constructor() {
     this.taskAdapter = new TaskAdapter();
+    this.occurrenceAdapter = new OccurrenceAdapter();
+    this.eventAdapter = new CalendarEventAdapter();
   }
 
   /**
@@ -142,8 +146,21 @@ export class TaskManagementService {
 
   /**
    * Delete a task (soft delete)
+   * Also deletes all associated occurrences and calendar events
    */
   async deleteTask(taskId: number) {
+    // Get all occurrences for this task
+    const occurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
+    
+    // Delete all calendar events associated with each occurrence
+    for (const occurrence of occurrences) {
+      const events = await this.eventAdapter.getEventsByOccurrenceId(occurrence.id);
+      for (const event of events) {
+        await this.eventAdapter.deleteEvent(event.id);
+      }
+    }
+    
+    // Soft delete the task (sets isActive to false)
     return await this.taskAdapter.deleteTask(taskId);
   }
 

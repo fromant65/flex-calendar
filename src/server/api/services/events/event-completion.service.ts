@@ -71,9 +71,13 @@ export class EventCompletionService {
       isCompleted: false,
     });
 
-    // Handle occurrence skipping if requested
-    if (eventDetails.associatedOccurrenceId && skipOccurrence) {
-      await this.handleOccurrenceSkip(eventDetails);
+    // Handle occurrence skipping - ALWAYS for fixed tasks, or if explicitly requested
+    // Check both task.isFixed AND eventDetails.isFixed as fallback
+    if (eventDetails.associatedOccurrenceId) {
+      const task = eventDetails.occurrence?.task;
+      if (task?.isFixed || eventDetails.isFixed || skipOccurrence) {
+        await this.handleOccurrenceSkip(eventDetails);
+      }
     }
     
     return event;
@@ -94,11 +98,14 @@ export class EventCompletionService {
     await this.eventAdapter.syncOccurrenceTimeFromEvents(eventDetails.associatedOccurrenceId);
 
     // FIXED TASKS: Completing event always completes the occurrence
-    if (task?.isFixed) {
+    // Check both task.isFixed AND eventDetails.isFixed as fallback
+    if (task?.isFixed || eventDetails.isFixed) {
+      console.log("Completing fixed task occurrence...");
       await this.completeFixedTaskOccurrence(eventDetails.associatedOccurrenceId, task, occurrence, completedAt);
     }
     // NON-FIXED TASKS: Complete occurrence only if requested
     else if (completeOccurrence && occurrence) {
+      console.log("Completing non-fixed task occurrence...");
       await this.completeOccurrence(eventDetails.associatedOccurrenceId, completedAt);
     }
   }

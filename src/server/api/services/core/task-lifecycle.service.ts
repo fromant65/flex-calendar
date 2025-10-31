@@ -63,6 +63,7 @@ export class TaskLifecycleService {
         fixedStartTime: data.fixedStartTime!,
         fixedEndTime: data.fixedEndTime!,
         recurrence: recurrenceData,
+        targetDate: data.targetDate,
       });
     } else {
       // For non-fixed tasks, create the first occurrence

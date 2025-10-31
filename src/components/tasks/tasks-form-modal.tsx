@@ -162,7 +162,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
     } else if (taskType === "finite") {
       recurrence = {
         maxOccurrences: formData.maxOccurrences,
-        endDate: formData.endDate ? new Date(formData.endDate) : undefined,
+        endDate: formData.endDate ? new Date(formData.endDate + "T23:59:59") : undefined,
       };
       
       // Only set ONE type of recurrence pattern (daysOfWeek OR daysOfMonth, never both or with interval)
@@ -183,7 +183,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
       recurrence = {
         interval: formData.interval,
         maxOccurrences: formData.maxOccurrences,
-        endDate: formData.endDate ? new Date(formData.endDate) : undefined,
+        endDate: formData.endDate ? new Date(formData.endDate + "T23:59:59") : undefined,
         lastPeriodStart: new Date(), // Start period now
       };
       
@@ -200,7 +200,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
       };
     } else if (taskType === "fixed-repetitive") {
       recurrence = {
-        endDate: new Date(formData.endDate!), // Required for fixed-repetitive
+        endDate: new Date(formData.endDate! + "T23:59:59"), // Required for fixed-repetitive
       };
       
       // Only set ONE type of recurrence pattern
@@ -227,11 +227,11 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
         importance: formData.importance,
         targetDate:
           taskType === "fixed-unique" && formData.fixedDate
-            ? new Date(formData.fixedDate)
+            ? new Date(formData.fixedDate + "T12:00:00")
             : formData.targetDate
-              ? new Date(formData.targetDate)
+              ? new Date(formData.targetDate + "T12:00:00")
               : undefined,
-        limitDate: formData.limitDate ? new Date(formData.limitDate) : undefined,
+        limitDate: formData.limitDate ? new Date(formData.limitDate + "T12:00:00") : undefined,
         targetTimeConsumption: formData.targetTimeConsumption,
         isFixed: isFixed,
         fixedStartTime: isFixed ? `${formData.fixedStartTime}:00` : undefined,

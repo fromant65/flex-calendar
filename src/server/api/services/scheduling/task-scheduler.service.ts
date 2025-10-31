@@ -259,6 +259,7 @@ export class TaskSchedulerService {
       fixedStartTime: string;
       fixedEndTime: string;
       recurrence: CreateRecurrenceDTO;
+      targetDate?: Date;
     }
   ): Promise<void> {
     await this.fixedTaskService.createFixedTaskEvents(taskId, ownerId, config);

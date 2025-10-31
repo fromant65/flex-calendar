@@ -50,7 +50,7 @@ export default function StatsPage() {
       toast.error("Error al cargar estadísticas", { 
         description: error.message || "No se pudieron cargar las estadísticas" 
       })
-      console.error("Error fetching stats:", error)
+      //console.error("Error fetching stats:", error)
     }
   }, [activeSection, errorTask, errorRecurrence, errorOccurrence, errorCalendar, errorKPIs, errorInsights])
 

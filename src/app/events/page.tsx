@@ -65,11 +65,11 @@ function EventsPageContent() {
   useEffect(() => {
     if (eventsError) {
       toast.error("Error al cargar eventos", { description: eventsError.message || "No se pudieron cargar los eventos" })
-      console.error("Error fetching events:", eventsError)
+      //console.error("Error fetching events:", eventsError)
     }
     if (occurrencesError) {
       toast.error("Error al cargar ocurrencias", { description: occurrencesError.message || "No se pudieron cargar las ocurrencias" })
-      console.error("Error fetching occurrences:", occurrencesError)
+      //console.error("Error fetching occurrences:", occurrencesError)
     }
   }, [eventsError, occurrencesError])
   
@@ -91,7 +91,7 @@ function EventsPageContent() {
     },
     onError: (error) => {
       toast.error("Error al crear evento", { description: error.message || "No se pudo crear el evento" })
-      console.error("Error creating event:", error)
+      //console.error("Error creating event:", error)
     }
   })
   
@@ -109,7 +109,7 @@ function EventsPageContent() {
     },
     onError: (error) => {
       toast.error("Error al actualizar evento", { description: error.message || "No se pudo actualizar el evento" })
-      console.error("Error updating event:", error)
+      //console.error("Error updating event:", error)
     }
   })
 

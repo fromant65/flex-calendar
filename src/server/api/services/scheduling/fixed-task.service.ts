@@ -25,12 +25,13 @@ export class FixedTaskService {
       fixedStartTime: string;
       fixedEndTime: string;
       recurrence: CreateRecurrenceDTO;
+      targetDate?: Date;
     }
   ): Promise<void> {
-    const { fixedStartTime, fixedEndTime, recurrence } = config;
+    const { fixedStartTime, fixedEndTime, recurrence, targetDate } = config;
 
     // Generate dates to create
-    const datesToCreate = this.generateDates(recurrence);
+    const datesToCreate = this.generateDates(recurrence, targetDate);
 
     // Create occurrences and events for each date
     for (const date of datesToCreate) {
@@ -47,8 +48,13 @@ export class FixedTaskService {
   /**
    * Generate all dates based on recurrence pattern
    */
-  private generateDates(recurrence: CreateRecurrenceDTO): Date[] {
-    const startDate = new Date();
+  private generateDates(recurrence: CreateRecurrenceDTO, targetDate?: Date): Date[] {
+    // For single occurrence tasks (maxOccurrences === 1), use targetDate if provided
+    if (recurrence.maxOccurrences === 1 && targetDate) {
+      return [targetDate];
+    }
+
+    const startDate = targetDate ?? new Date();
     const periodEnd = this.calculatePeriodEnd(startDate, recurrence);
 
     let datesToCreate: Date[] = [];
@@ -171,24 +177,24 @@ export class FixedTaskService {
     fixedStartTime: string,
     fixedEndTime: string
   ): Promise<void> {
+    // Normalize the date to midnight in local timezone to avoid timezone issues
+    const normalizedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    
     // Create occurrence
     const occurrence = await this.occurrenceAdapter.createOccurrence({
       associatedTaskId: taskId,
-      startDate: date,
-      targetDate: date,
-      limitDate: date,
+      startDate: normalizedDate,
+      targetDate: normalizedDate,
+      limitDate: normalizedDate,
     });
 
     // Parse time strings
     const [startHours, startMinutes, startSeconds] = fixedStartTime.split(':').map(Number);
     const [endHours, endMinutes, endSeconds] = fixedEndTime.split(':').map(Number);
 
-    // Create calendar event with fixed times
-    const eventStart = new Date(date);
-    eventStart.setHours(startHours!, startMinutes, startSeconds);
-
-    const eventEnd = new Date(date);
-    eventEnd.setHours(endHours!, endMinutes, endSeconds);
+    // Create calendar event with fixed times using the normalized date
+    const eventStart = new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), normalizedDate.getDate(), startHours!, startMinutes, startSeconds);
+    const eventEnd = new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), normalizedDate.getDate(), endHours!, endMinutes, endSeconds);
 
     await this.eventAdapter.createEvent(ownerId, {
       associatedOccurrenceId: occurrence.id,

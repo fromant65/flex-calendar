@@ -23,10 +23,6 @@ export class GlobalKPIsCalculator {
         return this.getDefaultKPIs();
       }
 
-      console.log(
-        `[GlobalKPIs] Processing ${occurrences.length} occurrences, ${userEvents.length} events, ${userTasks.length} tasks`
-      );
-
       // Filter valid occurrences
       const validOccurrences = occurrences.filter((occ) => occ != null);
 

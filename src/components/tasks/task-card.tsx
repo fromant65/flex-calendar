@@ -56,15 +56,17 @@ export function TaskCard({ task, onEdit, onDelete, onClick }: TaskCardProps) {
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onDelete(task.id)
-            }}
-            className="rounded-lg border border-destructive/30 bg-destructive/10 p-2 text-destructive transition-colors hover:bg-destructive/20 cursor-pointer"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          {task.isActive && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete(task.id)
+              }}
+              className="rounded-lg border border-destructive/30 bg-destructive/10 p-2 text-destructive transition-colors hover:bg-destructive/20 cursor-pointer"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       </div>
 

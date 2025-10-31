@@ -45,6 +45,8 @@ export function CalendarViewComponent({
     } else if (view === "week") {
       newDate.setDate(newDate.getDate() - 7)
     } else {
+      // For month view, set to day 1 to avoid date overflow issues
+      newDate.setDate(1)
       newDate.setMonth(newDate.getMonth() - 1)
     }
     setCurrentDate(newDate)
@@ -57,6 +59,8 @@ export function CalendarViewComponent({
     } else if (view === "week") {
       newDate.setDate(newDate.getDate() + 7)
     } else {
+      // For month view, set to day 1 to avoid date overflow issues
+      newDate.setDate(1)
       newDate.setMonth(newDate.getMonth() + 1)
     }
     setCurrentDate(newDate)

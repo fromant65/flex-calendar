@@ -120,12 +120,6 @@ export const occurrenceRouter = createTRPCRouter({
       
       const enriched = analyticsService.enrichOccurrencesWithUrgency(occurrences);
       
-      console.log("Total enriched:", enriched.length);
-      for (const occ of enriched) {
-        console.log("Sample enriched urgency:", occ.urgency);
-      }
-      console.log("=== END DEBUG ===");
-      
       return enriched;
     }),
     // TODO - Get by limit and target date

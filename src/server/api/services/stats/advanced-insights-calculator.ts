@@ -15,10 +15,6 @@ export class AdvancedInsightsCalculator {
     try {
       const { tasks: userTasks = [], occurrences = [], recurrenceMap } = dataset;
 
-      console.log(
-        `[AdvancedInsights] Processing ${userTasks.length} tasks, ${occurrences.length} occurrences`
-      );
-
       const insights: AdvancedInsights = {
         lowComplianceHabits: this.calculateLowComplianceHabits(
           userTasks,
@@ -37,7 +33,6 @@ export class AdvancedInsightsCalculator {
       // Generate insights
       insights.insights = AdvancedInsightsGenerator.generate(insights);
 
-      console.log("[AdvancedInsights] Calculation completed successfully");
       return insights;
     } catch (error) {
       console.error("[AdvancedInsights] Error calculating advanced insights:", error);
@@ -127,7 +122,6 @@ export class AdvancedInsightsCalculator {
         completionRate: data.total > 0 ? (data.completed / data.total) * 100 : 0,
       }));
 
-    console.log(`[AdvancedInsights] Calculated completion trend for ${result.length} weeks`);
     return result;
   }
 
