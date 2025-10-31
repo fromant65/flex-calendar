@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { HelpTip } from "~/components/ui/help-tip"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
+import { ensureLocalDate } from "~/lib/calendar-utils"
 
 interface ScheduleDialogProps {
   open: boolean
@@ -34,8 +35,8 @@ export function ScheduleDialog({
   useEffect(() => {
     if (event) {
       // Editing existing event
-      const start = new Date(event.start)
-      const end = new Date(event.finish)
+      const start = ensureLocalDate(event.start)
+      const end = ensureLocalDate(event.finish)
       setStartTime(`${String(start.getHours()).padStart(2, "0")}:${String(start.getMinutes()).padStart(2, "0")}`)
       setEndTime(`${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`)
       setContext(event.context ?? "")

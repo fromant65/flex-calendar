@@ -3,9 +3,10 @@
 import type React from "react"
 
 import type { EventWithDetails } from "~/types"
-import { formatTime, getHoursArray, isToday } from "~/lib/calendar-utils"
+import { formatTime, getHoursArray, isToday, ensureLocalDate, groupOverlappingEvents } from "~/lib/calendar-utils"
 import { getTaskTypeClassName } from "~/lib/task-type-colors"
 import { Clock } from "lucide-react"
+import { OverlappingEventsIndicator } from "./overlapping-events-indicator"
 
 interface DayViewProps {
   date: Date
@@ -30,13 +31,20 @@ export function DayView({
   const showCurrentTime = isToday(date)
 
   const dayEvents = events.filter((event) => {
-    const eventDate = new Date(event.start)
+    const eventDate = ensureLocalDate(event.start)
     return (
       eventDate.getFullYear() === date.getFullYear() &&
       eventDate.getMonth() === date.getMonth() &&
       eventDate.getDate() === date.getDate()
     )
   })
+
+  // Group overlapping events
+  const overlappingGroups = groupOverlappingEvents(dayEvents)
+  const eventsInGroups = new Set(
+    overlappingGroups.flatMap(group => group.events.map(e => e.id))
+  )
+  const standaloneEvents = dayEvents.filter(event => !eventsInGroups.has(event.id))
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -82,10 +90,21 @@ export function DayView({
             </div>
           )}
 
-          {/* Events */}
-          {dayEvents.map((event) => {
-            const start = new Date(event.start)
-            const finish = new Date(event.finish)
+          {/* Overlapping Events Indicators */}
+          {overlappingGroups.map((group, index) => (
+            <OverlappingEventsIndicator
+              key={`group-${index}`}
+              events={group.events}
+              startHour={group.startHour}
+              duration={group.duration}
+              onEventClick={onEventClick}
+            />
+          ))}
+
+          {/* Standalone Events */}
+          {standaloneEvents.map((event) => {
+            const start = ensureLocalDate(event.start)
+            const finish = ensureLocalDate(event.finish)
             const startHour = start.getHours() + start.getMinutes() / 60
             const duration = (finish.getTime() - start.getTime()) / (1000 * 60 * 60)
             const taskTypeClassName = getTaskTypeClassName(event.occurrence?.task?.taskType, {

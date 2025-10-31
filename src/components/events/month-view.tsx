@@ -3,7 +3,7 @@
 import type React from "react"
 
 import type { EventWithDetails } from "~/types"
-import { getMonthDays, isSameDay, isToday } from "~/lib/calendar-utils"
+import { getMonthDays, isSameDay, isToday, ensureLocalDate } from "~/lib/calendar-utils"
 import { getTaskTypeClassName } from "~/lib/task-type-colors"
 
 interface MonthViewProps {
@@ -45,7 +45,7 @@ export function MonthView({ date, events, onTimeSlotClick, onEventClick, onDrop 
       {/* Calendar grid */}
       <div className="flex-1 grid grid-cols-7 auto-rows-fr min-w-0">
         {monthDays.map((day, index) => {
-          const dayEvents = events.filter((event) => isSameDay(new Date(event.start), day))
+          const dayEvents = events.filter((event) => isSameDay(ensureLocalDate(event.start), day))
           const isCurrentMonth = day.getMonth() === date.getMonth()
           const isDayToday = isToday(day)
 

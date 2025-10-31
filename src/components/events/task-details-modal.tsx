@@ -13,6 +13,7 @@ import { ContextPanel } from "./task-details/ContextPanel"
 import ModalHeader from "./task-details/ModalHeader"
 import DescriptionBlock from "./task-details/DescriptionBlock"
 import FixedInfo from "./task-details/FixedInfo"
+import { ensureLocalDate } from "~/lib/calendar-utils"
 import CompletedPanel from "./task-details/CompletedPanel"
 import CompleteFooter from "./task-details/CompleteFooter"
 
@@ -55,8 +56,8 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
   // Initialize edit fields when entering edit mode
   const startEditMode = () => {
     if (!event) return
-    const start = new Date(event.start)
-    const end = new Date(event.finish)
+    const start = ensureLocalDate(event.start)
+    const end = ensureLocalDate(event.finish)
     
     setEditDate(start.toISOString().split('T')[0] ?? "")
     setEditStartTime(`${String(start.getHours()).padStart(2, "0")}:${String(start.getMinutes()).padStart(2, "0")}`)
@@ -219,7 +220,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
   }
 
   // Check if event has already started
-  const eventHasStarted = event ? new Date(event.start) <= new Date() : false
+  const eventHasStarted = event ? ensureLocalDate(event.start) <= new Date() : false
 
   if (!task && !event) return null
 

@@ -3,9 +3,10 @@
 import type React from "react"
 
 import type { EventWithDetails } from "~/types"
-import { formatTime, getHoursArray, getWeekDays, isSameDay, isToday } from "~/lib/calendar-utils"
+import { formatTime, getHoursArray, getWeekDays, isSameDay, isToday, ensureLocalDate, groupOverlappingEvents } from "~/lib/calendar-utils"
 import { getTaskTypeClassName } from "~/lib/task-type-colors"
 import { Clock } from "lucide-react"
+import { OverlappingEventsIndicator } from "./overlapping-events-indicator"
 
 interface WeekViewProps {
   date: Date
@@ -66,8 +67,15 @@ export function WeekView({
 
         {/* Day columns */}
         {weekDays.map((day: Date) => {
-          const dayEvents = events.filter((event) => isSameDay(new Date(event.start), day))
+          const dayEvents = events.filter((event) => isSameDay(ensureLocalDate(event.start), day))
           const showCurrentTime = isToday(day)
+
+          // Group overlapping events for this day
+          const overlappingGroups = groupOverlappingEvents(dayEvents)
+          const eventsInGroups = new Set(
+            overlappingGroups.flatMap(group => group.events.map(e => e.id))
+          )
+          const standaloneEvents = dayEvents.filter(event => !eventsInGroups.has(event.id))
 
           return (
             <div key={day.toISOString()} className="flex-1 min-w-0 relative border-r border-border last:border-r-0">
@@ -92,10 +100,21 @@ export function WeekView({
                 </div>
               )}
 
-              {/* Events */}
-              {dayEvents.map((event) => {
-                const start = new Date(event.start)
-                const finish = new Date(event.finish)
+              {/* Overlapping Events Indicators */}
+              {overlappingGroups.map((group, index) => (
+                <OverlappingEventsIndicator
+                  key={`group-${day.toISOString()}-${index}`}
+                  events={group.events}
+                  startHour={group.startHour}
+                  duration={group.duration}
+                  onEventClick={onEventClick}
+                />
+              ))}
+
+              {/* Standalone Events */}
+              {standaloneEvents.map((event) => {
+                const start = ensureLocalDate(event.start)
+                const finish = ensureLocalDate(event.finish)
                 const startHour = start.getHours() + start.getMinutes() / 60
                 const duration = (finish.getTime() - start.getTime()) / (1000 * 60 * 60)
                 const taskTypeClassName = getTaskTypeClassName(event.occurrence?.task?.taskType, {
