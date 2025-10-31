@@ -9,6 +9,7 @@
 import { CalendarEventAdapter, OccurrenceAdapter, TaskAdapter } from "../../adapter";
 import { TaskSchedulerService } from "../scheduling/task-scheduler.service";
 import type { TaskSchedulerServiceInterface } from "../scheduling";
+import { calculateTaskType } from "../../helpers";
 
 export class EventCompletionService {
   private eventAdapter: CalendarEventAdapter;
@@ -140,14 +141,15 @@ export class EventCompletionService {
   }
 
   /**
-   * Check if all occurrences are completed and deactivate task
+   * Check if all occurrences are completed/skipped and deactivate task
+   * This ensures tasks are deactivated when all work is done (either completed or skipped)
    */
   private async checkAndDeactivateIfAllCompleted(taskId: number): Promise<void> {
     const occurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
-    const completedCount = occurrences.filter(o => o.status === "Completed").length;
+    const finishedCount = occurrences.filter(o => o.status === "Completed" || o.status === "Skipped").length;
     const totalOccurrences = occurrences.length;
     
-    if (completedCount >= totalOccurrences) {
+    if (finishedCount >= totalOccurrences) {
       await this.taskAdapter.updateTask(taskId, { isActive: false });
     }
   }
@@ -226,7 +228,26 @@ export class EventCompletionService {
     const task = await this.taskAdapter.getTaskWithRecurrence(occurrence.task.id);
     if (task?.recurrence) {
       await this.schedulerService.incrementCompletedOccurrences(task.recurrence.id, occurrence.startDate);
-      await this.schedulerService.createNextOccurrence(task.id);
+      
+      // Use the helper to determine task type
+      const taskType = calculateTaskType(task.recurrence, task);
+      
+      // Only Hábito, Hábito+ and Recurrente Finita generate occurrences dynamically
+      const needsDynamicGeneration = taskType === "Hábito" || taskType === "Hábito +" || taskType === "Recurrente Finita";
+      
+      if (needsDynamicGeneration) {
+        await this.schedulerService.createNextOccurrence(task.id);
+      } else {
+        // For tasks with pre-generated occurrences (Fija Única, Fija Repetitiva)
+        // Check if all occurrences are completed/skipped and deactivate task
+        if (task.recurrence.maxOccurrences === 1) {
+          // Single occurrence task - deactivate immediately
+          await this.taskAdapter.updateTask(task.id, { isActive: false });
+        } else {
+          // Multiple occurrences - check if all are finished
+          await this.checkAndDeactivateIfAllCompleted(task.id);
+        }
+      }
     }
   }
 }
