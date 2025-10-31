@@ -164,7 +164,7 @@ export default function TasksPage() {
                   fixedFilter: "all",
                 })
               }
-              className="mt-4 text-primary hover:underline"
+              className="mt-4 text-primary hover:underline cursor-pointer"
             >
               Limpiar filtros
             </button>
@@ -206,7 +206,7 @@ export default function TasksPage() {
                   </h2>
                   <button
                     onClick={() => setShowInactiveTasks(!showInactiveTasks)}
-                    className="text-sm text-primary hover:underline focus:outline-none"
+                    className="text-sm text-primary hover:underline focus:outline-none cursor-pointer"
                   >
                     {showInactiveTasks ? "Ocultar" : "Mostrar"}
                   </button>

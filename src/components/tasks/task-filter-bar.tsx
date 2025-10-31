@@ -177,7 +177,7 @@ export function TaskFilterBar({
                 fixedFilter: "all",
               })
             }
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             Limpiar filtros
           </button>

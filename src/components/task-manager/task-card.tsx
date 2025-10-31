@@ -210,7 +210,7 @@ export function TaskCard({
                 <div className="pt-2">
                   <button
                     onClick={() => setShowCompletedSkipped(!showCompletedSkipped)}
-                    className="text-xs text-primary hover:underline focus:outline-none w-full text-left"
+                    className="text-xs text-primary hover:underline focus:outline-none w-full text-left cursor-pointer"
                   >
                     {showCompletedSkipped ? "Ocultar" : "Mostrar"} ocurrencias completadas/saltadas ({completedSkippedOccurrences.length})
                   </button>
