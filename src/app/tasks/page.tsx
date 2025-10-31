@@ -31,6 +31,7 @@ export default function TasksPage() {
   const [viewingTask, setViewingTask] = useState<TaskFromList | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState<number | null>(null)
+  const [showInactiveTasks, setShowInactiveTasks] = useState(false)
   const [filters, setFilters] = useState<TaskFilter>({
     searchQuery: "",
     statusFilter: "all",
@@ -196,23 +197,33 @@ export default function TasksPage() {
             {/* Inactive Tasks Section */}
             {inactiveTasksList.length > 0 && (
               <div>
-                <h2 className="mb-4 text-2xl font-semibold text-muted-foreground">
-                  Tareas Inactivas
-                  <span className="ml-2 text-sm font-normal">
-                    ({inactiveTasksList.length})
-                  </span>
-                </h2>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {inactiveTasksList.map((task) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      onClick={setViewingTask}
-                    />
-                  ))}
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-semibold text-muted-foreground">
+                    Tareas Inactivas
+                    <span className="ml-2 text-sm font-normal">
+                      ({inactiveTasksList.length})
+                    </span>
+                  </h2>
+                  <button
+                    onClick={() => setShowInactiveTasks(!showInactiveTasks)}
+                    className="text-sm text-primary hover:underline focus:outline-none"
+                  >
+                    {showInactiveTasks ? "Ocultar" : "Mostrar"}
+                  </button>
                 </div>
+                {showInactiveTasks && (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {inactiveTasksList.map((task) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        onClick={setViewingTask}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { CheckCircle2, Circle, Clock, TrendingUp, Calendar, ChevronDown, ChevronRight } from "lucide-react";
@@ -63,6 +64,8 @@ export function TaskCard({
   isSkipping = false,
   isSkippingBacklog = false,
 }: TaskCardProps) {
+  const [showCompletedSkipped, setShowCompletedSkipped] = useState(false);
+  
   // Detect backlog when expanded
   const { data: backlogInfo } = api.occurrence.detectBacklog.useQuery(
     { taskId: task.id },
@@ -72,6 +75,8 @@ export function TaskCard({
     (o: any) => o.status === "Pending" || o.status === "In Progress"
   );
   const completedOccurrences = occurrences.filter((o: any) => o.status === "Completed");
+  const skippedOccurrences = occurrences.filter((o: any) => o.status === "Skipped");
+  const completedSkippedOccurrences = [...completedOccurrences, ...skippedOccurrences];
   const totalTimeConsumed = occurrences.reduce(
     (sum: number, o: any) => sum + (o.timeConsumed ?? 0),
     0
@@ -170,9 +175,10 @@ export function TaskCard({
             <div className="space-y-2.5">
               <h3 className="font-semibold text-sm text-foreground">
                 Ocurrencias Activas ({visibleOccurrences.length})
-                {completedOccurrences.length > 0 && (
+                {completedSkippedOccurrences.length > 0 && (
                   <span className="ml-2 text-xs font-normal text-muted-foreground">
                     • {completedOccurrences.length} completada{completedOccurrences.length !== 1 ? "s" : ""}
+                    {skippedOccurrences.length > 0 && `, ${skippedOccurrences.length} saltada${skippedOccurrences.length !== 1 ? "s" : ""}`}
                   </span>
                 )}
               </h3>
@@ -196,6 +202,36 @@ export function TaskCard({
                   <p className="text-sm text-muted-foreground">
                     Todas las ocurrencias han sido completadas
                   </p>
+                </div>
+              )}
+
+              {/* Toggle for completed/skipped occurrences */}
+              {completedSkippedOccurrences.length > 0 && (
+                <div className="pt-2">
+                  <button
+                    onClick={() => setShowCompletedSkipped(!showCompletedSkipped)}
+                    className="text-xs text-primary hover:underline focus:outline-none w-full text-left"
+                  >
+                    {showCompletedSkipped ? "Ocultar" : "Mostrar"} ocurrencias completadas/saltadas ({completedSkippedOccurrences.length})
+                  </button>
+                  
+                  {showCompletedSkipped && (
+                    <div className="mt-2.5 space-y-2.5">
+                      {completedSkippedOccurrences.map((occurrence: any) => (
+                        <OccurrenceCard
+                          key={occurrence.id}
+                          occurrence={occurrence}
+                          taskName={task.name}
+                          taskImportance={task.importance}
+                          onEdit={onEditOccurrence}
+                          onComplete={onCompleteOccurrence}
+                          onSkip={onSkipOccurrence}
+                          isCompleting={isCompleting}
+                          isSkipping={isSkipping}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
