@@ -32,6 +32,7 @@ export default function TasksPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState<number | null>(null)
   const [showInactiveTasks, setShowInactiveTasks] = useState(false)
+  const [showStats, setShowStats] = useState(false)
   const [filters, setFilters] = useState<TaskFilter>({
     searchQuery: "",
     statusFilter: "all",
@@ -136,10 +137,8 @@ export default function TasksPage() {
       <div className="container mx-auto px-6 py-8">
         {tasks.length > 0 && (
           <>
-            <TaskStats totalTasks={tasks.length} activeTasks={activeTasks} fixedTasks={fixedTasks} />
-            
             {/* Filter Bar */}
-            <div className="mt-6 mb-6">
+            <div className="mb-6">
               <TaskFilterBar
                 filters={filters}
                 onFiltersChange={setFilters}
@@ -193,6 +192,26 @@ export default function TasksPage() {
                 </div>
               </div>
             )}
+
+            {/* Statistics Section */}
+            <div className="my-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-semibold text-foreground">
+                  Estadísticas
+                </h2>
+                <button
+                  onClick={() => setShowStats(!showStats)}
+                  className="text-sm text-primary hover:underline focus:outline-none cursor-pointer"
+                >
+                  {showStats ? "Ocultar" : "Mostrar"}
+                </button>
+              </div>
+              {showStats && (
+                <div className="rounded-lg border border-border bg-card/20 p-6 backdrop-blur-sm">
+                  <TaskStats tasks={tasks} />
+                </div>
+              )}
+            </div>
 
             {/* Inactive Tasks Section */}
             {inactiveTasksList.length > 0 && (
