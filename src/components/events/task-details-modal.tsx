@@ -240,14 +240,18 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
                 <p className="text-sm font-semibold text-foreground">{task.taskType}</p>
               </div>
             )}
-            {task?.isFixed && (
+            {task?.isFixed && event && (
               <div className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-2">
                 <p className="text-xs text-primary font-medium">Tarea Fija</p>
-                {task.fixedStartTime && task.fixedEndTime && (
-                  <p className="text-sm font-semibold text-primary">
-                    {task.fixedStartTime.substring(0, 5)} - {task.fixedEndTime.substring(0, 5)}
-                  </p>
-                )}
+                <p className="text-sm font-semibold text-primary">
+                  {(() => {
+                    const start = ensureLocalDate(event.start)
+                    const finish = ensureLocalDate(event.finish)
+                    const startTime = `${String(start.getHours()).padStart(2, "0")}:${String(start.getMinutes()).padStart(2, "0")}`
+                    const endTime = `${String(finish.getHours()).padStart(2, "0")}:${String(finish.getMinutes()).padStart(2, "0")}`
+                    return `${startTime} - ${endTime}`
+                  })()}
+                </p>
               </div>
             )}
           </div>

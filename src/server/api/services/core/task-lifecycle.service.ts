@@ -51,6 +51,11 @@ export class TaskLifecycleService {
    * Create a new task with initial occurrences/events
    */
   async createTask(userId: string, data: CreateTaskDTO) {
+    // Validate fixed tasks have required date/times
+    if (data.isFixed && (!data.targetDate || !data.limitDate)) {
+      throw new Error("Fixed tasks must have both targetDate (start datetime) and limitDate (end datetime)");
+    }
+    
     // Create task
     const task = await this.taskManagement.createTask(userId, data);
 
@@ -60,10 +65,9 @@ export class TaskLifecycleService {
     // For fixed tasks, create occurrences and calendar events automatically
     if (data.isFixed) {
       await this.scheduler.createFixedTaskEvents(task.id, userId, {
-        fixedStartTime: data.fixedStartTime!,
-        fixedEndTime: data.fixedEndTime!,
+        startDateTime: data.targetDate!,
+        endDateTime: data.limitDate!,
         recurrence: recurrenceData,
-        targetDate: data.targetDate,
       });
     } else {
       // For non-fixed tasks, create the first occurrence

@@ -31,8 +31,8 @@ export class TaskManagementService {
 
     // Validate fixed task requirements
     if (data.isFixed) {
-      if (!data.fixedStartTime || !data.fixedEndTime) {
-        throw new Error("Fixed tasks must have fixedStartTime and fixedEndTime defined");
+      if (!data.targetDate || !data.limitDate) {
+        throw new Error("Fixed tasks must have targetDate (start) and limitDate (end) defined");
       }
 
       const isFixedUnique = data.targetDate && (!data.recurrence?.daysOfWeek && !data.recurrence?.daysOfMonth);

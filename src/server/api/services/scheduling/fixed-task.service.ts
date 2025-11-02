@@ -22,16 +22,15 @@ export class FixedTaskService {
     taskId: number,
     ownerId: string,
     config: {
-      fixedStartTime: string;
-      fixedEndTime: string;
+      startDateTime: Date; // Full datetime with timezone info from client
+      endDateTime: Date; // Full datetime with timezone info from client
       recurrence: CreateRecurrenceDTO;
-      targetDate?: Date;
     }
   ): Promise<void> {
-    const { fixedStartTime, fixedEndTime, recurrence, targetDate } = config;
+    const { startDateTime, endDateTime, recurrence } = config;
 
     // Generate dates to create
-    const datesToCreate = this.generateDates(recurrence, targetDate);
+    const datesToCreate = this.generateDates(recurrence, startDateTime);
 
     // Create occurrences and events for each date
     for (const date of datesToCreate) {
@@ -39,8 +38,8 @@ export class FixedTaskService {
         taskId,
         ownerId,
         date,
-        fixedStartTime,
-        fixedEndTime
+        startDateTime,
+        endDateTime
       );
     }
   }
@@ -174,10 +173,10 @@ export class FixedTaskService {
     taskId: number,
     ownerId: string,
     date: Date,
-    fixedStartTime: string,
-    fixedEndTime: string
+    startDateTime: Date,
+    endDateTime: Date
   ): Promise<void> {
-    // Normalize the date to midnight in local timezone to avoid timezone issues
+    // Normalize the date to midnight
     const normalizedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     
     // Create occurrence
@@ -188,13 +187,22 @@ export class FixedTaskService {
       limitDate: normalizedDate,
     });
 
-    // Parse time strings
-    const [startHours, startMinutes, startSeconds] = fixedStartTime.split(':').map(Number);
-    const [endHours, endMinutes, endSeconds] = fixedEndTime.split(':').map(Number);
+    // Extract time from the datetime objects (which have correct timezone from client)
+    const startHours = startDateTime.getHours();
+    const startMinutes = startDateTime.getMinutes();
+    const startSeconds = startDateTime.getSeconds();
+    
+    const endHours = endDateTime.getHours();
+    const endMinutes = endDateTime.getMinutes();
+    const endSeconds = endDateTime.getSeconds();
 
-    // Create calendar event with fixed times using the normalized date
-    const eventStart = new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), normalizedDate.getDate(), startHours!, startMinutes, startSeconds);
-    const eventEnd = new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), normalizedDate.getDate(), endHours!, endMinutes, endSeconds);
+    // Create event dates by combining the occurrence date with the times from startDateTime/endDateTime
+    // Use the date's local constructor to preserve timezone
+    const eventStart = new Date(date);
+    eventStart.setHours(startHours, startMinutes, startSeconds, 0);
+    
+    const eventEnd = new Date(date);
+    eventEnd.setHours(endHours, endMinutes, endSeconds, 0);
 
     await this.eventAdapter.createEvent(ownerId, {
       associatedOccurrenceId: occurrence.id,

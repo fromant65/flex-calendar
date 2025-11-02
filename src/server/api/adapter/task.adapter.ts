@@ -50,8 +50,6 @@ export class TaskAdapter {
       recurrenceId,
       isActive: true,
       isFixed: data.isFixed ?? false,
-      fixedStartTime: data.fixedStartTime ?? null,
-      fixedEndTime: data.fixedEndTime ?? null,
     });
 
     return task;

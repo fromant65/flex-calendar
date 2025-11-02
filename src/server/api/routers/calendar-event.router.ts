@@ -40,17 +40,6 @@ export const calendarEventRouter = createTRPCRouter({
   create: protectedProcedure
     .input(createCalendarEventSchema)
     .mutation(async ({ ctx, input }) => {
-      // DEBUG: Log received dates to diagnose timezone issue
-      console.log('[DEBUG] Creating event - Received dates:', {
-        start: input.start,
-        startISO: input.start.toISOString(),
-        startLocal: input.start.toString(),
-        finish: input.finish,
-        finishISO: input.finish.toISOString(),
-        finishLocal: input.finish.toString(),
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      });
-      
       // If associatedOccurrenceId is provided, verify ownership
       if (input.associatedOccurrenceId) {
         await verifyOccurrenceOwnership(input.associatedOccurrenceId, ctx.session.user.id);

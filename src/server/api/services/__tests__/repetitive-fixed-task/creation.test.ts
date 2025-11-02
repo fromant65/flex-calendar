@@ -84,8 +84,8 @@ describe('Repetitive Fixed Task Creation', () => {
 
     // Act
     await schedulerService.createFixedTaskEvents(taskId, userId, {
-      fixedStartTime: '10:00:00',
-      fixedEndTime: '11:00:00',
+      startDateTime: new Date('2024-10-30T10:00:00.000Z'),
+      endDateTime: new Date('2024-10-30T11:00:00.000Z'),
       recurrence: {
         maxOccurrences,
         daysOfWeek: ['Mon'],
@@ -124,8 +124,8 @@ describe('Repetitive Fixed Task Creation', () => {
 
     // Act
     await schedulerService.createFixedTaskEvents(taskId, userId, {
-      fixedStartTime: '14:00:00',
-      fixedEndTime: '15:30:00',
+      startDateTime: new Date('2024-10-30T14:00:00.000Z'),
+      endDateTime: new Date('2024-10-30T15:30:00.000Z'),
       recurrence: {
         maxOccurrences,
         daysOfWeek: ['Wed', 'Fri'],
@@ -167,8 +167,8 @@ describe('Repetitive Fixed Task Creation', () => {
 
     // Act
     await schedulerService.createFixedTaskEvents(taskId, userId, {
-      fixedStartTime: '09:00:00',
-      fixedEndTime: '10:00:00',
+      startDateTime: new Date('2024-10-30T09:00:00.000Z'),
+      endDateTime: new Date('2024-10-30T10:00:00.000Z'),
       recurrence: {
         maxOccurrences,
         daysOfWeek: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], // Could generate many
@@ -199,8 +199,8 @@ describe('Repetitive Fixed Task Creation', () => {
 
     // Act
     await schedulerService.createFixedTaskEvents(taskId, userId, {
-      fixedStartTime: '10:00:00',
-      fixedEndTime: '11:00:00',
+      startDateTime: new Date('2024-10-30T10:00:00.000Z'),
+      endDateTime: new Date('2024-10-30T11:00:00.000Z'),
       recurrence: {
         maxOccurrences: 3,
         daysOfWeek: ['Mon', 'Wed', 'Fri'], // Specific days

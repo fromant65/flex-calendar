@@ -34,9 +34,8 @@ describe('Single Fixed Task Creation', () => {
     // Arrange: Single fixed task
     const taskId = 1;
     const userId = 'test-user-1';
-    const fixedStartTime = '10:00:00';
-    const fixedEndTime = '11:00:00';
-    const targetDate = new Date('2024-10-30T10:00:00.000Z');
+    const startDateTime = new Date('2024-10-30T10:00:00.000Z');
+    const endDateTime = new Date('2024-10-30T11:00:00.000Z');
 
     const task: MockTask = {
       id: taskId,
@@ -59,9 +58,9 @@ describe('Single Fixed Task Creation', () => {
     mockOccurrenceAdapter.createOccurrence.mockResolvedValue({
       id: 1,
       associatedTaskId: taskId,
-      startDate: targetDate,
-      targetDate,
-      limitDate: targetDate,
+      startDate: startDateTime,
+      targetDate: startDateTime,
+      limitDate: startDateTime,
       status: 'Pending',
     });
     mockEventAdapter.createEvent.mockResolvedValue({
@@ -70,14 +69,14 @@ describe('Single Fixed Task Creation', () => {
       associatedOwnerId: userId,
       isFixed: true,
       isCompleted: false,
-      start: new Date('2024-10-30T10:00:00.000Z'),
-      finish: new Date('2024-10-30T11:00:00.000Z'),
+      start: startDateTime,
+      finish: endDateTime,
     });
 
     // Act
     await schedulerService.createFixedTaskEvents(taskId, userId, {
-      fixedStartTime,
-      fixedEndTime,
+      startDateTime,
+      endDateTime,
       recurrence: {
         maxOccurrences: 1,
       },
@@ -100,8 +99,8 @@ describe('Single Fixed Task Creation', () => {
   it('should verify created event has correct time fields', async () => {
     const taskId = 2;
     const userId = 'test-user-2';
-    const fixedStartTime = '14:00:00';
-    const fixedEndTime = '15:30:00';
+    const startDateTime = new Date('2024-10-30T14:00:00.000Z');
+    const endDateTime = new Date('2024-10-30T15:30:00.000Z');
 
     mockOccurrenceAdapter.createOccurrence.mockResolvedValue({
       id: 2,
@@ -120,8 +119,8 @@ describe('Single Fixed Task Creation', () => {
 
     // Act
     await schedulerService.createFixedTaskEvents(taskId, userId, {
-      fixedStartTime,
-      fixedEndTime,
+      startDateTime,
+      endDateTime,
       recurrence: {
         maxOccurrences: 1,
       },
@@ -137,7 +136,8 @@ describe('Single Fixed Task Creation', () => {
   it('should create occurrence with correct date for single fixed task', async () => {
     const taskId = 3;
     const userId = 'test-user-3';
-    const targetDate = new Date('2024-11-01T09:00:00.000Z');
+    const startDateTime = new Date('2024-11-01T09:00:00.000Z');
+    const endDateTime = new Date('2024-11-01T10:00:00.000Z');
 
     let capturedOccurrence: any;
     mockOccurrenceAdapter.createOccurrence.mockImplementation(async (data: any) => {
@@ -151,8 +151,8 @@ describe('Single Fixed Task Creation', () => {
 
     // Act
     await schedulerService.createFixedTaskEvents(taskId, userId, {
-      fixedStartTime: '09:00:00',
-      fixedEndTime: '10:00:00',
+      startDateTime,
+      endDateTime,
       recurrence: {
         maxOccurrences: 1,
         // For single fixed task, can optionally have targetDate

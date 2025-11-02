@@ -4,7 +4,7 @@
  * Interface definitions for dependency injection and testing
  */
 
-import type { TaskRecurrence } from "../types";
+import type { TaskRecurrence, CreateRecurrenceDTO } from "../types";
 
 export interface TaskSchedulerServiceInterface {
   getRecurrence(recurrenceId: number): Promise<TaskRecurrence | undefined>;
@@ -25,9 +25,9 @@ export interface TaskSchedulerServiceInterface {
     taskId: number,
     ownerId: string,
     config: {
-      fixedStartTime: string;
-      fixedEndTime: string;
-      recurrence: any;
+      startDateTime: Date;
+      endDateTime: Date;
+      recurrence: CreateRecurrenceDTO;
     }
   ): Promise<void>;
 }

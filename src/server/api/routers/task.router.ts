@@ -23,13 +23,11 @@ const createTaskSchema = z.object({
   name: z.string().min(1).max(512),
   description: z.string().optional(),
   importance: z.number().min(1).max(10).optional(),
-  targetDate: z.date().optional(),
-  limitDate: z.date().optional(),
+  targetDate: z.date().optional(), // For fixed tasks: start date+time. For others: target/limit date
+  limitDate: z.date().optional(), // For fixed tasks: end date+time. For others: limit date
   targetTimeConsumption: z.number().positive().optional(),
   recurrence: createRecurrenceSchema.optional(),
   isFixed: z.boolean().optional(),
-  fixedStartTime: z.string().regex(/^\d{2}:\d{2}:\d{2}$/).optional(), // Format: "HH:MM:SS"
-  fixedEndTime: z.string().regex(/^\d{2}:\d{2}:\d{2}$/).optional(), // Format: "HH:MM:SS"
 });
 
 const updateTaskSchema = z.object({

@@ -76,13 +76,11 @@ export interface CreateTaskDTO {
   name: string;
   description?: string;
   importance?: number; // 1-10
-  targetDate?: Date;
-  limitDate?: Date;
+  targetDate?: Date; // For fixed tasks: start datetime. For others: target date
+  limitDate?: Date; // For fixed tasks: end datetime. For others: limit date
   targetTimeConsumption?: number;
   recurrence?: CreateRecurrenceDTO;
   isFixed?: boolean;
-  fixedStartTime?: string; // Format: "HH:MM:SS" - Required if isFixed is true
-  fixedEndTime?: string; // Format: "HH:MM:SS" - Required if isFixed is true
 }
 
 export interface CreateRecurrenceDTO {
@@ -99,9 +97,6 @@ export interface UpdateTaskDTO {
   description?: string;
   importance?: number;
   isActive?: boolean;
-  isFixed?: boolean;
-  fixedStartTime?: string;
-  fixedEndTime?: string;
 }
 
 export interface CreateOccurrenceDTO {

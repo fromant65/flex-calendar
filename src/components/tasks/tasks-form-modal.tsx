@@ -245,21 +245,49 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
         },
       })
     } else {
+      // For fixed tasks: targetDate = start datetime, limitDate = end datetime
+      // For non-fixed tasks: targetDate = target date, limitDate = limit date
+      let targetDate: Date | undefined;
+      let limitDate: Date | undefined;
+      
+      if (isFixed) {
+        // Fixed tasks: combine date with time
+        let dateStr: string | undefined;
+        
+        if (taskType === "fixed-unique") {
+          // For fixed unique, use the specific date
+          dateStr = formData.fixedDate;
+        } else if (taskType === "fixed-repetitive") {
+          // For fixed repetitive, use today as the start date for generating events
+          // The actual dates will be determined by daysOfWeek/daysOfMonth pattern
+          dateStr = new Date().toISOString().split('T')[0];
+        }
+        
+        if (dateStr && formData.fixedStartTime && formData.fixedEndTime) {
+          targetDate = new Date(dateStr + "T" + formData.fixedStartTime + ":00");
+          limitDate = new Date(dateStr + "T" + formData.fixedEndTime + ":00");
+        }
+      } else {
+        // Non-fixed tasks: use date with default time
+        if (formData.fixedDate) {
+          targetDate = new Date(formData.fixedDate + "T12:00:00");
+        } else if (formData.targetDate) {
+          targetDate = new Date(formData.targetDate + "T12:00:00");
+        }
+        
+        if (formData.limitDate) {
+          limitDate = new Date(formData.limitDate + "T12:00:00");
+        }
+      }
+      
       createMutation.mutate({
         name: formData.name,
         description: formData.description,
         importance: formData.importance,
-        targetDate:
-          taskType === "fixed-unique" && formData.fixedDate
-            ? new Date(formData.fixedDate + "T12:00:00")
-            : formData.targetDate
-              ? new Date(formData.targetDate + "T12:00:00")
-              : undefined,
-        limitDate: formData.limitDate ? new Date(formData.limitDate + "T12:00:00") : undefined,
+        targetDate,
+        limitDate,
         targetTimeConsumption: formData.targetTimeConsumption,
         isFixed: isFixed,
-        fixedStartTime: isFixed ? `${formData.fixedStartTime}:00` : undefined,
-        fixedEndTime: isFixed ? `${formData.fixedEndTime}:00` : undefined,
         recurrence,
       })
     }
