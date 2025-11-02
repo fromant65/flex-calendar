@@ -11,15 +11,25 @@ const createCalendarEventSchema = z.object({
   context: z.string().optional(),
   associatedOccurrenceId: z.number().optional(),
   isFixed: z.boolean(),
-  start: z.date(),
-  finish: z.date(),
+  start: z.union([z.date(), z.string().datetime()]).transform((val) => {
+    // Accept both Date objects and ISO strings, always convert to Date
+    // This ensures the Date object has the correct timezone information
+    return typeof val === 'string' ? new Date(val) : val;
+  }),
+  finish: z.union([z.date(), z.string().datetime()]).transform((val) => {
+    return typeof val === 'string' ? new Date(val) : val;
+  }),
 });
 
 const updateCalendarEventSchema = z.object({
   context: z.string().optional(),
   isFixed: z.boolean().optional(),
-  start: z.date().optional(),
-  finish: z.date().optional(),
+  start: z.union([z.date(), z.string().datetime()]).transform((val) => {
+    return typeof val === 'string' ? new Date(val) : val;
+  }).optional(),
+  finish: z.union([z.date(), z.string().datetime()]).transform((val) => {
+    return typeof val === 'string' ? new Date(val) : val;
+  }).optional(),
   isCompleted: z.boolean().optional(),
 });
 
@@ -30,6 +40,17 @@ export const calendarEventRouter = createTRPCRouter({
   create: protectedProcedure
     .input(createCalendarEventSchema)
     .mutation(async ({ ctx, input }) => {
+      // DEBUG: Log received dates to diagnose timezone issue
+      console.log('[DEBUG] Creating event - Received dates:', {
+        start: input.start,
+        startISO: input.start.toISOString(),
+        startLocal: input.start.toString(),
+        finish: input.finish,
+        finishISO: input.finish.toISOString(),
+        finishLocal: input.finish.toString(),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      });
+      
       // If associatedOccurrenceId is provided, verify ownership
       if (input.associatedOccurrenceId) {
         await verifyOccurrenceOwnership(input.associatedOccurrenceId, ctx.session.user.id);

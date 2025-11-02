@@ -21,13 +21,28 @@ export class CalendarEventAdapter {
    * Create a new calendar event
    */
   async createEvent(ownerId: string, data: CreateCalendarEventDTO) {
+    // CRITICAL FIX: Ensure dates are proper Date objects
+    // When dates come from the client via tRPC/SuperJSON, they should already be Date objects
+    // But we need to ensure they maintain correct timezone information
+    const start = data.start instanceof Date ? data.start : new Date(data.start);
+    const finish = data.finish instanceof Date ? data.finish : new Date(data.finish);
+    
+    // DEBUG: Log what we're about to save
+    console.log('[DEBUG] Calendar Event Adapter - Creating event:', {
+      start,
+      startISO: start.toISOString(),
+      finish,
+      finishISO: finish.toISOString(),
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    });
+    
     return await this.eventRepo.create({
       ownerId,
       context: data.context ?? null,
       associatedOccurrenceId: data.associatedOccurrenceId ?? null,
       isFixed: data.isFixed,
-      start: data.start,
-      finish: data.finish,
+      start,
+      finish,
       isCompleted: false,
       dedicatedTime: 0,
     });
@@ -157,7 +172,26 @@ export class CalendarEventAdapter {
    * Update an event
    */
   async updateEvent(eventId: number, data: UpdateCalendarEventDTO) {
-    return await this.eventRepo.updateById(eventId, data);
+    // CRITICAL FIX: Ensure dates are proper Date objects if provided
+    const updateData = { ...data };
+    
+    if (updateData.start) {
+      updateData.start = updateData.start instanceof Date ? updateData.start : new Date(updateData.start);
+      console.log('[DEBUG] Calendar Event Adapter - Updating start:', {
+        start: updateData.start,
+        startISO: updateData.start.toISOString(),
+      });
+    }
+    
+    if (updateData.finish) {
+      updateData.finish = updateData.finish instanceof Date ? updateData.finish : new Date(updateData.finish);
+      console.log('[DEBUG] Calendar Event Adapter - Updating finish:', {
+        finish: updateData.finish,
+        finishISO: updateData.finish.toISOString(),
+      });
+    }
+    
+    return await this.eventRepo.updateById(eventId, updateData);
   }
 
   /**

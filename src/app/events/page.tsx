@@ -198,6 +198,18 @@ function EventsPageContent() {
   }
 
   const handleSchedule = (start: Date, finish: Date, context?: string) => {
+    // DEBUG: Log dates being sent to server
+    console.log('[DEBUG] Scheduling event - Sending dates:', {
+      start,
+      startISO: start.toISOString(),
+      startLocal: start.toString(),
+      finish,
+      finishISO: finish.toISOString(),
+      finishLocal: finish.toString(),
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      timezoneOffset: start.getTimezoneOffset(),
+    });
+    
     if (eventToReschedule) {
       updateEventMutation.mutate({
         id: eventToReschedule.id,

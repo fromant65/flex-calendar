@@ -82,11 +82,29 @@ export function ScheduleDialog({
     const [startHour, startMinute] = startTime.split(":").map(Number)
     const [endHour, endMinute] = endTime.split(":").map(Number)
 
-    const start = new Date(selectedDate)
-    start.setHours(startHour!, startMinute, 0, 0)
+    // Ensure we're working with a proper local date
+    // Create a new date in local timezone, not UTC
+    const localSelectedDate = ensureLocalDate(selectedDate)
+    
+    const start = new Date(
+      localSelectedDate.getFullYear(),
+      localSelectedDate.getMonth(),
+      localSelectedDate.getDate(),
+      startHour!,
+      startMinute!,
+      0,
+      0
+    )
 
-    const finish = new Date(selectedDate)
-    finish.setHours(endHour!, endMinute, 0, 0)
+    const finish = new Date(
+      localSelectedDate.getFullYear(),
+      localSelectedDate.getMonth(),
+      localSelectedDate.getDate(),
+      endHour!,
+      endMinute!,
+      0,
+      0
+    )
 
     // Validate that end time is after start time
     if (finish <= start) {
