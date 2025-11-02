@@ -245,7 +245,8 @@ export default function TaskManagerPage() {
     );
   }
 
-  if (!occurrences || groupedOccurrences.size === 0) {
+  // True empty state - no occurrences at all (not just filtered out)
+  if (!allOccurrences || allOccurrences.length === 0) {
     return (
       <div className="flex flex-col h-full bg-background">
         {/* Header */}
@@ -353,7 +354,7 @@ export default function TaskManagerPage() {
       ) : (
         /* Content - List View */
         <div className="container mx-auto px-4 lg:px-6 py-6 flex-1 overflow-y-auto">
-          {/* Filter Bar */}
+          {/* Filter Bar - Always visible */}
           <div className="mb-6">
             <TaskManagerFilterBar
               filters={filters}

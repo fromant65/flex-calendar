@@ -135,9 +135,11 @@ export default function TasksPage() {
 
       {/* Content */}
       <div className="container mx-auto px-6 py-8">
-        {tasks.length > 0 && (
+        {tasks.length === 0 ? (
+          <EmptyState onCreateClick={() => setIsFormOpen(true)} />
+        ) : (
           <>
-            {/* Filter Bar */}
+            {/* Filter Bar - Always visible when there are tasks */}
             <div className="mb-6">
               <TaskFilterBar
                 filters={filters}
@@ -146,29 +148,25 @@ export default function TasksPage() {
                 filteredCount={filteredTasks.length}
               />
             </div>
-          </>
-        )}
 
-        {tasks.length === 0 ? (
-          <EmptyState onCreateClick={() => setIsFormOpen(true)} />
-        ) : filteredTasks.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No se encontraron tareas con los filtros aplicados.</p>
-            <button
-              onClick={() =>
-                setFilters({
-                  searchQuery: "",
-                  statusFilter: "all",
-                  taskTypeFilter: "all",
-                  fixedFilter: "all",
-                })
-              }
-              className="mt-4 text-primary hover:underline cursor-pointer"
-            >
-              Limpiar filtros
-            </button>
-          </div>
-        ) : (
+            {filteredTasks.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No se encontraron tareas con los filtros aplicados.</p>
+                <button
+                  onClick={() =>
+                    setFilters({
+                      searchQuery: "",
+                      statusFilter: "all",
+                      taskTypeFilter: "all",
+                      fixedFilter: "all",
+                    })
+                  }
+                  className="mt-4 text-primary hover:underline cursor-pointer"
+                >
+                  Limpiar filtros
+                </button>
+              </div>
+            ) : (
           <div className="space-y-8">
             {/* Active Tasks Section */}
             {activeTasksList.length > 0 && (
@@ -246,6 +244,8 @@ export default function TasksPage() {
               </div>
             )}
           </div>
+            )}
+          </>
         )}
       </div>
 
