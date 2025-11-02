@@ -86,6 +86,20 @@ export function ScheduleDialog({
     // Create a new date in local timezone, not UTC
     const localSelectedDate = ensureLocalDate(selectedDate)
     
+    // DEBUG: Log intermediate values
+    console.log('[DEBUG] Schedule Dialog - Building dates:', {
+      selectedDate,
+      selectedDateType: typeof selectedDate,
+      localSelectedDate,
+      year: localSelectedDate.getFullYear(),
+      month: localSelectedDate.getMonth(),
+      date: localSelectedDate.getDate(),
+      startHour,
+      startMinute,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      timezoneOffset: new Date().getTimezoneOffset(),
+    });
+    
     const start = new Date(
       localSelectedDate.getFullYear(),
       localSelectedDate.getMonth(),
@@ -105,6 +119,17 @@ export function ScheduleDialog({
       0,
       0
     )
+    
+    // DEBUG: Log created dates
+    console.log('[DEBUG] Schedule Dialog - Created dates:', {
+      start,
+      startISO: start.toISOString(),
+      startLocal: start.toString(),
+      startHours: start.getHours(),
+      finish,
+      finishISO: finish.toISOString(),
+      finishLocal: finish.toString(),
+    });
 
     // Validate that end time is after start time
     if (finish <= start) {
