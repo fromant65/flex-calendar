@@ -9,6 +9,11 @@ import type { MockTask, MockOccurrence, CreateOccurrenceDTO } from '../test-type
 
 describe('Habit+ Period Transition', () => {
   let schedulerService: TaskSchedulerService;
+  let mockRecurrenceAdapter: {
+    getRecurrenceById: jest.Mock;
+    updateRecurrence: jest.Mock;
+    incrementCompletedOccurrences: jest.Mock;
+  };
   let mockTaskAdapter: {
     getTaskWithRecurrence: jest.Mock;
     updateTask: jest.Mock;
@@ -18,17 +23,16 @@ describe('Habit+ Period Transition', () => {
     createOccurrence: jest.Mock<Promise<MockOccurrence>, [CreateOccurrenceDTO]>;
     getOccurrencesByTaskId: jest.Mock;
   };
-  let mockRecurrenceRepo: {
-    findById: jest.Mock;
-    updateById: jest.Mock;
-  };
+  
 
   beforeEach(() => {
     schedulerService = new TaskSchedulerService();
     
+    mockRecurrenceAdapter = (schedulerService as unknown as { recurrenceAdapter: typeof mockRecurrenceAdapter }).recurrenceAdapter;
+    
     mockTaskAdapter = (schedulerService as unknown as { taskAdapter: typeof mockTaskAdapter }).taskAdapter;
     mockOccurrenceAdapter = (schedulerService as unknown as { occurrenceAdapter: typeof mockOccurrenceAdapter }).occurrenceAdapter;
-    mockRecurrenceRepo = (schedulerService as unknown as { recurrenceRepo: typeof mockRecurrenceRepo }).recurrenceRepo;
+    
     
     jest.clearAllMocks();
   });
@@ -65,8 +69,8 @@ describe('Habit+ Period Transition', () => {
 
     mockTaskAdapter.getTaskWithRecurrence.mockResolvedValue(task);
     mockOccurrenceAdapter.getLatestOccurrenceByTaskId.mockResolvedValue(thirdOccurrence);
-    mockRecurrenceRepo.findById.mockResolvedValue(task.recurrence);
-    mockRecurrenceRepo.updateById.mockResolvedValue(undefined);
+    mockRecurrenceAdapter.getRecurrenceById.mockResolvedValue(task.recurrence);
+    mockRecurrenceAdapter.updateRecurrence.mockResolvedValue(undefined);
     
     let capturedOccurrence: CreateOccurrenceDTO | undefined;
     mockOccurrenceAdapter.createOccurrence.mockImplementation(async (data: CreateOccurrenceDTO) => {
@@ -93,7 +97,7 @@ describe('Habit+ Period Transition', () => {
     expect(capturedOccurrence.startDate.getTime()).toBeGreaterThanOrEqual(periodEnd.getTime());
     
     // Verify the period was advanced
-    expect(mockRecurrenceRepo.updateById).toHaveBeenCalledWith(
+    expect(mockRecurrenceAdapter.updateRecurrence).toHaveBeenCalledWith(
       1,
       expect.objectContaining({
         completedOccurrences: 0, // Reset counter
@@ -138,8 +142,8 @@ describe('Habit+ Period Transition', () => {
 
     mockTaskAdapter.getTaskWithRecurrence.mockResolvedValue(task);
     mockOccurrenceAdapter.getLatestOccurrenceByTaskId.mockResolvedValue(lastOccurrence);
-    mockRecurrenceRepo.findById.mockResolvedValue(task.recurrence);
-    mockRecurrenceRepo.updateById.mockResolvedValue(undefined);
+    mockRecurrenceAdapter.getRecurrenceById.mockResolvedValue(task.recurrence);
+    mockRecurrenceAdapter.updateRecurrence.mockResolvedValue(undefined);
     
     let capturedOccurrence: CreateOccurrenceDTO | undefined;
     mockOccurrenceAdapter.createOccurrence.mockImplementation(async (data: CreateOccurrenceDTO) => {

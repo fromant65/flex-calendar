@@ -2,8 +2,7 @@
  * Task Scheduler Service - handles recurrence logic and automatic occurrence creation
  */
 
-import { TaskAdapter, OccurrenceAdapter, CalendarEventAdapter } from "../../adapter";
-import { TaskRecurrenceRepository } from "../../repository";
+import { TaskAdapter, OccurrenceAdapter, CalendarEventAdapter, RecurrenceAdapter } from "../../adapter";
 import type { CreateOccurrenceDTO, DayOfWeek, TaskRecurrence, CreateRecurrenceDTO } from "../types";
 import { TaskAnalyticsService } from "../analytics/task-analytics.service";
 import { RecurrenceDateCalculator } from "./recurrence-date-calculator.service";
@@ -16,7 +15,7 @@ export class TaskSchedulerService {
   private taskAdapter: TaskAdapter;
   private occurrenceAdapter: OccurrenceAdapter;
   private eventAdapter: CalendarEventAdapter;
-  private recurrenceRepo: TaskRecurrenceRepository;
+  private recurrenceAdapter: RecurrenceAdapter;
   private analyticsService: TaskAnalyticsService;
   private dateCalculator: RecurrenceDateCalculator;
   private periodManager: PeriodManager;
@@ -28,14 +27,14 @@ export class TaskSchedulerService {
     this.taskAdapter = new TaskAdapter();
     this.occurrenceAdapter = new OccurrenceAdapter();
     this.eventAdapter = new CalendarEventAdapter();
-    this.recurrenceRepo = new TaskRecurrenceRepository();
+    this.recurrenceAdapter = new RecurrenceAdapter();
     this.analyticsService = new TaskAnalyticsService();
     this.dateCalculator = new RecurrenceDateCalculator();
-    this.periodManager = new PeriodManager(this.recurrenceRepo);
+    this.periodManager = new PeriodManager(this.recurrenceAdapter);
     this.occurrenceCreation = new OccurrenceCreationService(
       this.taskAdapter,
       this.occurrenceAdapter,
-      this.recurrenceRepo,
+      this.recurrenceAdapter,
       this.dateCalculator,
       this.periodManager
     );
@@ -55,7 +54,7 @@ export class TaskSchedulerService {
    * Get recurrence by ID
    */
   async getRecurrence(recurrenceId: number) {
-    return await this.recurrenceRepo.findById(recurrenceId);
+    return await this.recurrenceAdapter.getRecurrenceById(recurrenceId);
   }
 
   /**
@@ -78,7 +77,7 @@ export class TaskSchedulerService {
    * Resets completedOccurrences and updates lastPeriodStart
    */
   async updateRecurrencePeriod(recurrenceId: number): Promise<void> {
-    const recurrence = await this.recurrenceRepo.findById(recurrenceId);
+    const recurrence = await this.recurrenceAdapter.getRecurrenceById(recurrenceId);
     if (!recurrence) return;
 
     const currentDate = new Date();
@@ -172,7 +171,7 @@ export class TaskSchedulerService {
     taskId: number,
     recurrenceId: number
   ): Promise<boolean> {
-    const recurrence = await this.recurrenceRepo.findById(recurrenceId);
+    const recurrence = await this.recurrenceAdapter.getRecurrenceById(recurrenceId);
     if (!recurrence) return true;
 
     // Check end date
@@ -215,7 +214,7 @@ export class TaskSchedulerService {
     // Check if recurrence has ended
     const hasEnded = await this.hasRecurrenceEnded(taskId, task.recurrence.id);
     if (hasEnded) {
-      await this.taskAdapter.updateTask(taskId, { isActive: false });
+      await this.taskAdapter.deleteTask(taskId);
       return;
     }
 

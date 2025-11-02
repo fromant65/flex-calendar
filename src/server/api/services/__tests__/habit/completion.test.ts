@@ -28,9 +28,9 @@ describe('Habit Completion', () => {
     getEventsByOccurrenceId: jest.Mock;
     completeEvent: jest.Mock;
   };
-  let mockRecurrenceRepo: {
-    findById: jest.Mock;
-    updateById: jest.Mock;
+  let mockRecurrenceAdapter: {
+    getRecurrenceById: jest.Mock;
+    updateRecurrence: jest.Mock;
   };
 
   beforeEach(() => {
@@ -44,13 +44,13 @@ describe('Habit Completion', () => {
     
     const schedulerTaskAdapter = (schedulerService as unknown as { taskAdapter: typeof mockTaskAdapter }).taskAdapter;
     const schedulerOccurrenceAdapter = (schedulerService as unknown as { occurrenceAdapter: typeof mockOccurrenceAdapter }).occurrenceAdapter;
-    const schedulerRecurrenceRepo = (schedulerService as unknown as { recurrenceRepo: typeof mockRecurrenceRepo }).recurrenceRepo;
+    const schedulerRecurrenceAdapter = (schedulerService as unknown as { recurrenceAdapter: typeof mockRecurrenceAdapter }).recurrenceAdapter;
     
     // Use completion service adapters as the primary mocks
     mockTaskAdapter = completionTaskAdapter;
     mockOccurrenceAdapter = completionOccurrenceAdapter;
     mockEventAdapter = completionEventAdapter;
-    mockRecurrenceRepo = schedulerRecurrenceRepo;
+    mockRecurrenceAdapter = schedulerRecurrenceAdapter;
     
     // Ensure scheduler service uses the same mocked functions
     schedulerTaskAdapter.getTaskWithRecurrence = completionTaskAdapter.getTaskWithRecurrence;
@@ -98,8 +98,8 @@ describe('Habit Completion', () => {
     mockTaskAdapter.getTaskWithRecurrence.mockResolvedValue(task);
     mockEventAdapter.getEventsByOccurrenceId.mockResolvedValue([]);
     mockOccurrenceAdapter.completeOccurrence.mockResolvedValue(true);
-    mockRecurrenceRepo.updateById.mockResolvedValue(true);
-    mockRecurrenceRepo.findById.mockResolvedValue(task.recurrence);
+    mockRecurrenceAdapter.updateRecurrence.mockResolvedValue(true);
+    mockRecurrenceAdapter.getRecurrenceById.mockResolvedValue(task.recurrence);
     mockOccurrenceAdapter.getLatestOccurrenceByTaskId.mockResolvedValue({
       ...occurrence,
       status: 'Completed',
@@ -155,8 +155,8 @@ describe('Habit Completion', () => {
     mockTaskAdapter.getTaskWithRecurrence.mockResolvedValue(task);
     mockEventAdapter.getEventsByOccurrenceId.mockResolvedValue([]);
     mockOccurrenceAdapter.completeOccurrence.mockResolvedValue(true);
-    mockRecurrenceRepo.updateById.mockResolvedValue(true);
-    mockRecurrenceRepo.findById.mockResolvedValue(task.recurrence);
+    mockRecurrenceAdapter.updateRecurrence.mockResolvedValue(true);
+    mockRecurrenceAdapter.getRecurrenceById.mockResolvedValue(task.recurrence);
     mockOccurrenceAdapter.getLatestOccurrenceByTaskId.mockResolvedValue({
       ...occurrence,
       status: 'Completed',
@@ -216,8 +216,8 @@ describe('Habit Completion', () => {
     mockTaskAdapter.getTaskWithRecurrence.mockResolvedValue(task);
     mockEventAdapter.getEventsByOccurrenceId.mockResolvedValue([]);
     mockOccurrenceAdapter.completeOccurrence.mockResolvedValue(true);
-    mockRecurrenceRepo.updateById.mockResolvedValue(true);
-    mockRecurrenceRepo.findById.mockResolvedValue(task.recurrence);
+    mockRecurrenceAdapter.updateRecurrence.mockResolvedValue(true);
+    mockRecurrenceAdapter.getRecurrenceById.mockResolvedValue(task.recurrence);
     mockOccurrenceAdapter.getLatestOccurrenceByTaskId.mockResolvedValue({
       ...occurrence,
       status: 'Completed',

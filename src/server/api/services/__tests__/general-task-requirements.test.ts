@@ -9,6 +9,11 @@ import type { MockTask, MockOccurrence, CreateOccurrenceDTO } from './test-types
 
 describe('General Task Requirements', () => {
   let schedulerService: TaskSchedulerService;
+  let mockRecurrenceAdapter: {
+    getRecurrenceById: jest.Mock;
+    updateRecurrence: jest.Mock;
+    incrementCompletedOccurrences: jest.Mock;
+  };
   let mockTaskAdapter: {
     getTaskWithRecurrence: jest.Mock;
   };
@@ -16,17 +21,17 @@ describe('General Task Requirements', () => {
     getLatestOccurrenceByTaskId: jest.Mock;
     createOccurrence: jest.Mock<Promise<MockOccurrence>, [CreateOccurrenceDTO]>;
   };
-  let mockRecurrenceRepo: {
-    findById: jest.Mock;
-  };
+  
 
   beforeEach(() => {
     schedulerService = new TaskSchedulerService();
     
+    mockRecurrenceAdapter = (schedulerService as unknown as { recurrenceAdapter: typeof mockRecurrenceAdapter }).recurrenceAdapter;
+    
     // Access mocked instances
     mockTaskAdapter = (schedulerService as unknown as { taskAdapter: typeof mockTaskAdapter }).taskAdapter;
     mockOccurrenceAdapter = (schedulerService as unknown as { occurrenceAdapter: typeof mockOccurrenceAdapter }).occurrenceAdapter;
-    mockRecurrenceRepo = (schedulerService as unknown as { recurrenceRepo: typeof mockRecurrenceRepo }).recurrenceRepo;
+    
     
     jest.clearAllMocks();
   });
@@ -51,7 +56,7 @@ describe('General Task Requirements', () => {
 
     mockTaskAdapter.getTaskWithRecurrence.mockResolvedValue(singleTask);
     mockOccurrenceAdapter.getLatestOccurrenceByTaskId.mockResolvedValue(null);
-    mockRecurrenceRepo.findById.mockResolvedValue(singleTask.recurrence);
+    mockRecurrenceAdapter.getRecurrenceById.mockResolvedValue(singleTask.recurrence);
     mockOccurrenceAdapter.createOccurrence.mockResolvedValue({
       id: 1,
       associatedTaskId: 1,

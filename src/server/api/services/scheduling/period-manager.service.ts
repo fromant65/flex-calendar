@@ -6,10 +6,10 @@
  */
 
 import type { TaskRecurrence } from "../types";
-import type { TaskRecurrenceRepository } from "../../repository/task-recurrence.repository";
+import type { RecurrenceAdapter } from "../../adapter";
 
 export class PeriodManager {
-  constructor(private recurrenceRepo: TaskRecurrenceRepository) {}
+  constructor(private recurrenceAdapter: RecurrenceAdapter) {}
 
   /**
    * Get the end of the current period based on recurrence type
@@ -91,7 +91,7 @@ export class PeriodManager {
    * Increment completed occurrences, handling period boundaries correctly
    */
   async incrementCompletedOccurrences(recurrenceId: number, occurrenceStartDate: Date): Promise<void> {
-    const recurrence = await this.recurrenceRepo.findById(recurrenceId);
+    const recurrence = await this.recurrenceAdapter.getRecurrenceById(recurrenceId);
     if (!recurrence) return;
 
     // Determine which period the occurrence belongs to
@@ -105,14 +105,14 @@ export class PeriodManager {
 
     if (occurrenceInCurrentPeriod) {
       // Increment in current period
-      await this.recurrenceRepo.updateById(recurrenceId, {
+      await this.recurrenceAdapter.updateRecurrence(recurrenceId, {
         completedOccurrences: (recurrence.completedOccurrences ?? 0) + 1,
       });
     }
     else if (occurrenceStartDate >= currentPeriodEnd) {
       // The occurrence is in a future period, advance to that period and set count to 1
       const nextPeriodStart = this.getNextPeriodStartByType(currentPeriodStart, recurrence);
-      await this.recurrenceRepo.updateById(recurrenceId, {
+      await this.recurrenceAdapter.updateRecurrence(recurrenceId, {
         completedOccurrences: 1,
         lastPeriodStart: nextPeriodStart,
       });
@@ -132,7 +132,7 @@ export class PeriodManager {
       recurrence
     );
 
-    await this.recurrenceRepo.updateById(recurrence.id, {
+    await this.recurrenceAdapter.updateRecurrence(recurrence.id, {
       lastPeriodStart: nextPeriodStart,
       completedOccurrences: 0,
     });

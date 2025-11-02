@@ -29,9 +29,10 @@ describe('Finite Recurring Task Completion', () => {
     completeEvent: jest.Mock;
     deleteEvent: jest.Mock;
   };
-  let mockRecurrenceRepo: {
-    findById: jest.Mock;
-    updateById: jest.Mock;
+  let mockRecurrenceAdapter: {
+    getRecurrenceById: jest.Mock;
+    updateRecurrence: jest.Mock;
+    incrementCompletedOccurrences: jest.Mock;
   };
 
   beforeEach(() => {
@@ -45,13 +46,13 @@ describe('Finite Recurring Task Completion', () => {
     
     const schedulerTaskAdapter = (schedulerService as unknown as { taskAdapter: typeof mockTaskAdapter }).taskAdapter;
     const schedulerOccurrenceAdapter = (schedulerService as unknown as { occurrenceAdapter: typeof mockOccurrenceAdapter }).occurrenceAdapter;
-    const schedulerRecurrenceRepo = (schedulerService as unknown as { recurrenceRepo: typeof mockRecurrenceRepo }).recurrenceRepo;
+    const schedulerRecurrenceAdapter = (schedulerService as unknown as { recurrenceAdapter: typeof mockRecurrenceAdapter }).recurrenceAdapter;
     
     // Use completion service adapters as the primary mocks
     mockTaskAdapter = completionTaskAdapter;
     mockOccurrenceAdapter = completionOccurrenceAdapter;
     mockEventAdapter = completionEventAdapter;
-    mockRecurrenceRepo = schedulerRecurrenceRepo;
+    mockRecurrenceAdapter = schedulerRecurrenceAdapter;
     
     // Ensure scheduler service uses the same mocked functions
     // by copying the mock implementations from completion service to scheduler service
@@ -106,8 +107,8 @@ describe('Finite Recurring Task Completion', () => {
     mockEventAdapter.getEventsByOccurrenceId.mockResolvedValue([]);
     mockOccurrenceAdapter.completeOccurrence.mockResolvedValue(true);
     mockOccurrenceAdapter.getOccurrencesByTaskId.mockResolvedValue(allOccurrences);
-    mockRecurrenceRepo.updateById.mockResolvedValue(true);
-    mockRecurrenceRepo.findById.mockResolvedValue(task.recurrence);
+    mockRecurrenceAdapter.incrementCompletedOccurrences.mockResolvedValue(true);
+    mockRecurrenceAdapter.getRecurrenceById.mockResolvedValue(task.recurrence);
     mockOccurrenceAdapter.getLatestOccurrenceByTaskId.mockResolvedValue({
       ...occurrence,
       status: 'Completed',
@@ -176,7 +177,7 @@ describe('Finite Recurring Task Completion', () => {
     mockOccurrenceAdapter.completeOccurrence.mockResolvedValue(true);
     mockOccurrenceAdapter.getOccurrencesByTaskId.mockResolvedValue(allOccurrences);
     mockTaskAdapter.completeTask.mockResolvedValue(true);
-    mockRecurrenceRepo.updateById.mockResolvedValue(true);
+    mockRecurrenceAdapter.incrementCompletedOccurrences.mockResolvedValue(true);
 
     // Act
     await completionService.completeOccurrence(occurrenceId);
@@ -231,7 +232,7 @@ describe('Finite Recurring Task Completion', () => {
     mockEventAdapter.getEventsByOccurrenceId.mockResolvedValue([]);
     mockOccurrenceAdapter.skipOccurrence.mockResolvedValue(true);
     mockOccurrenceAdapter.getOccurrencesByTaskId.mockResolvedValue(allOccurrences);
-    mockRecurrenceRepo.findById.mockResolvedValue(task.recurrence);
+    mockRecurrenceAdapter.getRecurrenceById.mockResolvedValue(task.recurrence);
     mockOccurrenceAdapter.getLatestOccurrenceByTaskId.mockResolvedValue({
       ...occurrence,
       status: 'Skipped',
@@ -292,8 +293,8 @@ describe('Finite Recurring Task Completion', () => {
     mockOccurrenceAdapter.getOccurrencesByTaskId.mockResolvedValue([
       { id: 1, associatedTaskId: taskId, status: 'Completed' as const },
     ]);
-    mockRecurrenceRepo.updateById.mockResolvedValue(true);
-    mockRecurrenceRepo.findById.mockResolvedValue(task.recurrence);
+    mockRecurrenceAdapter.incrementCompletedOccurrences.mockResolvedValue(true);
+    mockRecurrenceAdapter.getRecurrenceById.mockResolvedValue(task.recurrence);
     mockOccurrenceAdapter.getLatestOccurrenceByTaskId.mockResolvedValue({
       ...occurrence1,
       status: 'Completed',

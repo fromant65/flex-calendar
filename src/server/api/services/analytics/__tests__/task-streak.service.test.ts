@@ -7,30 +7,35 @@
 import { TaskStreakService } from '../task-streak.service';
 import type { TaskOccurrence } from '../../types';
 
-// Mock the repository
-jest.mock('../../../repository', () => ({
-  TaskOccurrenceRepository: jest.fn().mockImplementation(() => ({
-    findByTaskId: jest.fn(),
-    findByOwnerIdWithTask: jest.fn(),
+// Mock the adapter
+jest.mock('../../../adapter', () => ({
+  OccurrenceAdapter: jest.fn().mockImplementation(() => ({
+    getOccurrencesByTaskIdRaw: jest.fn(),
   })),
+}));
+
+// Mock the repositories that the adapter uses
+jest.mock('../../../repository', () => ({
+  TaskOccurrenceRepository: jest.fn().mockImplementation(() => ({})),
+  CalendarEventRepository: jest.fn().mockImplementation(() => ({})),
+  TaskRecurrenceRepository: jest.fn().mockImplementation(() => ({})),
 }));
 
 describe('TaskStreakService', () => {
   let service: TaskStreakService;
-  let mockRepo: {
-    findByTaskId: jest.Mock;
-    findByOwnerIdWithTask: jest.Mock;
+  let mockAdapter: {
+    getOccurrencesByTaskIdRaw: jest.Mock;
   };
 
   beforeEach(() => {
     service = new TaskStreakService();
-    mockRepo = (service as any).occurrenceRepo;
+    mockAdapter = (service as any).occurrenceAdapter;
     jest.clearAllMocks();
   });
 
   describe('getTaskStreak', () => {
     it('should return zero streak for task with no occurrences', async () => {
-      mockRepo.findByTaskId.mockResolvedValue([]);
+      mockAdapter.getOccurrencesByTaskIdRaw.mockResolvedValue([]);
 
       const result = await service.getTaskStreak(1);
 
@@ -74,7 +79,7 @@ describe('TaskStreakService', () => {
         },
       ];
 
-      mockRepo.findByTaskId.mockResolvedValue(occurrences);
+      mockAdapter.getOccurrencesByTaskIdRaw.mockResolvedValue(occurrences);
 
       const result = await service.getTaskStreak(1);
 
@@ -115,7 +120,7 @@ describe('TaskStreakService', () => {
         },
       ];
 
-      mockRepo.findByTaskId.mockResolvedValue(occurrences);
+      mockAdapter.getOccurrencesByTaskIdRaw.mockResolvedValue(occurrences);
 
       const result = await service.getTaskStreak(1);
 
@@ -151,7 +156,7 @@ describe('TaskStreakService', () => {
         },
       ];
 
-      mockRepo.findByTaskId.mockResolvedValue(occurrences);
+      mockAdapter.getOccurrencesByTaskIdRaw.mockResolvedValue(occurrences);
 
       const result = await service.getTaskStreak(1);
 
@@ -198,7 +203,7 @@ describe('TaskStreakService', () => {
         },
       ];
 
-      mockRepo.findByTaskId.mockResolvedValue(occurrences);
+      mockAdapter.getOccurrencesByTaskIdRaw.mockResolvedValue(occurrences);
 
       const result = await service.getTaskStreak(1);
 
@@ -232,7 +237,7 @@ describe('TaskStreakService', () => {
         },
       ];
 
-      mockRepo.findByTaskId.mockResolvedValue(occurrences);
+      mockAdapter.getOccurrencesByTaskIdRaw.mockResolvedValue(occurrences);
 
       const result = await service.getTaskStreak(1);
 
@@ -250,7 +255,7 @@ describe('TaskStreakService', () => {
         { id: 4, associatedTaskId: 1, startDate: new Date('2025-10-22'), status: 'Pending', createdAt: new Date(), updatedAt: null },
       ];
 
-      mockRepo.findByTaskId.mockResolvedValue(occurrences);
+      mockAdapter.getOccurrencesByTaskIdRaw.mockResolvedValue(occurrences);
 
       const result = await service.getTaskStreak(1);
 
@@ -267,7 +272,7 @@ describe('TaskStreakService', () => {
         { id: 5, associatedTaskId: 1, startDate: new Date('2025-10-23'), status: 'Completed', createdAt: new Date(), updatedAt: null },
       ];
 
-      mockRepo.findByTaskId.mockResolvedValue(occurrences);
+      mockAdapter.getOccurrencesByTaskIdRaw.mockResolvedValue(occurrences);
 
       const result = await service.getTaskStreak(1);
 
@@ -278,7 +283,7 @@ describe('TaskStreakService', () => {
 
   describe('getTaskStreaks', () => {
     it('should get streaks for multiple tasks', async () => {
-      mockRepo.findByTaskId
+      mockAdapter.getOccurrencesByTaskIdRaw
         .mockResolvedValueOnce([
           { id: 1, associatedTaskId: 1, startDate: new Date('2025-10-25'), status: 'Completed', createdAt: new Date(), updatedAt: null },
           { id: 2, associatedTaskId: 1, startDate: new Date('2025-10-24'), status: 'Completed', createdAt: new Date(), updatedAt: null },

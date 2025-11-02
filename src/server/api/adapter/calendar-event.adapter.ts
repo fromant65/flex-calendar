@@ -196,4 +196,11 @@ export class CalendarEventAdapter {
       timeConsumed: totalTime,
     });
   }
+
+  /**
+   * Get completed events by occurrence IDs (for timeline/analytics)
+   */
+  async getCompletedEventsByOccurrenceIds(occurrenceIds: number[]) {
+    return await this.eventRepo.findCompletedByOccurrenceIds(occurrenceIds);
+  }
 }

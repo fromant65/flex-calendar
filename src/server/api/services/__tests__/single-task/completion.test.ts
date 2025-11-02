@@ -11,9 +11,15 @@ import type { MockTask, MockOccurrence } from '../test-types';
 describe('Single Task Completion', () => {
   let completionService: OccurrenceCompletionService;
   let schedulerService: TaskSchedulerService;
+  let mockRecurrenceAdapter: {
+    getRecurrenceById: jest.Mock;
+    updateRecurrence: jest.Mock;
+    incrementCompletedOccurrences: jest.Mock;
+  };
   let mockTaskAdapter: {
     getTaskWithRecurrence: jest.Mock;
     completeTask: jest.Mock;
+    deleteTask: jest.Mock;
   };
   let mockOccurrenceAdapter: {
     getOccurrenceWithTask: jest.Mock;
@@ -26,12 +32,12 @@ describe('Single Task Completion', () => {
     completeEvent: jest.Mock;
     deleteEvent: jest.Mock;
   };
-  let mockRecurrenceRepo: {
-    updateById: jest.Mock;
-  };
+  
 
   beforeEach(() => {
     schedulerService = new TaskSchedulerService();
+    
+    mockRecurrenceAdapter = (schedulerService as unknown as { recurrenceAdapter: typeof mockRecurrenceAdapter }).recurrenceAdapter;
     completionService = new OccurrenceCompletionService(schedulerService);
     
     // Access mocked instances from completion service
@@ -39,8 +45,8 @@ describe('Single Task Completion', () => {
     mockOccurrenceAdapter = (completionService as unknown as { occurrenceAdapter: typeof mockOccurrenceAdapter }).occurrenceAdapter;
     mockEventAdapter = (completionService as unknown as { eventAdapter: typeof mockEventAdapter }).eventAdapter;
     
-    // Access recurrence repo from scheduler service
-    mockRecurrenceRepo = (schedulerService as unknown as { recurrenceRepo: typeof mockRecurrenceRepo }).recurrenceRepo;
+    // Access recurrence adapter from scheduler service
+    
     
     // IMPORTANT: Both services share the same mocked adapter instances
     // So mockTaskAdapter.getTaskWithRecurrence applies to both completion and scheduler services
@@ -83,7 +89,7 @@ describe('Single Task Completion', () => {
     mockTaskAdapter.getTaskWithRecurrence.mockResolvedValue(task);
     mockEventAdapter.getEventsByOccurrenceId.mockResolvedValue([]);
     mockOccurrenceAdapter.completeOccurrence.mockResolvedValue(true);
-    mockRecurrenceRepo.updateById.mockResolvedValue(true);
+    mockRecurrenceAdapter.incrementCompletedOccurrences.mockResolvedValue(task.recurrence);
     mockTaskAdapter.completeTask.mockResolvedValue(true);
 
     // Act
@@ -179,7 +185,7 @@ describe('Single Task Completion', () => {
     mockTaskAdapter.getTaskWithRecurrence.mockResolvedValue(task);
     mockEventAdapter.getEventsByOccurrenceId.mockResolvedValue([]);
     mockOccurrenceAdapter.completeOccurrence.mockResolvedValue(true);
-    mockRecurrenceRepo.updateById.mockResolvedValue(true);
+    mockRecurrenceAdapter.incrementCompletedOccurrences.mockResolvedValue(task.recurrence);
     mockTaskAdapter.completeTask.mockResolvedValue(true);
 
     const mockOccurrenceAdapter2 = (schedulerService as unknown as { occurrenceAdapter: { createOccurrence: jest.Mock } }).occurrenceAdapter;

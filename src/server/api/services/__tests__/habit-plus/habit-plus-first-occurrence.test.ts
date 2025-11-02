@@ -9,6 +9,11 @@ import type { MockTask, MockOccurrence, CreateOccurrenceDTO } from '../test-type
 
 describe('Habit+ First Occurrence Completion', () => {
   let schedulerService: TaskSchedulerService;
+  let mockRecurrenceAdapter: {
+    getRecurrenceById: jest.Mock;
+    updateRecurrence: jest.Mock;
+    incrementCompletedOccurrences: jest.Mock;
+  };
   let mockTaskAdapter: {
     getTaskWithRecurrence: jest.Mock;
     updateTask: jest.Mock;
@@ -18,18 +23,16 @@ describe('Habit+ First Occurrence Completion', () => {
     createOccurrence: jest.Mock<Promise<MockOccurrence>, [CreateOccurrenceDTO]>;
     getOccurrencesByTaskId: jest.Mock;
   };
-  let mockRecurrenceRepo: {
-    findById: jest.Mock;
-    updateById: jest.Mock;
-  };
+  
 
   beforeEach(() => {
     schedulerService = new TaskSchedulerService();
     
     // Access mocked instances
+    mockRecurrenceAdapter = (schedulerService as unknown as { recurrenceAdapter: typeof mockRecurrenceAdapter }).recurrenceAdapter;
     mockTaskAdapter = (schedulerService as unknown as { taskAdapter: typeof mockTaskAdapter }).taskAdapter;
     mockOccurrenceAdapter = (schedulerService as unknown as { occurrenceAdapter: typeof mockOccurrenceAdapter }).occurrenceAdapter;
-    mockRecurrenceRepo = (schedulerService as unknown as { recurrenceRepo: typeof mockRecurrenceRepo }).recurrenceRepo;
+    
     
     jest.clearAllMocks();
   });
@@ -71,7 +74,7 @@ describe('Habit+ First Occurrence Completion', () => {
     // Mock responses
     mockTaskAdapter.getTaskWithRecurrence.mockResolvedValue(task);
     mockOccurrenceAdapter.getLatestOccurrenceByTaskId.mockResolvedValue(firstOccurrence);
-    mockRecurrenceRepo.findById.mockResolvedValue(task.recurrence);
+    mockRecurrenceAdapter.getRecurrenceById.mockResolvedValue(task.recurrence);
     
     let capturedOccurrence: CreateOccurrenceDTO | undefined;
     mockOccurrenceAdapter.createOccurrence.mockImplementation(async (data: CreateOccurrenceDTO) => {
@@ -132,7 +135,7 @@ describe('Habit+ First Occurrence Completion', () => {
 
     mockTaskAdapter.getTaskWithRecurrence.mockResolvedValue(task);
     mockOccurrenceAdapter.getLatestOccurrenceByTaskId.mockResolvedValue(firstOccurrence);
-    mockRecurrenceRepo.findById.mockResolvedValue(task.recurrence);
+    mockRecurrenceAdapter.getRecurrenceById.mockResolvedValue(task.recurrence);
     
     let capturedOccurrence: CreateOccurrenceDTO | undefined;
     mockOccurrenceAdapter.createOccurrence.mockImplementation(async (data: CreateOccurrenceDTO) => {

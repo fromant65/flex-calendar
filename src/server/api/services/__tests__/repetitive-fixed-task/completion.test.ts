@@ -29,8 +29,8 @@ describe('Repetitive Fixed Task Completion', () => {
     deleteEvent: jest.Mock;
     createEvent: jest.Mock;
   };
-  let mockRecurrenceRepo: {
-    updateById: jest.Mock;
+  let mockRecurrenceAdapter: {
+    updateRecurrence: jest.Mock;
   };
 
   beforeEach(() => {
@@ -44,13 +44,13 @@ describe('Repetitive Fixed Task Completion', () => {
     
     const schedulerTaskAdapter = (schedulerService as unknown as { taskAdapter: typeof mockTaskAdapter }).taskAdapter;
     const schedulerOccurrenceAdapter = (schedulerService as unknown as { occurrenceAdapter: typeof mockOccurrenceAdapter }).occurrenceAdapter;
-    const schedulerRecurrenceRepo = (schedulerService as unknown as { recurrenceRepo: typeof mockRecurrenceRepo }).recurrenceRepo;
+    const schedulerRecurrenceAdapter = (schedulerService as unknown as { recurrenceAdapter: typeof mockRecurrenceAdapter }).recurrenceAdapter;
     
     // Use completion service adapters as the primary mocks
     mockTaskAdapter = completionTaskAdapter;
     mockOccurrenceAdapter = completionOccurrenceAdapter;
     mockEventAdapter = completionEventAdapter;
-    mockRecurrenceRepo = schedulerRecurrenceRepo;
+    mockRecurrenceAdapter = schedulerRecurrenceAdapter;
     
     // Ensure scheduler service uses the same mocked functions
     schedulerTaskAdapter.getTaskWithRecurrence = completionTaskAdapter.getTaskWithRecurrence;
@@ -122,7 +122,7 @@ describe('Repetitive Fixed Task Completion', () => {
     mockEventAdapter.completeEvent.mockResolvedValue(true);
     mockOccurrenceAdapter.completeOccurrence.mockResolvedValue(true);
     mockOccurrenceAdapter.getOccurrencesByTaskId.mockResolvedValue(allOccurrences);
-    mockRecurrenceRepo.updateById.mockResolvedValue(true);
+    mockRecurrenceAdapter.updateRecurrence.mockResolvedValue(true);
 
     // Act
     await completionService.completeOccurrence(occurrenceId);
@@ -196,7 +196,7 @@ describe('Repetitive Fixed Task Completion', () => {
     mockOccurrenceAdapter.completeOccurrence.mockResolvedValue(true);
     mockOccurrenceAdapter.getOccurrencesByTaskId.mockResolvedValue(allOccurrences);
     mockTaskAdapter.completeTask.mockResolvedValue(true);
-    mockRecurrenceRepo.updateById.mockResolvedValue(true);
+    mockRecurrenceAdapter.updateRecurrence.mockResolvedValue(true);
 
     // Act
     await completionService.completeOccurrence(occurrenceId);
@@ -264,7 +264,7 @@ describe('Repetitive Fixed Task Completion', () => {
     mockEventAdapter.completeEvent.mockResolvedValue(true);
     mockOccurrenceAdapter.completeOccurrence.mockResolvedValue(true);
     mockOccurrenceAdapter.getOccurrencesByTaskId.mockResolvedValue(allOccurrences);
-    mockRecurrenceRepo.updateById.mockResolvedValue(true);
+    mockRecurrenceAdapter.updateRecurrence.mockResolvedValue(true);
 
     // Act
     await completionService.completeOccurrence(occurrenceId);
@@ -322,7 +322,7 @@ describe('Repetitive Fixed Task Completion', () => {
     mockEventAdapter.getEventsByOccurrenceId.mockResolvedValue([]);
     mockOccurrenceAdapter.completeOccurrence.mockResolvedValue(true);
     mockOccurrenceAdapter.getOccurrencesByTaskId.mockResolvedValue(allOccurrences);
-    mockRecurrenceRepo.updateById.mockResolvedValue(true);
+    mockRecurrenceAdapter.updateRecurrence.mockResolvedValue(true);
 
     const mockSchedulerOccurrenceAdapter = (schedulerService as unknown as { occurrenceAdapter: { createOccurrence: jest.Mock } }).occurrenceAdapter;
 
@@ -388,7 +388,7 @@ describe('Repetitive Fixed Task Completion', () => {
     mockOccurrenceAdapter.completeOccurrence.mockResolvedValue(true);
     mockOccurrenceAdapter.getOccurrencesByTaskId.mockResolvedValue(allOccurrences);
     mockTaskAdapter.completeTask.mockResolvedValue(true);
-    mockRecurrenceRepo.updateById.mockResolvedValue(true);
+    mockRecurrenceAdapter.updateRecurrence.mockResolvedValue(true);
 
     // Act
     await completionService.completeOccurrence(occurrenceId);

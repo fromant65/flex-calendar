@@ -2,7 +2,7 @@
  * Timeline Service - Business logic for timeline data aggregation
  */
 
-import { TaskRepository, TaskOccurrenceRepository, CalendarEventRepository } from "../repository";
+import { TaskAdapter, OccurrenceAdapter, CalendarEventAdapter } from "../adapter";
 import type { TaskWithRecurrence, OccurrenceWithTask, EventWithDetails, TaskOccurrenceStatus } from "~/types";
 
 export interface TimelineData {
@@ -12,9 +12,9 @@ export interface TimelineData {
 }
 
 export class TimelineService {
-  private taskRepo = new TaskRepository();
-  private occurrenceRepo = new TaskOccurrenceRepository();
-  private eventRepo = new CalendarEventRepository();
+  private taskAdapter = new TaskAdapter();
+  private occurrenceAdapter = new OccurrenceAdapter();
+  private eventAdapter = new CalendarEventAdapter();
 
   /**
    * Get timeline data for a user within a date range
@@ -22,7 +22,7 @@ export class TimelineService {
    */
   async getTimelineData(userId: string, startDate: Date, endDate: Date): Promise<TimelineData> {
     // Get all completed occurrences within the date range
-    const occurrencesWithTask = await this.occurrenceRepo.findCompletedByOwnerIdInDateRange(
+    const occurrencesWithTask = await this.occurrenceAdapter.getCompletedOccurrencesByOwnerInDateRange(
       userId,
       startDate,
       endDate
@@ -45,7 +45,7 @@ export class TimelineService {
     const occurrenceIds = occurrencesWithTask.map(occ => occ.id);
 
     // Get all completed events for these occurrences
-    const eventsWithDetails = await this.eventRepo.findCompletedByOccurrenceIds(occurrenceIds);
+    const eventsWithDetails = await this.eventAdapter.getCompletedEventsByOccurrenceIds(occurrenceIds);
 
     // Transform to proper types
     const occurrences: OccurrenceWithTask[] = occurrencesWithTask.map(occ => ({

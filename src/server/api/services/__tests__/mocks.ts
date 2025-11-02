@@ -14,6 +14,8 @@ jest.mock('../../adapter', () => ({
     getTaskWithRecurrence: jest.fn(),
     updateTask: jest.fn(),
     completeTask: jest.fn(),
+    deleteTask: jest.fn(),
+    getTasksByOwner: jest.fn(),
   })),
   OccurrenceAdapter: jest.fn().mockImplementation(() => ({
     getLatestOccurrenceByTaskId: jest.fn(),
@@ -22,12 +24,21 @@ jest.mock('../../adapter', () => ({
     getOccurrenceWithTask: jest.fn(),
     completeOccurrence: jest.fn(),
     skipOccurrence: jest.fn(),
+    getCompletedOccurrencesByOwnerAndDateRange: jest.fn(),
+    getOccurrencesByOwner: jest.fn(),
   })),
   CalendarEventAdapter: jest.fn().mockImplementation(() => ({
     createEvent: jest.fn(),
     getEventsByOccurrenceId: jest.fn(),
     completeEvent: jest.fn(),
     deleteEvent: jest.fn(),
+    getCompletedEventsByOccurrenceIds: jest.fn(),
+  })),
+  RecurrenceAdapter: jest.fn().mockImplementation(() => ({
+    getRecurrenceById: jest.fn(),
+    updateRecurrence: jest.fn(),
+    incrementCompletedOccurrences: jest.fn(),
+    resetCompletedOccurrences: jest.fn(),
   })),
 }));
 
@@ -45,4 +56,3 @@ jest.mock('../analytics/task-analytics.service', () => ({
 }));
 
 export {}; // Make this a module
-

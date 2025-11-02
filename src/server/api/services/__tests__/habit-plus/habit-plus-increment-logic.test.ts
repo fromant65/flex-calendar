@@ -9,15 +9,16 @@ import type { MockTask } from '../test-types';
 
 describe('Habit+ Counter Increment Logic', () => {
   let schedulerService: TaskSchedulerService;
-  let mockRecurrenceRepo: {
-    findById: jest.Mock;
-    updateById: jest.Mock;
+  let mockRecurrenceAdapter: {
+    getRecurrenceById: jest.Mock;
+    updateRecurrence: jest.Mock;
+    incrementCompletedOccurrences: jest.Mock;
   };
 
   beforeEach(() => {
     schedulerService = new TaskSchedulerService();
     
-    mockRecurrenceRepo = (schedulerService as unknown as { recurrenceRepo: typeof mockRecurrenceRepo }).recurrenceRepo;
+    mockRecurrenceAdapter = (schedulerService as unknown as { recurrenceAdapter: typeof mockRecurrenceAdapter }).recurrenceAdapter;
     
     jest.clearAllMocks();
   });
@@ -38,14 +39,14 @@ describe('Habit+ Counter Increment Logic', () => {
       endDate: null,
     };
 
-    mockRecurrenceRepo.findById.mockResolvedValue(recurrence);
-    mockRecurrenceRepo.updateById.mockResolvedValue(undefined);
+    mockRecurrenceAdapter.getRecurrenceById.mockResolvedValue(recurrence);
+    mockRecurrenceAdapter.updateRecurrence.mockResolvedValue(undefined);
 
     // Act
     await schedulerService.incrementCompletedOccurrences(1, occurrenceDate);
 
     // Assert
-    expect(mockRecurrenceRepo.updateById).toHaveBeenCalledWith(
+    expect(mockRecurrenceAdapter.updateRecurrence).toHaveBeenCalledWith(
       1,
       expect.objectContaining({
         completedOccurrences: 2, // Incremented
@@ -69,14 +70,14 @@ describe('Habit+ Counter Increment Logic', () => {
       endDate: null,
     };
 
-    mockRecurrenceRepo.findById.mockResolvedValue(recurrence);
-    mockRecurrenceRepo.updateById.mockResolvedValue(undefined);
+    mockRecurrenceAdapter.getRecurrenceById.mockResolvedValue(recurrence);
+    mockRecurrenceAdapter.updateRecurrence.mockResolvedValue(undefined);
 
     // Act
     await schedulerService.incrementCompletedOccurrences(1, occurrenceDate);
 
-    // Assert - Should NOT call updateById at all (occurrence is from past period)
-    expect(mockRecurrenceRepo.updateById).not.toHaveBeenCalled();
+    // Assert - Should NOT call updateRecurrence at all (occurrence is from past period)
+    expect(mockRecurrenceAdapter.updateRecurrence).not.toHaveBeenCalled();
   });
 
   it('should increment counter when occurrence is exactly at period start', async () => {
@@ -95,14 +96,14 @@ describe('Habit+ Counter Increment Logic', () => {
       endDate: null,
     };
 
-    mockRecurrenceRepo.findById.mockResolvedValue(recurrence);
-    mockRecurrenceRepo.updateById.mockResolvedValue(undefined);
+    mockRecurrenceAdapter.getRecurrenceById.mockResolvedValue(recurrence);
+    mockRecurrenceAdapter.updateRecurrence.mockResolvedValue(undefined);
 
     // Act
     await schedulerService.incrementCompletedOccurrences(1, occurrenceDate);
 
     // Assert
-    expect(mockRecurrenceRepo.updateById).toHaveBeenCalledWith(
+    expect(mockRecurrenceAdapter.updateRecurrence).toHaveBeenCalledWith(
       1,
       expect.objectContaining({
         completedOccurrences: 1, // Incremented

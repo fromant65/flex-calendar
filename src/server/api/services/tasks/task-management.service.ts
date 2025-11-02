@@ -146,17 +146,23 @@ export class TaskManagementService {
 
   /**
    * Delete a task (soft delete)
-   * Also deletes all associated occurrences and calendar events
+   * Also skips all pending/in-progress occurrences and deletes associated calendar events
    */
   async deleteTask(taskId: number) {
     // Get all occurrences for this task
     const occurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
     
-    // Delete all calendar events associated with each occurrence
+    // Skip pending and in-progress occurrences, delete associated events
     for (const occurrence of occurrences) {
+      // Delete all calendar events associated with this occurrence
       const events = await this.eventAdapter.getEventsByOccurrenceId(occurrence.id);
       for (const event of events) {
         await this.eventAdapter.deleteEvent(event.id);
+      }
+      
+      // Skip occurrence if it's not already completed or skipped
+      if (occurrence.status === "Pending" || occurrence.status === "In Progress") {
+        await this.occurrenceAdapter.skipOccurrence(occurrence.id);
       }
     }
     
@@ -172,9 +178,9 @@ export class TaskManagementService {
   }
 
   /**
-   * Deactivate a task
+   * Deactivate a task (soft delete)
    */
   async deactivateTask(taskId: number) {
-    return await this.taskAdapter.updateTask(taskId, { isActive: false });
+    return await this.taskAdapter.deleteTask(taskId);
   }
 }

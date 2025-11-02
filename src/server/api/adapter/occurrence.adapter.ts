@@ -206,4 +206,29 @@ export class OccurrenceAdapter {
     const events = await this.eventRepo.findByOccurrenceId(occurrenceId);
     return events.reduce((total, event) => total + (event.dedicatedTime ?? 0), 0);
   }
+
+  /**
+   * Get completed occurrences by owner and date range (for timeline/analytics)
+   */
+  async getCompletedOccurrencesByOwnerInDateRange(
+    userId: string,
+    startDate: Date,
+    endDate: Date
+  ) {
+    return await this.occurrenceRepo.findCompletedByOwnerIdInDateRange(userId, startDate, endDate);
+  }
+
+  /**
+   * Get occurrences by owner with task (for analytics)
+   */
+  async getOccurrencesByOwnerWithTask(userId: string) {
+    return await this.occurrenceRepo.findByOwnerIdWithTask(userId);
+  }
+
+  /**
+   * Get occurrences by task ID (for analytics)
+   */
+  async getOccurrencesByTaskIdRaw(taskId: number) {
+    return await this.occurrenceRepo.findByTaskId(taskId);
+  }
 }

@@ -9,6 +9,11 @@ import type { MockTask, MockOccurrence, CreateOccurrenceDTO } from '../test-type
 
 describe('Finite Recurring Task Creation', () => {
   let schedulerService: TaskSchedulerService;
+  let mockRecurrenceAdapter: {
+    getRecurrenceById: jest.Mock;
+    updateRecurrence: jest.Mock;
+    incrementCompletedOccurrences: jest.Mock;
+  };
   let mockTaskAdapter: {
     getTaskWithRecurrence: jest.Mock;
     updateTask: jest.Mock;
@@ -21,19 +26,18 @@ describe('Finite Recurring Task Creation', () => {
   let mockEventAdapter: {
     createEvent: jest.Mock;
   };
-  let mockRecurrenceRepo: {
-    findById: jest.Mock;
-    updateById: jest.Mock;
-  };
+  
 
   beforeEach(() => {
     schedulerService = new TaskSchedulerService();
+    
+    mockRecurrenceAdapter = (schedulerService as unknown as { recurrenceAdapter: typeof mockRecurrenceAdapter }).recurrenceAdapter;
     
     // Access mocked instances
     mockTaskAdapter = (schedulerService as unknown as { taskAdapter: typeof mockTaskAdapter }).taskAdapter;
     mockOccurrenceAdapter = (schedulerService as unknown as { occurrenceAdapter: typeof mockOccurrenceAdapter }).occurrenceAdapter;
     mockEventAdapter = (schedulerService as unknown as { eventAdapter: typeof mockEventAdapter }).eventAdapter;
-    mockRecurrenceRepo = (schedulerService as unknown as { recurrenceRepo: typeof mockRecurrenceRepo }).recurrenceRepo;
+    
     
     jest.clearAllMocks();
   });
@@ -62,7 +66,7 @@ describe('Finite Recurring Task Creation', () => {
 
     mockTaskAdapter.getTaskWithRecurrence.mockResolvedValue(task);
     mockOccurrenceAdapter.getLatestOccurrenceByTaskId.mockResolvedValue(null);
-    mockRecurrenceRepo.findById.mockResolvedValue(task.recurrence);
+    mockRecurrenceAdapter.getRecurrenceById.mockResolvedValue(task.recurrence);
     
     let capturedOccurrence: CreateOccurrenceDTO | undefined;
     mockOccurrenceAdapter.createOccurrence.mockImplementation(async (data: CreateOccurrenceDTO) => {
@@ -103,7 +107,7 @@ describe('Finite Recurring Task Creation', () => {
 
     mockTaskAdapter.getTaskWithRecurrence.mockResolvedValue(task);
     mockOccurrenceAdapter.getLatestOccurrenceByTaskId.mockResolvedValue(null);
-    mockRecurrenceRepo.findById.mockResolvedValue(task.recurrence);
+    mockRecurrenceAdapter.getRecurrenceById.mockResolvedValue(task.recurrence);
     mockOccurrenceAdapter.createOccurrence.mockImplementation(async (data: CreateOccurrenceDTO) => {
       return { ...data, id: 2, status: 'Pending' as const };
     });
@@ -140,7 +144,7 @@ describe('Finite Recurring Task Creation', () => {
 
     mockTaskAdapter.getTaskWithRecurrence.mockResolvedValue(task);
     mockOccurrenceAdapter.getLatestOccurrenceByTaskId.mockResolvedValue(null);
-    mockRecurrenceRepo.findById.mockResolvedValue(task.recurrence);
+    mockRecurrenceAdapter.getRecurrenceById.mockResolvedValue(task.recurrence);
     
     let capturedOccurrence: CreateOccurrenceDTO | undefined;
     mockOccurrenceAdapter.createOccurrence.mockImplementation(async (data: CreateOccurrenceDTO) => {

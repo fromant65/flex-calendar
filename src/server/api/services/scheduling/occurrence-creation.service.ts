@@ -5,8 +5,7 @@
  * Extracted from TaskSchedulerService to reduce file size and improve maintainability.
  */
 
-import type { TaskAdapter, OccurrenceAdapter } from "../../adapter";
-import type { TaskRecurrenceRepository } from "../../repository/task-recurrence.repository";
+import type { TaskAdapter, OccurrenceAdapter, RecurrenceAdapter } from "../../adapter";
 import type { CreateOccurrenceDTO, DayOfWeek, TaskRecurrence } from "../types";
 import type { RecurrenceDateCalculator } from "./recurrence-date-calculator.service";
 import type { PeriodManager } from "./period-manager.service";
@@ -15,7 +14,7 @@ export class OccurrenceCreationService {
   constructor(
     private taskAdapter: TaskAdapter,
     private occurrenceAdapter: OccurrenceAdapter,
-    private recurrenceRepo: TaskRecurrenceRepository,
+    private recurrenceAdapter: RecurrenceAdapter,
     private dateCalculator: RecurrenceDateCalculator,
     private periodManager: PeriodManager
   ) {}
@@ -37,7 +36,7 @@ export class OccurrenceCreationService {
     }
 
     // Refresh recurrence data after potential period update
-    const updatedRecurrence = await this.recurrenceRepo.findById(task.recurrence.id);
+    const updatedRecurrence = await this.recurrenceAdapter.getRecurrenceById(task.recurrence.id);
     if (!updatedRecurrence) return;
 
     // Handle unique tasks (single occurrence, no pattern)
@@ -142,7 +141,7 @@ export class OccurrenceCreationService {
     const nextPeriodStart = this.periodManager.getNextPeriodStartByType(currentPeriodStart, recurrence);
 
     // Reset counter and update period
-    await this.recurrenceRepo.updateById(recurrence.id, {
+    await this.recurrenceAdapter.updateRecurrence(recurrence.id, {
       completedOccurrences: 0,
       lastPeriodStart: nextPeriodStart,
     });

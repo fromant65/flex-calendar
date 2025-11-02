@@ -12,7 +12,7 @@
  */
 
 import type { TaskOccurrence } from "../types";
-import { TaskOccurrenceRepository } from "../../repository";
+import { OccurrenceAdapter } from "../../adapter";
 
 export interface TaskStreakInfo {
   taskId: number;
@@ -23,10 +23,10 @@ export interface TaskStreakInfo {
 }
 
 export class TaskStreakService {
-  private occurrenceRepo: TaskOccurrenceRepository;
+  private occurrenceAdapter: OccurrenceAdapter;
 
   constructor() {
-    this.occurrenceRepo = new TaskOccurrenceRepository();
+    this.occurrenceAdapter = new OccurrenceAdapter();
   }
 
   /**
@@ -35,7 +35,7 @@ export class TaskStreakService {
    * @returns Streak information
    */
   async getTaskStreak(taskId: number): Promise<TaskStreakInfo> {
-    const occurrences = await this.occurrenceRepo.findByTaskId(taskId);
+    const occurrences = await this.occurrenceAdapter.getOccurrencesByTaskIdRaw(taskId);
     
     if (occurrences.length === 0) {
       return {
@@ -121,7 +121,7 @@ export class TaskStreakService {
    * @returns Array of streak info for all user's tasks
    */
   async getUserTaskStreaks(userId: string): Promise<TaskStreakInfo[]> {
-    const occurrences = await this.occurrenceRepo.findByOwnerIdWithTask(userId);
+    const occurrences = await this.occurrenceAdapter.getOccurrencesByOwnerWithTask(userId);
     
     // Group by task ID
     const occurrencesByTask = new Map<number, TaskOccurrence[]>();

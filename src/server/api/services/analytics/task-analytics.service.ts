@@ -7,18 +7,15 @@ import type {
   TaskOccurrence,
 } from "../types";
 import { UrgencyCalculator } from "../../utils/urgency-calculator";
-import { OccurrenceAdapter } from "../../adapter";
-import { TaskRepository, TaskOccurrenceRepository } from "../../repository";
+import { OccurrenceAdapter, TaskAdapter } from "../../adapter";
 
 export class TaskAnalyticsService {
   private occurrenceAdapter: OccurrenceAdapter;
-  private taskRepo: TaskRepository;
-  private occurrenceRepo: TaskOccurrenceRepository;
+  private taskAdapter: TaskAdapter;
 
   constructor() {
     this.occurrenceAdapter = new OccurrenceAdapter();
-    this.taskRepo = new TaskRepository();
-    this.occurrenceRepo = new TaskOccurrenceRepository();
+    this.taskAdapter = new TaskAdapter();
   }
 
   /**
@@ -54,13 +51,13 @@ export class TaskAnalyticsService {
    * Get statistics for a user's tasks
    */
   async getUserStatistics(userId: string): Promise<TaskStatistics> {
-    const tasks = await this.taskRepo.findByOwnerId(userId);
+    const tasks = await this.taskAdapter.getTasksByOwnerId(userId);
     const activeTasks = tasks.filter((t) => t.isActive);
 
     // Get all occurrences for user's tasks
     const taskIds = tasks.map((t) => t.id);
     const allOccurrences = await Promise.all(
-      taskIds.map((id) => this.occurrenceRepo.findByTaskId(id))
+      taskIds.map((id) => this.occurrenceAdapter.getOccurrencesByTaskIdRaw(id))
     );
     const occurrences = allOccurrences.flat();
 

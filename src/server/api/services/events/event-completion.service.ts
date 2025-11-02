@@ -130,7 +130,7 @@ export class EventCompletionService {
 
         // Fija Única: maxOccurrences = 1
         if (recurrence.maxOccurrences === 1) {
-          await this.taskAdapter.updateTask(task.id, { isActive: false });
+          await this.taskAdapter.deleteTask(task.id);
         }
         // Fija Repetitiva: Check if all occurrences are completed
         else {
@@ -150,7 +150,7 @@ export class EventCompletionService {
     const totalOccurrences = occurrences.length;
     
     if (finishedCount >= totalOccurrences) {
-      await this.taskAdapter.updateTask(taskId, { isActive: false });
+      await this.taskAdapter.deleteTask(taskId);
     }
   }
 
@@ -242,7 +242,7 @@ export class EventCompletionService {
         // Check if all occurrences are completed/skipped and deactivate task
         if (task.recurrence.maxOccurrences === 1) {
           // Single occurrence task - deactivate immediately
-          await this.taskAdapter.updateTask(task.id, { isActive: false });
+          await this.taskAdapter.deleteTask(task.id);
         } else {
           // Multiple occurrences - check if all are finished
           await this.checkAndDeactivateIfAllCompleted(task.id);
