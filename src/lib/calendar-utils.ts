@@ -75,12 +75,28 @@ export function getCurrentTimePosition(): number {
 /**
  * Ensures a date value is converted to a proper Date object in local timezone
  * Handles Date objects, timestamp strings, and ISO strings
+ * 
+ * IMPORTANT: When dates come from the database as ISO strings (e.g., "2024-11-02T14:00:00.000Z"),
+ * JavaScript's Date constructor automatically converts them to the local timezone.
+ * This function ensures consistent handling across the application.
  */
 export function ensureLocalDate(dateValue: Date | string | number): Date {
   if (dateValue instanceof Date) {
     return dateValue
   }
-  return new Date(dateValue)
+  
+  // Create a Date object from the value
+  // If it's an ISO string from the backend (UTC), this will automatically
+  // convert it to the local timezone
+  const date = new Date(dateValue)
+  
+  // Validate that the date is valid
+  if (isNaN(date.getTime())) {
+    console.error('Invalid date value:', dateValue)
+    return new Date() // Return current date as fallback
+  }
+  
+  return date
 }
 
 /**

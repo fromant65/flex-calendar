@@ -11,4 +11,9 @@ export {
   getOccurrenceWithOwnership,
   getCalendarEventWithOwnership,
 } from "./ownership.helper";
+export {
+  ensureDate,
+  normalizeDates,
+  normalizeDatesArray,
+} from "./date-utils";
 

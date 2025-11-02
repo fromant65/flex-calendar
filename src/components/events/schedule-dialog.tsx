@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { HelpTip } from "~/components/ui/help-tip"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
+import { Alert, AlertDescription } from "../ui/alert"
+import { AlertCircle } from "lucide-react"
 import { ensureLocalDate } from "~/lib/calendar-utils"
 
 interface ScheduleDialogProps {
@@ -31,8 +33,14 @@ export function ScheduleDialog({
   const [startTime, setStartTime] = useState("")
   const [endTime, setEndTime] = useState("")
   const [context, setContext] = useState<string>("")
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    // Reset error when dialog opens or closes
+    if (!open) {
+      setError(null);
+    }
+    
     if (event) {
       // Editing existing event
       const start = ensureLocalDate(event.start)
@@ -60,6 +68,13 @@ export function ScheduleDialog({
       setContext("")
     }
   }, [event, selectedHour, occurrence, open])
+  
+  // Clear error when times change
+  useEffect(() => {
+    if (error) {
+      setError(null);
+    }
+  }, [startTime, endTime])
 
   const handleSchedule = () => {
     if (!selectedDate || !startTime || !endTime) return
@@ -75,7 +90,7 @@ export function ScheduleDialog({
 
     // Validate that end time is after start time
     if (finish <= start) {
-      alert("La hora de fin debe ser posterior a la hora de inicio")
+      setError("La hora de finalización debe ser posterior a la hora de inicio")
       return
     }
 
@@ -136,6 +151,13 @@ export function ScheduleDialog({
                   })}
                 </p>
               </div>
+            )}
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
 
             <div className="grid grid-cols-2 gap-4">

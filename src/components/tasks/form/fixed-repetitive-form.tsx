@@ -1,7 +1,8 @@
 import { useState } from "react"
-import { Lock } from "lucide-react"
+import { Lock, AlertCircle } from "lucide-react"
 import { Label } from "~/components/ui/label"
 import { Input } from "~/components/ui/input"
+import { Alert, AlertDescription } from "~/components/ui/alert"
 import { DaySelector } from "./day-selector"
 
 type RecurrencePattern = "days-of-week" | "days-of-month"
@@ -17,6 +18,7 @@ interface FixedRepetitiveFormProps {
   onFixedStartTimeChange: (value: string) => void
   onFixedEndTimeChange: (value: string) => void
   onEndDateChange: (value: string) => void
+  validationError?: string | null
 }
 
 export function FixedRepetitiveForm({
@@ -30,6 +32,7 @@ export function FixedRepetitiveForm({
   onFixedStartTimeChange,
   onFixedEndTimeChange,
   onEndDateChange,
+  validationError,
 }: FixedRepetitiveFormProps) {
   // Determine current pattern
   const getCurrentPattern = (): RecurrencePattern => {
@@ -182,6 +185,14 @@ export function FixedRepetitiveForm({
           />
         </div>
       </div>
+
+      {/* Validation Error Alert */}
+      {validationError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{validationError}</AlertDescription>
+        </Alert>
+      )}
 
       <div>
         <Label htmlFor="endDate" className="text-foreground">

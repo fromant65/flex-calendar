@@ -4,7 +4,7 @@
 
 import { CalendarEventRepository, TaskOccurrenceRepository, TaskRecurrenceRepository } from "../repository";
 import type { CreateCalendarEventDTO, UpdateCalendarEventDTO } from "../services/types";
-import { calculateTaskType } from "../helpers";
+import { calculateTaskType, normalizeDates, normalizeDatesArray } from "../helpers";
 
 export class CalendarEventAdapter {
   private eventRepo: CalendarEventRepository;
@@ -37,7 +37,11 @@ export class CalendarEventAdapter {
    * Get event by ID
    */
   async getEventById(eventId: number) {
-    return await this.eventRepo.findById(eventId);
+    const event = await this.eventRepo.findById(eventId);
+    if (!event) return undefined;
+    
+    // Normalize dates to ensure they are Date objects for SuperJSON serialization
+    return normalizeDates(event, ['start', 'finish', 'completedAt', 'createdAt', 'updatedAt']);
   }
 
   /**
@@ -51,7 +55,9 @@ export class CalendarEventAdapter {
    * Get all events for a user
    */
   async getEventsByOwnerId(ownerId: string) {
-    return await this.eventRepo.findByOwnerId(ownerId);
+    const events = await this.eventRepo.findByOwnerId(ownerId);
+    // Normalize dates for all events
+    return normalizeDatesArray(events, ['start', 'finish', 'completedAt', 'createdAt', 'updatedAt']);
   }
 
   /**
@@ -93,7 +99,9 @@ export class CalendarEventAdapter {
    * Get events in a date range
    */
   async getEventsByDateRange(ownerId: string, startDate: Date, endDate: Date) {
-    return await this.eventRepo.findByDateRange(ownerId, startDate, endDate);
+    const events = await this.eventRepo.findByDateRange(ownerId, startDate, endDate);
+    // Normalize dates for all events
+    return normalizeDatesArray(events, ['start', 'finish', 'completedAt', 'createdAt', 'updatedAt']);
   }
 
   /**

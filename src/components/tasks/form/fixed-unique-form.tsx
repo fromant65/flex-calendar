@@ -1,6 +1,7 @@
-import { Lock } from "lucide-react"
+import { Lock, AlertCircle } from "lucide-react"
 import { Label } from "~/components/ui/label"
 import { Input } from "~/components/ui/input"
+import { Alert, AlertDescription } from "~/components/ui/alert"
 
 interface FixedUniqueFormProps {
   fixedDate: string | undefined
@@ -9,6 +10,7 @@ interface FixedUniqueFormProps {
   onFixedDateChange: (value: string) => void
   onFixedStartTimeChange: (value: string) => void
   onFixedEndTimeChange: (value: string) => void
+  validationError?: string | null
 }
 
 export function FixedUniqueForm({
@@ -18,6 +20,7 @@ export function FixedUniqueForm({
   onFixedDateChange,
   onFixedStartTimeChange,
   onFixedEndTimeChange,
+  validationError,
 }: FixedUniqueFormProps) {
   return (
     <div className="space-y-3 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/30 p-4">
@@ -66,6 +69,15 @@ export function FixedUniqueForm({
           />
         </div>
       </div>
+      
+      {/* Validation Error Alert */}
+      {validationError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{validationError}</AlertDescription>
+        </Alert>
+      )}
+      
       <p className="text-xs text-blue-600 dark:text-blue-400">
         Se creará un evento automáticamente en el calendario en la fecha y horario especificados
       </p>

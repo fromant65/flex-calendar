@@ -29,6 +29,7 @@ interface TaskFormModalProps {
 export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: TaskFormModalProps) {
   const [taskType, setTaskType] = useState<FormTaskType>("unique")
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [validationError, setValidationError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -103,6 +104,13 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
       resetForm()
     }
   }, [editingTask, open])
+  
+  // Clear validation error when relevant fields change
+  useEffect(() => {
+    if (validationError) {
+      setValidationError(null)
+    }
+  }, [formData.fixedStartTime, formData.fixedEndTime, formData.fixedDate, formData.daysOfWeek, formData.daysOfMonth, formData.endDate])
 
   const resetForm = () => {
     setFormData({
@@ -123,30 +131,46 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
     })
     setTaskType("unique")
     setShowAdvanced(false)
+    setValidationError(null)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Clear previous validation errors
+    setValidationError(null)
 
     const isFixed = taskType === "fixed-unique" || taskType === "fixed-repetitive"
 
     // Validation for fixed tasks
     if (isFixed) {
       if (!formData.fixedStartTime || !formData.fixedEndTime) {
-        alert("Las tareas fijas deben tener horario de inicio y fin")
+        setValidationError("Las tareas fijas deben tener horario de inicio y fin")
         return
       }
+      
+      // Validate that end time is after start time
+      const [startHour, startMinute] = formData.fixedStartTime.split(":").map(Number)
+      const [endHour, endMinute] = formData.fixedEndTime.split(":").map(Number)
+      const startMinutes = startHour! * 60 + startMinute!
+      const endMinutes = endHour! * 60 + endMinute!
+      
+      if (endMinutes <= startMinutes) {
+        setValidationError("La hora de finalización debe ser posterior a la hora de inicio")
+        return
+      }
+      
       if (taskType === "fixed-unique" && !formData.fixedDate) {
-        alert("Las tareas fijas únicas deben tener una fecha definida")
+        setValidationError("Las tareas fijas únicas deben tener una fecha definida")
         return
       }
       if (taskType === "fixed-repetitive") {
         if (!formData.daysOfWeek.length && !formData.daysOfMonth.length) {
-          alert("Las tareas fijas repetitivas deben tener días de la semana o del mes definidos")
+          setValidationError("Las tareas fijas repetitivas deben tener días de la semana o del mes definidos")
           return
         }
         if (!formData.endDate) {
-          alert("Las tareas fijas repetitivas deben tener una fecha de finalización para evitar generar eventos infinitamente")
+          setValidationError("Las tareas fijas repetitivas deben tener una fecha de finalización para evitar generar eventos infinitamente")
           return
         }
       }
@@ -302,6 +326,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
               onFixedDateChange={(value) => setFormData({ ...formData, fixedDate: value })}
               onFixedStartTimeChange={(value) => setFormData({ ...formData, fixedStartTime: value })}
               onFixedEndTimeChange={(value) => setFormData({ ...formData, fixedEndTime: value })}
+              validationError={validationError}
             />
           )}
 
@@ -318,6 +343,7 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
               onFixedStartTimeChange={(value) => setFormData({ ...formData, fixedStartTime: value })}
               onFixedEndTimeChange={(value) => setFormData({ ...formData, fixedEndTime: value })}
               onEndDateChange={(value) => setFormData({ ...formData, endDate: value })}
+              validationError={validationError}
             />
           )}
 
