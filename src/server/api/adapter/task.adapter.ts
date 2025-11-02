@@ -41,6 +41,19 @@ export class TaskAdapter {
       recurrenceId = recurrence.id;
     }
 
+    // Extract fixed times from targetDate and limitDate for fixed tasks
+    let fixedStartTime: string | null = null;
+    let fixedEndTime: string | null = null;
+    
+    if (data.isFixed && data.targetDate && data.limitDate) {
+      const startDate = new Date(data.targetDate);
+      const endDate = new Date(data.limitDate);
+      
+      // Format times as HH:MM:SS
+      fixedStartTime = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}:${String(startDate.getSeconds()).padStart(2, '0')}`;
+      fixedEndTime = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}:${String(endDate.getSeconds()).padStart(2, '0')}`;
+    }
+
     // Create the task
     const task = await this.taskRepo.create({
       ownerId,
@@ -50,6 +63,8 @@ export class TaskAdapter {
       recurrenceId,
       isActive: true,
       isFixed: data.isFixed ?? false,
+      fixedStartTime,
+      fixedEndTime,
     });
 
     return task;
