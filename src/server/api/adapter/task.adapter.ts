@@ -16,7 +16,7 @@ import type {
   TaskRecurrence,
   TaskType,
 } from "../services/types";
-import { calculateTaskType } from "../helpers";
+import { calculateTaskType, normalizeDates, normalizeDatesArray } from "../helpers";
 
 export class TaskAdapter {
   private taskRepo: TaskRepository;
@@ -76,7 +76,11 @@ export class TaskAdapter {
    * Get task by ID
    */
   async getTaskById(taskId: number): Promise<Task | undefined> {
-    return await this.taskRepo.findById(taskId);
+    const task = await this.taskRepo.findById(taskId);
+    if (!task) return undefined;
+    
+    // Normalize dates to ensure they are Date objects for SuperJSON serialization
+    return normalizeDates(task, ['completedAt', 'createdAt', 'updatedAt']);
   }
 
   /**
@@ -97,14 +101,18 @@ export class TaskAdapter {
    * Get all tasks for a user
    */
   async getTasksByOwnerId(ownerId: string): Promise<Task[]> {
-    return await this.taskRepo.findByOwnerId(ownerId);
+    const tasks = await this.taskRepo.findByOwnerId(ownerId);
+    // Normalize dates for all tasks
+    return normalizeDatesArray(tasks, ['completedAt', 'createdAt', 'updatedAt']);
   }
 
   /**
    * Get active tasks for a user
    */
   async getActiveTasksByOwnerId(ownerId: string): Promise<Task[]> {
-    return await this.taskRepo.findActiveByOwnerId(ownerId);
+    const tasks = await this.taskRepo.findActiveByOwnerId(ownerId);
+    // Normalize dates for all tasks
+    return normalizeDatesArray(tasks, ['completedAt', 'createdAt', 'updatedAt']);
   }
 
   /**

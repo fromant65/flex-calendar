@@ -4,6 +4,7 @@
 
 import { TaskRecurrenceRepository } from "../repository";
 import type { TaskRecurrence } from "../services/types";
+import { normalizeDates } from "../helpers";
 
 export class RecurrenceAdapter {
   private recurrenceRepo: TaskRecurrenceRepository;
@@ -17,7 +18,10 @@ export class RecurrenceAdapter {
    */
   async getRecurrenceById(recurrenceId: number): Promise<TaskRecurrence | undefined> {
     const recurrence = await this.recurrenceRepo.findById(recurrenceId);
-    return recurrence ? (recurrence as TaskRecurrence) : undefined;
+    if (!recurrence) return undefined;
+    
+    // Normalize dates to ensure they are Date objects for SuperJSON serialization
+    return normalizeDates(recurrence as TaskRecurrence, ['creationDate', 'lastPeriodStart', 'endDate']);
   }
 
   /**

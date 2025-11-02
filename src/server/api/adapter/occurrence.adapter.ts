@@ -9,7 +9,7 @@ import type {
   TaskOccurrence,
   TaskOccurrenceStatus,
 } from "../services/types";
-import { calculateTaskType } from "../helpers";
+import { calculateTaskType, normalizeDates, normalizeDatesArray } from "../helpers";
 
 export class OccurrenceAdapter {
   private occurrenceRepo: TaskOccurrenceRepository;
@@ -44,7 +44,10 @@ export class OccurrenceAdapter {
    */
   async getOccurrenceById(occurrenceId: number): Promise<TaskOccurrence | undefined> {
     const occurrence = await this.occurrenceRepo.findById(occurrenceId);
-    return occurrence ? (occurrence as TaskOccurrence) : undefined;
+    if (!occurrence) return undefined;
+    
+    // Normalize dates to ensure they are Date objects for SuperJSON serialization
+    return normalizeDates(occurrence as TaskOccurrence, ['startDate', 'limitDate', 'targetDate', 'createdAt', 'updatedAt']);
   }
 
   /**
@@ -58,14 +61,18 @@ export class OccurrenceAdapter {
    * Get all occurrences for a task
    */
   async getOccurrencesByTaskId(taskId: number) {
-    return await this.occurrenceRepo.findByTaskId(taskId);
+    const occurrences = await this.occurrenceRepo.findByTaskId(taskId);
+    // Normalize dates for all occurrences
+    return normalizeDatesArray(occurrences, ['startDate', 'limitDate', 'targetDate', 'createdAt', 'updatedAt']);
   }
 
   /**
    * Get occurrences by status
    */
   async getOccurrencesByTaskIdAndStatus(taskId: number, status: TaskOccurrenceStatus) {
-    return await this.occurrenceRepo.findByTaskIdAndStatus(taskId, status);
+    const occurrences = await this.occurrenceRepo.findByTaskIdAndStatus(taskId, status);
+    // Normalize dates for all occurrences
+    return normalizeDatesArray(occurrences, ['startDate', 'limitDate', 'targetDate', 'createdAt', 'updatedAt']);
   }
 
   /**
