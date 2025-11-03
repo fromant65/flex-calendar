@@ -3,6 +3,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { CheckCircle2, Edit, AlertCircle, SkipForward } from "lucide-react";
 import HelpTip from "~/components/ui/help-tip"
+import { normalizeDateForDisplay, formatDateLong, getLimitDateDisplay as getLimit } from "~/lib/date-display-utils";
 
 interface OccurrenceCardProps {
   occurrence: any;
@@ -14,52 +15,6 @@ interface OccurrenceCardProps {
   isCompleting?: boolean;
   isSkipping?: boolean;
 }
-
-// Helper to format dates
-const formatDate = (date: Date | null | undefined) => {
-  if (!date) return "N/A";
-  return new Date(date).toLocaleDateString("es-AR", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-};
-
-// Helper to format urgency (0-10 scale)
-const getUrgencyDisplay = (urgency: number | null) => {
-  if (urgency === null || urgency === 0) {
-    return { text: "Baja", color: "text-green-600 dark:text-green-400", badge: null };
-  }
-
-  if (urgency <= 5) {
-    return {
-      text: `${urgency.toFixed(1)}/10`,
-      color: "text-green-600 dark:text-green-400",
-      badge: null,
-    };
-  } else if (urgency <= 9) {
-    return {
-      text: `${urgency.toFixed(1)}/10`,
-      color: "text-orange-600 dark:text-orange-400",
-      badge: (
-        <Badge variant="outline" className="border-orange-500 text-orange-700 dark:text-orange-400">
-          Bastante urgente
-        </Badge>
-      ),
-    };
-  } else {
-    return {
-      text: `${urgency.toFixed(1)}/10`,
-      color: "text-red-600 dark:text-red-400 font-semibold",
-      badge: (
-        <Badge variant="destructive" className="flex items-center gap-1">
-          <AlertCircle className="h-3 w-3" />
-          Muy urgente
-        </Badge>
-      ),
-    };
-  }
-};
 
 // Helper to get status badge
 const getStatusBadge = (status: string) => {
@@ -97,18 +52,32 @@ export function OccurrenceCard({
   isCompleting = false,
   isSkipping = false,
 }: OccurrenceCardProps) {
-  const urgencyDisplay = getUrgencyDisplay(occurrence.urgency);
+  const limitDateDisplay = getLimit(occurrence.limitDate);
   const isActive = occurrence.status !== "Completed" && occurrence.status !== "Skipped";
+
+  // Create badge component from the badge text
+  const limitBadge = limitDateDisplay.badgeText ? (
+    limitDateDisplay.badgeText === "Vencida" ? (
+      <Badge variant="destructive" className="flex items-center gap-1">
+        <AlertCircle className="h-3 w-3" />
+        {limitDateDisplay.badgeText}
+      </Badge>
+    ) : (
+      <Badge variant="outline" className="border-orange-500 text-orange-700 dark:text-orange-400">
+        {limitDateDisplay.badgeText}
+      </Badge>
+    )
+  ) : null;
 
   return (
     <div className="rounded-lg border border-border bg-card p-3.5 transition-all hover:border-primary/30 hover:shadow-md">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex-1 space-y-2.5">
-          {/* Status and urgency badges */}
+          {/* Status and limit date badges */}
           <div className="flex items-center gap-2 flex-wrap justify-between">
             <div className="flex items-center gap-2 flex-wrap">
               {getStatusBadge(occurrence.status)}
-              {urgencyDisplay.badge}
+              {limitBadge}
             </div>
             <HelpTip title="Acciones sobre ocurrencia">
               Editar: cambiar horas dedicadas. <br />
@@ -122,12 +91,12 @@ export function OccurrenceCard({
             {/* Row 1: Dates */}
             <div>
               <span className="font-medium text-muted-foreground">Inicio: </span>
-            <span className="text-foreground">{occurrence.startDate ? formatDate(occurrence.startDate) : "N/A"}</span>
+            <span className="text-foreground">{occurrence.startDate ? formatDateLong(occurrence.startDate) : "N/A"}</span>
             </div>
             {occurrence.targetDate && (
               <div>
                 <span className="font-medium text-muted-foreground">Fecha meta: </span>
-                <span className="text-foreground">{formatDate(occurrence.targetDate)}</span>
+                <span className="text-foreground">{formatDateLong(occurrence.targetDate)}</span>
               </div>
             )}
               
@@ -135,7 +104,7 @@ export function OccurrenceCard({
             {occurrence.limitDate && (
               <div>
                 <span className="font-medium text-muted-foreground">Fecha límite: </span>
-                <span className="font-semibold text-foreground">{formatDate(occurrence.limitDate)}</span>
+                <span className="font-semibold text-foreground">{formatDateLong(occurrence.limitDate)}</span>
               </div>
             )}
             <div>
@@ -154,13 +123,6 @@ export function OccurrenceCard({
               )}
             </div>
 
-            {/* Row 4: Urgency */}
-            {occurrence.urgency !== null && (
-              <div>
-                <span className="font-medium text-muted-foreground">Urgencia: </span>
-                <span className={urgencyDisplay.color}>{urgencyDisplay.text}</span>
-              </div>
-            )}
           </div>
         </div>
 

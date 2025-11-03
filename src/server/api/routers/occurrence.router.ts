@@ -102,22 +102,6 @@ export const occurrenceRouter = createTRPCRouter({
         ctx.session.user.id
       );
       
-      console.log("=== DEBUG getByDateRange ===");
-      console.log("User ID:", ctx.session.user.id);
-      console.log("Total occurrences from DB:", occurrences.length);
-      if (occurrences.length > 0) {
-        const sample = occurrences[0];
-        console.log("Sample occurrence:", {
-          id: sample?.id,
-          createdAt: sample?.createdAt,
-          createdAtType: typeof sample?.createdAt,
-          targetDate: sample?.targetDate,
-          targetDateType: typeof sample?.targetDate,
-          limitDate: sample?.limitDate,
-          limitDateType: typeof sample?.limitDate,
-        });
-      }
-      
       const enriched = analyticsService.enrichOccurrencesWithUrgency(occurrences);
       
       return enriched;

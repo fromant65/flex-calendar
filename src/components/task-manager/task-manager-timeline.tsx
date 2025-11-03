@@ -220,10 +220,10 @@ export function TaskManagerTimeline({
                   <strong className="text-slate-500 dark:text-slate-400">●</strong> Saltada
                 </p>
                 
-                <p className="font-semibold mt-3">Urgencia:</p>
+                <p className="font-semibold mt-3">Fecha Límite:</p>
                 <p>
                   <strong className="text-red-600 dark:text-red-400">Borde rojo</strong> = vencida <br/>
-                  <strong className="text-orange-600 dark:text-orange-400">Borde naranja</strong> = vence pronto (≤2 días)
+                  <strong className="text-orange-600 dark:text-orange-400">Borde naranja</strong> = vence pronto (≤3 días)
                 </p>
               </div>
             </HelpTip>

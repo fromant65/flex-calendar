@@ -180,8 +180,8 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
           <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-semibold text-foreground">Tareas Urgentes</h2>
-                <HelpTip title="Tareas urgentes">
+                <h2 className="text-xl font-semibold text-foreground">Eventos Urgentes</h2>
+                <HelpTip title="Eventos urgentes">
                   Estas son tus tareas con mayor puntuación de urgencia. Se ordenan por prioridad (1 = más urgente). <br />
                   Puedes tocar el título para ver los detalles de la tarea. <br />
                   Desde los botones de acción puedes marcar como completada o saltar. <br />
@@ -206,8 +206,8 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
           <div className="group rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-semibold text-foreground">Tareas Importantes</h2>
-                <HelpTip title="Tareas importantes">
+                <h2 className="text-xl font-semibold text-foreground">Eventos Importantes</h2>
+                <HelpTip title="Eventos importantes">
                   Estas son tus tareas con mayor valor de importancia (mayor a 5). <br />
                   Puedes tocar el título para ver los detalles de la tarea. <br />
                   Desde los botones de acción puedes marcar como completada o saltar. <br />

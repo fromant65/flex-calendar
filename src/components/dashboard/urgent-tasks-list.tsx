@@ -5,6 +5,8 @@ import { AlertCircle, Calendar, Clock, Flag } from "lucide-react"
 import { cn } from "~/lib/utils"
 import { getTaskTypeClassName } from "~/lib/task-type-colors"
 import { TaskActionButtons } from "./task-action-buttons"
+import { getLimitDateDisplay } from "~/lib/date-display-utils"
+import { Badge } from "~/components/ui/badge"
 
 interface UrgentTasksListProps {
   occurrences: OccurrenceWithTask[]
@@ -30,13 +32,13 @@ export function UrgentTasksList({ occurrences, onTaskClick, onCompleteTask, onSk
     <div className="space-y-2.5">
       {occurrences.map((occurrence, index) => {
         const task = occurrence.task
-        const urgency = occurrence.urgency ?? 0
         const importance = task?.importance ?? 0
+        const limitDisplay = getLimitDateDisplay(occurrence.limitDate)
         
-        // Determine urgency level for styling
+        // Determine urgency level based on limit date proximity
         const urgencyLevel = 
-          urgency >= 9 ? "critical" : 
-          urgency >= 7 ? "high" : 
+          limitDisplay.badgeText === "Vencida" || limitDisplay.badgeText === "Hoy" ? "critical" : 
+          limitDisplay.badgeText === "Mañana" || limitDisplay.badgeText === "Próxima" ? "high" : 
           "medium"
         
         const urgencyColors = {
@@ -90,35 +92,37 @@ export function UrgentTasksList({ occurrences, onTaskClick, onCompleteTask, onSk
 
               {/* Metrics */}
               <div className="flex flex-wrap items-center gap-2.5 text-xs">
-                <div className="flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  <span className="font-medium">Urgencia:</span>
-                  <span className={cn("font-bold", urgencyTextColors[urgencyLevel])}>
-                    {urgency.toFixed(1)}
-                  </span>
-                </div>
+                {/* Limit date display */}
+                {occurrence.limitDate && (
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-3 w-3" />
+                    <span className="font-medium">Límite:</span>
+                    <span className={cn("font-bold", limitDisplay.color)}>
+                      {limitDisplay.shortText}
+                    </span>
+                    {limitDisplay.badgeText && (
+                      <Badge 
+                        variant={limitDisplay.badgeText === "Vencida" ? "destructive" : "outline"}
+                        className={cn(
+                          "text-[10px] px-1.5 py-0",
+                          limitDisplay.badgeText !== "Vencida" && "border-orange-500 text-orange-700 dark:text-orange-400"
+                        )}
+                      >
+                        {limitDisplay.badgeText}
+                      </Badge>
+                    )}
+                  </div>
+                )}
                 
                 <div className="flex items-center gap-1 text-muted-foreground">
                   <Flag className="h-3 w-3" />
-                  <span>{importance}</span>
+                  <span>Importancia: {importance}</span>
                 </div>
 
                 {occurrence.targetTimeConsumption && (
                   <div className="flex items-center gap-1 text-muted-foreground">
                     <Clock className="h-3 w-3" />
                     <span>{occurrence.targetTimeConsumption}h</span>
-                  </div>
-                )}
-
-                {occurrence.limitDate && (
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    <span>
-                      {new Date(occurrence.limitDate).toLocaleDateString("es-ES", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                    </span>
                   </div>
                 )}
               </div>

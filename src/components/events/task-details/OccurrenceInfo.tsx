@@ -2,6 +2,7 @@
 
 import type { OccurrenceWithTask, TaskWithRecurrence } from "~/types"
 import { Calendar, Clock, Target, CheckCircle2, Flag } from "lucide-react"
+import { getLimitDateDisplay } from "~/lib/date-display-utils"
 
 export function OccurrenceInfo({ displayOccurrence, task }: { displayOccurrence?: OccurrenceWithTask | null; task?: Partial<TaskWithRecurrence> | null }) {
   const taskWithRecurrence = task && 'recurrence' in task ? task : null
@@ -41,14 +42,16 @@ export function OccurrenceInfo({ displayOccurrence, task }: { displayOccurrence?
           </div>
         )}
 
-        {displayOccurrence?.urgency !== undefined && displayOccurrence?.urgency !== null && (
+        {displayOccurrence?.limitDate && (
           <div className="flex items-center gap-2.5 rounded-lg bg-muted/20 p-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-orange-500/10">
-              <Target className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+              <Calendar className="w-4 h-4 text-orange-600 dark:text-orange-400" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Urgencia</p>
-              <p className="text-sm font-semibold text-foreground">{displayOccurrence.urgency.toFixed(1)}/10</p>
+              <p className="text-xs text-muted-foreground">Fecha Límite</p>
+              <p className={`text-sm font-semibold ${getLimitDateDisplay(displayOccurrence.limitDate).color}`}>
+                {getLimitDateDisplay(displayOccurrence.limitDate).shortText}
+              </p>
             </div>
           </div>
         )}

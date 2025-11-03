@@ -6,6 +6,7 @@
 import { useState } from "react"
 import { Clock, Calendar, AlertCircle, CheckCircle2, ChevronDown } from "lucide-react"
 import type { OccurrenceWithTask, EventWithDetails } from "~/types"
+import { getLimitDateDisplay, formatDateShort } from "~/lib/date-display-utils"
 
 interface OccurrenceAccordionProps {
   occurrence: OccurrenceWithTask
@@ -26,6 +27,8 @@ export function OccurrenceAccordion({
   isOpen,
   onToggle,
 }: OccurrenceAccordionProps) {
+  const limitDisplay = getLimitDateDisplay(occurrence.limitDate);
+  
   return (
     <div className="rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/50 overflow-hidden">
       {/* Accordion Header */}
@@ -43,11 +46,11 @@ export function OccurrenceAccordion({
             Ocurrencia #{index + 1}
           </h4>
         </div>
-        {occurrence.urgency !== undefined && (
+        {occurrence.limitDate && (
           <div className="flex items-center gap-1 px-2 py-1 rounded bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800">
             <AlertCircle className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-            <span className="text-xs font-bold text-amber-700 dark:text-amber-300">
-              Urgencia: {occurrence.urgency}/10
+            <span className={`text-xs font-bold ${limitDisplay.color}`}>
+              Límite: {formatDateShort(occurrence.limitDate)}
             </span>
           </div>
         )}

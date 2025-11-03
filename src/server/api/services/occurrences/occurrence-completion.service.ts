@@ -61,7 +61,7 @@ export class OccurrenceCompletionService {
       }
       // Tarea Fija (Única o Repetitiva): Check if all occurrences are done
       else if (task.isFixed) {
-        await this.checkAndDeactivateIfAllCompleted(task.id);
+        await this.checkAndCompleteIfAllDone(task.id);
       }
       // Recurrente Finita: maxOccurrences > 1, no interval
       else if (recurrence.maxOccurrences && recurrence.maxOccurrences > 1 && !recurrence.interval) {
@@ -118,7 +118,7 @@ export class OccurrenceCompletionService {
       }
       // Tarea Fija (Única o Repetitiva): Check if all occurrences are done
       else if (task.isFixed) {
-        await this.checkAndDeactivateIfAllCompleted(task.id);
+        await this.checkAndCompleteIfAllDone(task.id);
       }
       // Recurrente Finita: maxOccurrences > 1, no interval
       else if (recurrence.maxOccurrences && recurrence.maxOccurrences > 1 && !recurrence.interval) {
@@ -141,16 +141,16 @@ export class OccurrenceCompletionService {
   }
 
   /**
-   * Check if all occurrences are completed/skipped and deactivate task
-   * This ensures tasks are deactivated when all work is done (either completed or skipped)
+   * Check if all occurrences are completed/skipped and complete the task
+   * This ensures tasks are completed when all work is done (either completed or skipped)
    */
-  private async checkAndDeactivateIfAllCompleted(taskId: number): Promise<void> {
+  private async checkAndCompleteIfAllDone(taskId: number): Promise<void> {
     const occurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
     const finishedCount = occurrences.filter(o => o.status === "Completed" || o.status === "Skipped").length;
     const totalOccurrences = occurrences.length;
     
     if (finishedCount >= totalOccurrences) {
-      await this.taskAdapter.deleteTask(taskId);
+      await this.taskAdapter.completeTask(taskId);
     }
   }
 

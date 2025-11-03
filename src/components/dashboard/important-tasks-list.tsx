@@ -4,6 +4,8 @@ import type { OccurrenceWithTask } from "~/types"
 import { Star, Calendar, Clock, Flag, AlertCircle } from "lucide-react"
 import { cn } from "~/lib/utils"
 import { TaskActionButtons } from "./task-action-buttons"
+import { getLimitDateDisplay } from "~/lib/date-display-utils"
+import { Badge } from "~/components/ui/badge"
 
 interface ImportantTasksListProps {
   occurrences: OccurrenceWithTask[]
@@ -29,8 +31,8 @@ export function ImportantTasksList({ occurrences, onTaskClick, onCompleteTask, o
     <div className="space-y-2.5">
       {occurrences.map((occurrence, index) => {
         const task = occurrence.task
-        const urgency = occurrence.urgency ?? 0
         const importance = task?.importance ?? 0
+        const limitDisplay = getLimitDateDisplay(occurrence.limitDate)
         
         // Determine importance level for styling
         const importanceLevel = 
@@ -98,27 +100,21 @@ export function ImportantTasksList({ occurrences, onTaskClick, onCompleteTask, o
                   </span>
                 </div>
                 
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <AlertCircle className="h-3 w-3" />
-                  <span>{urgency.toFixed(1)}</span>
-                </div>
+                {/* Limit date display */}
+                {occurrence.limitDate && (
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Calendar className="h-3 w-3" />
+                    <span>Límite: </span>
+                    <span className={limitDisplay.color}>
+                      {limitDisplay.shortText}
+                    </span>
+                  </div>
+                )}
 
                 {occurrence.targetTimeConsumption && (
                   <div className="flex items-center gap-1 text-muted-foreground">
                     <Clock className="h-3 w-3" />
                     <span>{occurrence.targetTimeConsumption}h</span>
-                  </div>
-                )}
-
-                {occurrence.limitDate && (
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    <span>
-                      {new Date(occurrence.limitDate).toLocaleDateString("es-ES", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                    </span>
                   </div>
                 )}
               </div>

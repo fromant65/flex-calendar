@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "~/components/ui/dropdown-menu"
+import { formatDateShort } from "~/lib/date-display-utils"
 
 interface QuadrantPanelProps {
   title: string
@@ -89,7 +90,7 @@ export function QuadrantPanel({
               <DropdownMenuItem onClick={() => setSortBy("urgency")}>
                 {sortBy === "urgency" && <Check className="h-4 w-4 mr-2" />}
                 {sortBy !== "urgency" && <span className="w-4 mr-2" />}
-                Urgencia
+                Fecha límite
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSortBy("duration")}>
                 {sortBy === "duration" && <Check className="h-4 w-4 mr-2" />}
@@ -188,24 +189,21 @@ function TaskCard({ occurrence, quadrant, onSelect, onDragStart, onClick, isSele
             </span>
           </div>
         )}
-        {typeof occurrence.urgency === "number" && (
-          <div className="flex items-center gap-1">
-            <span className="whitespace-nowrap">Urgency: {occurrence.urgency}/10</span>
-          </div>
-        )}
         
         {/* Dates: targetDate and limitDate (inline with other metadata) */}
         {occurrence.targetDate && (
           <div className="flex items-center gap-1">
             <span className="text-[10px]">Meta:</span>
-            <span className="font-medium whitespace-nowrap text-[11px]">{new Date(occurrence.targetDate).toLocaleDateString()}</span>
+            <span className="font-medium whitespace-nowrap text-[11px]">{formatDateShort(occurrence.targetDate)}</span>
           </div>
         )}
 
         {occurrence.limitDate && (
           <div className="flex items-center gap-1">
             <span className="text-[10px]">Límite:</span>
-            <span className="font-medium whitespace-nowrap text-[11px]">{new Date(occurrence.limitDate).toLocaleDateString()}</span>
+            <span className={`font-medium whitespace-nowrap text-[11px]`}>
+              {formatDateShort(occurrence.limitDate)}
+            </span>
           </div>
         )}
       </div>

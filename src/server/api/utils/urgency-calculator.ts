@@ -6,6 +6,12 @@
  * - Statistics service (for historical urgency at completion time)
  * - Task analytics service (for real-time urgency)
  * - Any other service that needs to calculate task urgency
+ * 
+ * NEW ALGORITHM (Simplified):
+ * - Urgency is calculated based on proximity to limit date
+ * - Closer limit date = HIGHER urgency number
+ * - Target date is used for tie-breaking when limit dates are equal
+ * - The urgency number is primarily for sorting (higher = more urgent)
  */
 
 import type { UrgencyCalculationInput, UrgencyCalculationResult } from "../services/types";
@@ -15,12 +21,10 @@ export class UrgencyCalculator {
    * Calculate urgency for a task occurrence
    *
    * Algorithm:
-   * - Urgency 0-5: Before target date (based on progress: time elapsed / time remaining)
-   * - Urgency 5-10: Between target and limit date
-   * - Urgency > 10: Past limit date (overdue)
-   * 
-   * Special case: If target and limit are very close (distance target->limit < half of start->target),
-   * use proportional calculation from start to limit for more accurate urgency.
+   * - Uses limit date as primary urgency factor
+   * - Urgency = 1000 - daysUntilLimit (so closer dates have higher urgency)
+   * - If limit dates are equal, uses target date for tie-breaking
+   * - Overdue tasks get extra urgency boost
    *
    * @param input - The urgency calculation parameters
    * @returns The calculated urgency and metadata
@@ -37,7 +41,6 @@ export class UrgencyCalculator {
     }
 
     const now = currentDate.getTime();
-    const created = creationDate.getTime();
     const target = targetDate?.getTime();
     const limit = limitDate?.getTime();
 
@@ -52,84 +55,41 @@ export class UrgencyCalculator {
     let urgency = 0;
     let isOverdue = false;
 
-    // Check if we should use alternative calculation method
-    // When target and limit dates are very close, use proportional calculation
-    const useAlternativeCalculation = target && limit && 
-      (limit - target) < (target - created) / 2;
-
-    // Case 1: Past limit date - OVERDUE
-    if (limit && now > limit) {
-      const daysOverdue = Math.abs(daysUntilLimit ?? 0);
-      urgency = 10 + Math.min(daysOverdue * 0.5, 10); // Max urgency of 20
-      isOverdue = true;
-    }
-    // Alternative calculation: When target-limit distance is very small
-    // Use proportional calculation from start to limit with x*ln(1+x) function
-    // This accelerates as deadline approaches (similar to Case 2)
-    else if (useAlternativeCalculation && target && limit && now < limit) {
-      const dayMs = 1000 * 60 * 60 * 24;
-      const daysPassed = Math.max(0, (now - created) / dayMs);
-      const totalDays = Math.max(0, (limit - created) / dayMs);
-
-      if (totalDays <= 0) {
-        urgency = 10;
-      } else if (daysPassed <= 0) {
-        urgency = 0.5;
+    // Primary calculation: based on limit date
+    if (limit) {
+      const daysUntilLimitValue = Math.floor((limit - now) / (1000 * 60 * 60 * 24));
+      
+      // Overdue tasks get very high urgency
+      if (daysUntilLimitValue < 0) {
+        // More days overdue = higher urgency
+        // Base urgency of 1000 + days overdue
+        urgency = 1000 + Math.abs(daysUntilLimitValue);
+        isOverdue = true;
       } else {
-        // Use x*ln(1+x) scaled to [0,10]
-        // At x=1: f(1) = 1*ln(2) ≈ 0.693
-        const fraction = Math.min(1, daysPassed / totalDays); // x in [0,1]
-        const score = fraction * Math.log(1 + fraction);
-        const maxScore = Math.log(2); // ≈ 0.693 when fraction = 1
-        urgency = Math.min(10, (score / maxScore) * 10);
+        // Not overdue: urgency = 1000 - days until limit
+        // So 0 days away = 1000, 1 day away = 999, etc.
+        urgency = 1000 - daysUntilLimitValue;
+      }
+      
+      // Use target date for fine-grained tie-breaking (fractional component)
+      // If two tasks have same limit date, the one with closer target is more urgent
+      if (target) {
+        const daysUntilTargetValue = Math.floor((target - now) / (1000 * 60 * 60 * 24));
+        // Add a small fractional component based on target date (max 0.999)
+        const targetComponent = Math.min(0.999, (1000 - daysUntilTargetValue) / 1000);
+        urgency += targetComponent;
       }
     }
-    // Case 2: Between target and limit
-    else if (target && limit && now >= target && now <= limit) {
-      // New rule: urgency between 6 and 10, growth at rate x * ln(1 + x)
-      // where x = days passed since target
-      const dayMs = 1000 * 60 * 60 * 24;
-      const daysSinceTarget = Math.max(0, Math.floor((now - target) / dayMs));
-
-      // Score using x * ln(1 + x) (smooth, increasing). Normalize to 0..1 by score/(1+score)
-      const score = daysSinceTarget * Math.log(1 + daysSinceTarget);
-      const normalized = score > 0 ? score / (1 + score) : 0;
-      urgency = 6 + 4 * normalized; // maps into [6,10)
-    }
-    // Case 3: Before target date (between creation and target)
-    else if (target && now < target) {
-      // New rule: urgency between 0 and 6, grows at rate sqrt(x) where
-      // x = days passed since creation. We'll normalize by total days to target
-      // and apply sqrt to the fraction so urgency = 6 * sqrt(daysPassed/totalDays)
-      const dayMs = 1000 * 60 * 60 * 24;
-      const daysPassed = Math.max(0, (now - created) / dayMs);
-      const totalDays = Math.max(0, (target - created) / dayMs);
-
-      if (totalDays <= 0) {
-        urgency = 6;
-      } else if (daysPassed <= 0) {
-        // just created
-        urgency = 0.5;
+    // Fallback: only target date exists
+    else if (target) {
+      const daysUntilTargetValue = Math.floor((target - now) / (1000 * 60 * 60 * 24));
+      
+      if (daysUntilTargetValue < 0) {
+        urgency = 500 + Math.abs(daysUntilTargetValue);
+        isOverdue = true;
       } else {
-        const fraction = Math.min(1, daysPassed / totalDays);
-        urgency = Math.min(6, 6 * Math.sqrt(fraction));
-      }
-    }
-    // Case 4: Only limit date exists and we're before it
-    else if (limit && now < limit) {
-      const timeElapsed = now - created;
-      const timeRemaining = limit - now;
-
-      // Avoid division by zero
-      if (timeRemaining <= 0) {
-        urgency = 10;
-      } else if (timeElapsed <= 0) {
-        // If we just created the task, minimal urgency but not zero
-        const totalTime = limit - created;
-        urgency = totalTime > 0 ? 0.5 : 1; // Min 0.5, max 1
-      } else {
-        // Similar to case 3, but scaled to 10 instead of 5
-        urgency = Math.min(10, 10 * (timeElapsed / timeRemaining));
+        // Lower urgency range for tasks without limit date
+        urgency = 500 - daysUntilTargetValue;
       }
     }
 
