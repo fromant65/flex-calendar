@@ -14,6 +14,11 @@ import { TaskManagerFilterBar, type TaskManagerFilter } from "~/components/task-
 import { Button } from "~/components/ui/button";
 import type { OccurrenceWithTask } from "~/types";
 
+type TaskWithOccurrences = {
+  task: OccurrenceWithTask['task'];
+  occurrences: OccurrenceWithTask[];
+};
+
 export default function TaskManagerPage() {
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "timeline">("list");
@@ -21,6 +26,7 @@ export default function TaskManagerPage() {
     searchQuery: "",
     statusFilter: "all",
     taskTypeFilter: "all",
+    sortBy: "closest-target",
   });
   const [confirmAction, setConfirmAction] = useState<{
     type: "complete" | "skip";
@@ -185,6 +191,79 @@ export default function TaskManagerPage() {
     
     return grouped;
   }, [occurrences]);
+
+  // Sort tasks based on selected sort option
+  const sortedTasks = useMemo(() => {
+    const tasksArray: TaskWithOccurrences[] = Array.from(groupedOccurrences.entries()).map(
+      ([taskId, taskOccurrences]) => ({
+        task: taskOccurrences[0]!.task,
+        occurrences: taskOccurrences,
+      })
+    );
+
+    return tasksArray.sort((a, b) => {
+      switch (filters.sortBy) {
+        case "closest-target": {
+          // Find the closest target date among pending/in-progress occurrences
+          const aTarget = a.occurrences
+            .filter(o => o.status === "Pending" || o.status === "In Progress")
+            .map(o => o.targetDate ? new Date(o.targetDate).getTime() : Infinity)
+            .sort((x, y) => x - y)[0] ?? Infinity;
+          
+          const bTarget = b.occurrences
+            .filter(o => o.status === "Pending" || o.status === "In Progress")
+            .map(o => o.targetDate ? new Date(o.targetDate).getTime() : Infinity)
+            .sort((x, y) => x - y)[0] ?? Infinity;
+          
+          return aTarget - bTarget;
+        }
+        
+        case "closest-limit": {
+          // Find the closest limit date among pending/in-progress occurrences
+          const aLimit = a.occurrences
+            .filter(o => o.status === "Pending" || o.status === "In Progress")
+            .map(o => o.limitDate ? new Date(o.limitDate).getTime() : Infinity)
+            .sort((x, y) => x - y)[0] ?? Infinity;
+          
+          const bLimit = b.occurrences
+            .filter(o => o.status === "Pending" || o.status === "In Progress")
+            .map(o => o.limitDate ? new Date(o.limitDate).getTime() : Infinity)
+            .sort((x, y) => x - y)[0] ?? Infinity;
+          
+          return aLimit - bLimit;
+        }
+        
+        case "importance": {
+          // Sort by importance (higher first)
+          return (b.task.importance ?? 0) - (a.task.importance ?? 0);
+        }
+        
+        case "name": {
+          // Sort alphabetically by name
+          return a.task.name.localeCompare(b.task.name);
+        }
+        
+        case "time-allocated": {
+          // Sort by average target time consumption (higher first)
+          // Calculate average from pending/in-progress occurrences
+          const aAvgTime = a.occurrences
+            .filter(o => o.status === "Pending" || o.status === "In Progress")
+            .reduce((sum, o) => sum + (o.targetTimeConsumption ?? 0), 0) / 
+            Math.max(1, a.occurrences.filter(o => o.status === "Pending" || o.status === "In Progress").length);
+          
+          const bAvgTime = b.occurrences
+            .filter(o => o.status === "Pending" || o.status === "In Progress")
+            .reduce((sum, o) => sum + (o.targetTimeConsumption ?? 0), 0) / 
+            Math.max(1, b.occurrences.filter(o => o.status === "Pending" || o.status === "In Progress").length);
+          
+          return bAvgTime - aAvgTime;
+        }
+        
+        default:
+          return 0;
+      }
+    });
+  }, [groupedOccurrences, filters.sortBy]);
 
   // Calculate total tasks count (before filtering)
   const totalTasksCount = useMemo(() => {
@@ -381,20 +460,19 @@ export default function TaskManagerPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {Array.from(groupedOccurrences.entries()).map(([taskId, taskOccurrences]) => {
-                const task = taskOccurrences[0]!.task;
+              {sortedTasks.map(({ task, occurrences: taskOccurrences }) => {
                 const taskType = task.taskType as TaskType;
-                const isExpanded = selectedTaskId === taskId;
+                const isExpanded = selectedTaskId === task.id;
 
                 return (
                   <TaskCard
-                    key={taskId}
+                    key={task.id}
                     task={task}
                     taskType={taskType}
                     occurrences={taskOccurrences}
                     isExpanded={isExpanded}
                     nextOccurrenceDate={isExpanded ? nextOccurrenceDate : null}
-                    onToggle={() => setSelectedTaskId(isExpanded ? null : taskId)}
+                    onToggle={() => setSelectedTaskId(isExpanded ? null : task.id)}
                     onEditOccurrence={(id, timeConsumed, targetDate, limitDate) =>
                       setEditingOccurrence({ id, timeConsumed, targetDate, limitDate })
                     }
