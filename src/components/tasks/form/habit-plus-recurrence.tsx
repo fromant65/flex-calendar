@@ -1,8 +1,9 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Info } from "lucide-react"
 import { Label } from "~/components/ui/label"
 import { Input } from "~/components/ui/input"
 import { DaySelector } from "./day-selector"
+import { validateAndParseDaysOfMonth } from "~/lib/recurrence-utils"
 
 type RecurrenceMode = "interval-only" | "days-of-week" | "days-of-month"
 
@@ -39,6 +40,7 @@ export function HabitPlusRecurrence({
   }
 
   const [mode, setMode] = useState<RecurrenceMode>(getCurrentMode())
+  const [daysOfMonthInput, setDaysOfMonthInput] = useState("")
 
   const handleModeChange = (newMode: RecurrenceMode) => {
     setMode(newMode)
@@ -46,8 +48,10 @@ export function HabitPlusRecurrence({
     if (newMode === "interval-only") {
       onDaysOfWeekChange([])
       onDaysOfMonthChange([])
+      setDaysOfMonthInput("")
     } else if (newMode === "days-of-week") {
       onDaysOfMonthChange([])
+      setDaysOfMonthInput("")
       // Set default interval for days-of-week mode (weekly = 7 days)
       if (interval === 1 || !interval) {
         onIntervalChange(7)
@@ -66,6 +70,9 @@ export function HabitPlusRecurrence({
       daysOfWeek.includes(day) ? daysOfWeek.filter((d) => d !== day) : [...daysOfWeek, day]
     )
   }
+
+  // Validate input when it changes
+  const validation = validateAndParseDaysOfMonth(daysOfMonthInput)
 
   return (
     <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
@@ -213,18 +220,28 @@ export function HabitPlusRecurrence({
             </p>
             <Input
               id="daysOfMonth"
-              value={daysOfMonth.join(", ")}
+              type="text"
+              value={daysOfMonthInput}
               onChange={(e) => {
-                const days = e.target.value
-                  .split(",")
-                  .map((d) => Number.parseInt(d.trim()))
-                  .filter((d) => !isNaN(d) && d >= 1 && d <= 31)
-                onDaysOfMonthChange(days)
+                const inputValue = e.target.value
+                setDaysOfMonthInput(inputValue)
+                // Update parent state with parsed days if valid
+                const result = validateAndParseDaysOfMonth(inputValue)
+                if (result.isValid) {
+                  onDaysOfMonthChange(result.parsedDays)
+                } else {
+                  onDaysOfMonthChange([])
+                }
               }}
               placeholder="Ej: 1, 15, 30"
               className="mt-1.5"
             />
-            {daysOfMonth.length === 0 && (
+            {!validation.isValid && daysOfMonthInput.trim() !== "" && (
+              <p className="text-xs text-destructive mt-1">
+                {validation.errorMessage}
+              </p>
+            )}
+            {daysOfMonthInput.trim() === "" && (
               <p className="text-xs text-destructive mt-1">
                 Debes ingresar al menos un día
               </p>

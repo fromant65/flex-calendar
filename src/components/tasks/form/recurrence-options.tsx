@@ -1,7 +1,9 @@
 import { Info, ChevronDown, ChevronUp } from "lucide-react"
+import { useState, useEffect } from "react"
 import { Label } from "~/components/ui/label"
 import { Input } from "~/components/ui/input"
 import { DaySelector } from "./day-selector"
+import { validateAndParseDaysOfMonth } from "~/lib/recurrence-utils"
 import type { FormTaskType } from "./task-type-selector"
 
 interface RecurrenceOptionsProps {
@@ -35,11 +37,19 @@ export function RecurrenceOptions({
   onEndDateChange,
   onToggleAdvanced,
 }: RecurrenceOptionsProps) {
+  // Local state for raw input values
+  const [daysOfMonthInput, setDaysOfMonthInput] = useState("")
+  const [daysOfMonthInputAdvanced, setDaysOfMonthInputAdvanced] = useState("")
+
   const toggleDayOfWeek = (day: string) => {
     onDaysOfWeekChange(
       daysOfWeek.includes(day) ? daysOfWeek.filter((d) => d !== day) : [...daysOfWeek, day]
     )
   }
+
+  // Validate inputs
+  const validation = validateAndParseDaysOfMonth(daysOfMonthInput)
+  const validationAdvanced = validateAndParseDaysOfMonth(daysOfMonthInputAdvanced)
 
   return (
     <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
@@ -98,21 +108,31 @@ export function RecurrenceOptions({
             </p>
             <Input
               id="daysOfMonth"
-              value={daysOfMonth.join(", ")}
+              type="text"
+              value={daysOfMonthInput}
               onChange={(e) => {
-                const days = e.target.value
-                  .split(",")
-                  .map((d) => Number.parseInt(d.trim()))
-                  .filter((d) => !isNaN(d) && d >= 1 && d <= 31)
-                // Clear daysOfWeek when entering daysOfMonth
-                if (days.length > 0 && daysOfWeek.length > 0) {
-                  onDaysOfWeekChange([]);
+                const inputValue = e.target.value
+                setDaysOfMonthInput(inputValue)
+                // Update parent state with parsed days if valid
+                const result = validateAndParseDaysOfMonth(inputValue)
+                if (result.isValid) {
+                  // Clear daysOfWeek when entering daysOfMonth
+                  if (daysOfWeek.length > 0) {
+                    onDaysOfWeekChange([]);
+                  }
+                  onDaysOfMonthChange(result.parsedDays)
+                } else {
+                  onDaysOfMonthChange([])
                 }
-                onDaysOfMonthChange(days)
               }}
               placeholder="Ej: 1, 15, 30"
               className="mt-1.5"
             />
+            {!validation.isValid && daysOfMonthInput.trim() !== "" && (
+              <p className="text-xs text-destructive mt-1">
+                {validation.errorMessage}
+              </p>
+            )}
           </div>
 
           <div>
@@ -221,21 +241,31 @@ export function RecurrenceOptions({
                     </p>
                     <Input
                       id="daysOfMonth"
-                      value={daysOfMonth.join(", ")}
+                      type="text"
+                      value={daysOfMonthInputAdvanced}
                       onChange={(e) => {
-                        const days = e.target.value
-                          .split(",")
-                          .map((d) => Number.parseInt(d.trim()))
-                          .filter((d) => !isNaN(d) && d >= 1 && d <= 31)
-                        // Clear daysOfWeek when entering daysOfMonth
-                        if (days.length > 0 && daysOfWeek.length > 0) {
-                          onDaysOfWeekChange([]);
+                        const inputValue = e.target.value
+                        setDaysOfMonthInputAdvanced(inputValue)
+                        // Update parent state with parsed days if valid
+                        const result = validateAndParseDaysOfMonth(inputValue)
+                        if (result.isValid) {
+                          // Clear daysOfWeek when entering daysOfMonth
+                          if (daysOfWeek.length > 0) {
+                            onDaysOfWeekChange([]);
+                          }
+                          onDaysOfMonthChange(result.parsedDays)
+                        } else {
+                          onDaysOfMonthChange([])
                         }
-                        onDaysOfMonthChange(days)
                       }}
                       placeholder="Ej: 1, 15, 30"
                       className="mt-1.5"
                     />
+                    {!validationAdvanced.isValid && daysOfMonthInputAdvanced.trim() !== "" && (
+                      <p className="text-xs text-destructive mt-1">
+                        {validationAdvanced.errorMessage}
+                      </p>
+                    )}
                   </div>
 
                   <div>

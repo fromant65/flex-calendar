@@ -4,6 +4,7 @@ import { Label } from "~/components/ui/label"
 import { Input } from "~/components/ui/input"
 import { Alert, AlertDescription } from "~/components/ui/alert"
 import { DaySelector } from "./day-selector"
+import { validateAndParseDaysOfMonth } from "~/lib/recurrence-utils"
 
 type RecurrencePattern = "days-of-week" | "days-of-month"
 
@@ -41,12 +42,14 @@ export function FixedRepetitiveForm({
   }
 
   const [pattern, setPattern] = useState<RecurrencePattern>(getCurrentPattern())
+  const [daysOfMonthInput, setDaysOfMonthInput] = useState("")
 
   const handlePatternChange = (newPattern: RecurrencePattern) => {
     setPattern(newPattern)
     // Clear conflicting fields
     if (newPattern === "days-of-week") {
       onDaysOfMonthChange([])
+      setDaysOfMonthInput("")
     } else {
       onDaysOfWeekChange([])
     }
@@ -57,6 +60,9 @@ export function FixedRepetitiveForm({
       daysOfWeek.includes(day) ? daysOfWeek.filter((d) => d !== day) : [...daysOfWeek, day]
     )
   }
+
+  // Validate input when it changes
+  const validation = validateAndParseDaysOfMonth(daysOfMonthInput)
 
   return (
     <div className="space-y-4 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/30 p-4">
@@ -138,18 +144,28 @@ export function FixedRepetitiveForm({
           </p>
           <Input
             id="daysOfMonth"
-            value={daysOfMonth.join(", ")}
+            type="text"
+            value={daysOfMonthInput}
             onChange={(e) => {
-              const days = e.target.value
-                .split(",")
-                .map((d) => Number.parseInt(d.trim()))
-                .filter((d) => !isNaN(d) && d >= 1 && d <= 31)
-              onDaysOfMonthChange(days)
+              const inputValue = e.target.value
+              setDaysOfMonthInput(inputValue)
+              // Update parent state with parsed days if valid
+              const result = validateAndParseDaysOfMonth(inputValue)
+              if (result.isValid) {
+                onDaysOfMonthChange(result.parsedDays)
+              } else {
+                onDaysOfMonthChange([])
+              }
             }}
             placeholder="Ej: 1, 15, 30"
             className="mt-1.5"
           />
-          {daysOfMonth.length === 0 && (
+          {!validation.isValid && daysOfMonthInput.trim() !== "" && (
+            <p className="text-xs text-destructive mt-1">
+              {validation.errorMessage}
+            </p>
+          )}
+          {daysOfMonthInput.trim() === "" && (
             <p className="text-xs text-destructive mt-1">
               Debes ingresar al menos un día
             </p>
