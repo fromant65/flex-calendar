@@ -16,6 +16,7 @@ import FixedInfo from "./task-details/FixedInfo"
 import { ensureLocalDate } from "~/lib/calendar-utils"
 import CompletedPanel from "./task-details/CompletedPanel"
 import CompleteFooter from "./task-details/CompleteFooter"
+import TaskInfo from "./task-details/TaskInfo"
 
 interface TaskDetailsModalProps {
   open: boolean
@@ -232,32 +233,11 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
         <div className="space-y-4 py-2">
           <DescriptionBlock description={task?.description} />
 
-          {/* Task Type and Fixed Status */}
-          <div className="flex gap-2 flex-wrap">
-            {task?.taskType && (
-              <div className="rounded-lg border border-border bg-muted/20 px-3 py-2">
-                <p className="text-xs text-muted-foreground mb-0.5">Tipo</p>
-                <p className="text-sm font-semibold text-foreground">{task.taskType}</p>
-              </div>
-            )}
-            {task?.isFixed && event && (
-              <div className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-2">
-                <p className="text-xs text-primary font-medium">Tarea Fija</p>
-                <p className="text-sm font-semibold text-primary">
-                  {(() => {
-                    const start = ensureLocalDate(event.start)
-                    const finish = ensureLocalDate(event.finish)
-                    const startTime = `${String(start.getHours()).padStart(2, "0")}:${String(start.getMinutes()).padStart(2, "0")}`
-                    const endTime = `${String(finish.getHours()).padStart(2, "0")}:${String(finish.getMinutes()).padStart(2, "0")}`
-                    return `${startTime} - ${endTime}`
-                  })()}
-                </p>
-              </div>
-            )}
-          </div>
+          {/* Task Information Component - displays comprehensive task details */}
+          <TaskInfo task={task} />
 
           {/* Occurrence Information Component */}
-          <OccurrenceInfo displayOccurrence={displayOccurrence} task={task} />
+          <OccurrenceInfo displayOccurrence={displayOccurrence} />
 
           {event && (
             <>

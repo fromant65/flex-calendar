@@ -8,22 +8,18 @@ interface TaskBasicInfoProps {
   name: string
   description: string
   importance: number
-  targetTimeConsumption: number | undefined
   onNameChange: (value: string) => void
   onDescriptionChange: (value: string) => void
   onImportanceChange: (value: number) => void
-  onTargetTimeChange: (value: number | undefined) => void
 }
 
 export function TaskBasicInfo({
   name,
   description,
   importance,
-  targetTimeConsumption,
   onNameChange,
   onDescriptionChange,
   onImportanceChange,
-  onTargetTimeChange,
 }: TaskBasicInfoProps) {
   return (
     <div className="space-y-4">
@@ -70,27 +66,6 @@ export function TaskBasicInfo({
           step={1}
           className="mt-2 cursor-pointer"
         />
-      </div>
-
-      <div>
-        <Label htmlFor="targetTimeConsumption" className="text-foreground">
-          Tiempo Objetivo (horas) - Opcional
-        </Label>
-        <Input
-          id="targetTimeConsumption"
-          type="number"
-          min="0.5"
-          step="0.5"
-          value={targetTimeConsumption || ""}
-          onChange={(e) =>
-            onTargetTimeChange(e.target.value ? Number.parseFloat(e.target.value) : undefined)
-          }
-          placeholder="Ej: 2.5 horas"
-          className="mt-1.5"
-        />
-        <p className="mt-1 text-xs text-muted-foreground">
-          Tiempo estimado que debería tomar completar esta tarea
-        </p>
       </div>
     </div>
   )

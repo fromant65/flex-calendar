@@ -17,7 +17,7 @@ interface TaskCardProps {
   isExpanded: boolean;
   nextOccurrenceDate: Date | null | undefined;
   onToggle: () => void;
-  onEditOccurrence: (id: number, timeConsumed: number | null, targetDate: Date | null, limitDate: Date | null) => void;
+  onEditOccurrence: (id: number, timeConsumed: number | null, targetTimeConsumption: number | null, targetDate: Date | null, limitDate: Date | null) => void;
   onCompleteOccurrence: (id: number, taskName: string) => void;
   onSkipOccurrence: (id: number, taskName: string) => void;
   onSkipBacklog: (taskId: number) => void;

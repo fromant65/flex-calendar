@@ -36,6 +36,7 @@ export default function TaskManagerPage() {
   const [editingOccurrence, setEditingOccurrence] = useState<{
     id: number;
     timeConsumed: number | null;
+    targetTimeConsumption: number | null;
     targetDate: Date | null;
     limitDate: Date | null;
   } | null>(null);
@@ -310,6 +311,7 @@ export default function TaskManagerPage() {
     setEditingOccurrence({
       id: occurrence.id,
       timeConsumed: occurrence.timeConsumed,
+      targetTimeConsumption: occurrence.targetTimeConsumption,
       targetDate: occurrence.targetDate,
       limitDate: occurrence.limitDate,
     });
@@ -473,8 +475,8 @@ export default function TaskManagerPage() {
                     isExpanded={isExpanded}
                     nextOccurrenceDate={isExpanded ? nextOccurrenceDate : null}
                     onToggle={() => setSelectedTaskId(isExpanded ? null : task.id)}
-                    onEditOccurrence={(id, timeConsumed, targetDate, limitDate) =>
-                      setEditingOccurrence({ id, timeConsumed, targetDate, limitDate })
+                    onEditOccurrence={(id, timeConsumed, targetTimeConsumption, targetDate, limitDate) =>
+                      setEditingOccurrence({ id, timeConsumed, targetTimeConsumption, targetDate, limitDate })
                     }
                     onCompleteOccurrence={(id, taskName) =>
                       setConfirmAction({ type: "complete", occurrenceId: id, taskName })

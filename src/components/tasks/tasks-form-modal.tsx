@@ -41,7 +41,6 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
     endDate: undefined as string | undefined,
     targetDate: undefined as string | undefined,
     limitDate: undefined as string | undefined,
-    targetTimeConsumption: undefined as number | undefined,
     fixedDate: undefined as string | undefined,
     fixedStartTime: "",
     fixedEndTime: "",
@@ -95,7 +94,6 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
           : undefined,
         targetDate: undefined,
         limitDate: undefined,
-        targetTimeConsumption: undefined,
         fixedDate: undefined,
         fixedStartTime: editingTask.fixedStartTime || "",
         fixedEndTime: editingTask.fixedEndTime || "",
@@ -124,7 +122,6 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
       endDate: undefined,
       targetDate: undefined,
       limitDate: undefined,
-      targetTimeConsumption: undefined,
       fixedDate: undefined,
       fixedStartTime: "",
       fixedEndTime: "",
@@ -286,7 +283,6 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
         importance: formData.importance,
         targetDate,
         limitDate,
-        targetTimeConsumption: formData.targetTimeConsumption,
         isFixed: isFixed,
         recurrence,
       })
@@ -328,11 +324,9 @@ export function TaskFormModal({ open, onOpenChange, editingTask, onSuccess }: Ta
             name={formData.name}
             description={formData.description}
             importance={formData.importance}
-            targetTimeConsumption={formData.targetTimeConsumption}
             onNameChange={(value) => setFormData({ ...formData, name: value })}
             onDescriptionChange={(value) => setFormData({ ...formData, description: value })}
             onImportanceChange={(value) => setFormData({ ...formData, importance: value })}
-            onTargetTimeChange={(value) => setFormData({ ...formData, targetTimeConsumption: value })}
           />
 
           {/* removed inline HelpTip that was in middle of form to keep top placement */}

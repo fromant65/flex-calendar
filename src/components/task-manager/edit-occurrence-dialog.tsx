@@ -15,11 +15,13 @@ interface EditOccurrenceDialogProps {
   occurrence: {
     id: number;
     timeConsumed: number | null;
+    targetTimeConsumption: number | null;
     targetDate: Date | null;
     limitDate: Date | null;
   } | null;
   onSave: (id: number, data: { 
     timeConsumed: number | null;
+    targetTimeConsumption?: number | null;
     targetDate?: Date | null;
     limitDate?: Date | null;
   }) => void;
@@ -34,12 +36,14 @@ export function EditOccurrenceDialog({
   isLoading = false,
 }: EditOccurrenceDialogProps) {
   const [timeConsumed, setTimeConsumed] = useState<number | null>(null);
+  const [targetTimeConsumption, setTargetTimeConsumption] = useState<number | null>(null);
   const [targetDate, setTargetDate] = useState<string>("");
   const [limitDate, setLimitDate] = useState<string>("");
 
   useEffect(() => {
     if (occurrence) {
       setTimeConsumed(occurrence.timeConsumed);
+      setTargetTimeConsumption(occurrence.targetTimeConsumption);
       
       // Set target date if exists
       if (occurrence.targetDate) {
@@ -64,10 +68,12 @@ export function EditOccurrenceDialog({
     
     const data: {
       timeConsumed: number | null;
+      targetTimeConsumption?: number | null;
       targetDate?: Date | null;
       limitDate?: Date | null;
     } = {
       timeConsumed,
+      targetTimeConsumption,
     };
     
     // Only include dates if they were changed
@@ -94,10 +100,28 @@ export function EditOccurrenceDialog({
         <DialogHeader>
           <DialogTitle>Editar Ocurrencia</DialogTitle>
           <DialogDescription>
-            Modifica las horas dedicadas y las fechas de esta ocurrencia.
+            Modifica el tiempo objetivo, las horas dedicadas y las fechas de esta ocurrencia.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="targetTimeConsumption">Tiempo Objetivo (horas)</Label>
+            <Input
+              id="targetTimeConsumption"
+              type="number"
+              step="0.5"
+              min="0"
+              value={targetTimeConsumption != null ? targetTimeConsumption : ""}
+              onChange={(e) =>
+                setTargetTimeConsumption(e.target.value ? parseFloat(e.target.value) : null)
+              }
+              placeholder="Ej: 3"
+            />
+            <p className="text-sm text-muted-foreground">
+              Cantidad de horas que esperas dedicar a esta ocurrencia.
+            </p>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="timeConsumed">Horas dedicadas</Label>
             <Input
