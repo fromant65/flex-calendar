@@ -146,6 +146,8 @@ export function TaskCard({
                 taskName={task.name}
                 pendingCount={backlogInfo.pendingCount}
                 oldestPendingDate={backlogInfo.oldestPendingDate}
+                overdueCount={backlogInfo.overdueCount}
+                estimatedMissingCount={backlogInfo.estimatedMissingCount}
                 onSkipBacklog={() => onSkipBacklog(task.id)}
                 isLoading={isSkippingBacklog}
               />

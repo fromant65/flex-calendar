@@ -134,9 +134,15 @@ export default function TaskManagerPage() {
   const skipBacklog = api.occurrence.skipBacklog.useMutation({
     onSuccess: (result) => {
       void utils.occurrence.getMyOccurrencesWithTask.invalidate();
-      toast.success("Backlog procesado", { 
-        description: `Se saltearon ${result.skippedCount} ocurrencia${result.skippedCount !== 1 ? 's' : ''}` 
-      })
+      const messages = [];
+      if (result.createdCount > 0) {
+        messages.push(`${result.createdCount} ocurrencia${result.createdCount !== 1 ? 's' : ''} generada${result.createdCount !== 1 ? 's' : ''}`);
+      }
+      if (result.skippedCount > 0) {
+        messages.push(`${result.skippedCount} ocurrencia${result.skippedCount !== 1 ? 's' : ''} salteada${result.skippedCount !== 1 ? 's' : ''}`);
+      }
+      const description = messages.length > 0 ? messages.join(', ') : 'No había ocurrencias para procesar';
+      toast.success("Backlog procesado", { description })
     },
     onError: (error) => {
       toast.error("Error al procesar backlog", { description: error.message || "No se pudo procesar el backlog" })

@@ -223,6 +223,30 @@ export class TaskSchedulerService {
   }
 
   /**
+   * Force create the next occurrence for backlog processing
+   * Bypasses the shouldCreateNextOccurrence check
+   */
+  async forceCreateNextOccurrence(taskId: number): Promise<void> {
+    const task = await this.taskAdapter.getTaskWithRecurrence(taskId);
+    if (!task?.recurrence) {
+      throw new Error("Task does not have recurrence configured");
+    }
+
+    // Update period if needed (auto-advance to next period)
+    await this.updateRecurrencePeriod(task.recurrence.id);
+
+    // Check if recurrence has ended
+    const hasEnded = await this.hasRecurrenceEnded(taskId, task.recurrence.id);
+    if (hasEnded) {
+      await this.taskAdapter.deleteTask(taskId);
+      return;
+    }
+
+    // Delegate to OccurrenceCreationService - force create
+    await this.occurrenceCreation.createNextOccurrence(taskId);
+  }
+
+  /**
    * Preview when the next occurrence would be generated if the current one is completed
    * This is for UI preview purposes only, does not create the occurrence
    */

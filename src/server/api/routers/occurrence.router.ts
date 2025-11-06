@@ -208,8 +208,8 @@ export const occurrenceRouter = createTRPCRouter({
     }),
 
   /**
-   * Skip all backlog occurrences except the most recent one
-   * Useful for catching up when user has fallen behind
+   * Skip all backlog occurrences that are overdue
+   * Also generates missing occurrences up to today
    */
   skipBacklog: protectedProcedure
     .input(z.object({ taskId: z.number() }))
@@ -218,8 +218,12 @@ export const occurrenceRouter = createTRPCRouter({
       await verifyTaskOwnership(input.taskId, ctx.session.user.id);
       
       const service = new TaskLifecycleService();
-      const skippedCount = await service.skipBacklogOccurrences(input.taskId);
-      return { success: true, skippedCount };
+      const result = await service.skipBacklogOccurrences(input.taskId);
+      return { 
+        success: true, 
+        skippedCount: result.skippedCount,
+        createdCount: result.createdCount
+      };
     }),
 
   /**

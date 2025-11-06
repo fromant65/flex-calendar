@@ -18,6 +18,8 @@ interface BacklogAlertProps {
   taskName: string
   pendingCount: number
   oldestPendingDate: Date
+  overdueCount?: number
+  estimatedMissingCount?: number
   onSkipBacklog: () => void
   isLoading?: boolean
 }
@@ -27,6 +29,8 @@ export function BacklogAlert({
   taskName,
   pendingCount,
   oldestPendingDate,
+  overdueCount = 0,
+  estimatedMissingCount = 0,
   onSkipBacklog,
   isLoading = false,
 }: BacklogAlertProps) {
@@ -35,10 +39,32 @@ export function BacklogAlert({
 
   if (isDismissed) return null
 
-  const toSkipCount = pendingCount - 1 // Skip all except the last one
   const daysSinceOldest = Math.floor(
     (new Date().getTime() - new Date(oldestPendingDate).getTime()) / (1000 * 60 * 60 * 24)
   )
+
+  // Build descriptive message
+  const buildMessage = () => {
+    const parts = [];
+    const totalToProcess = overdueCount + estimatedMissingCount;
+    
+    if (totalToProcess > 0) {
+      parts.push(`${totalToProcess} ocurrencia${totalToProcess !== 1 ? 's' : ''} atrasada${totalToProcess !== 1 ? 's' : ''}`);
+      
+      // Add breakdown if we have both types
+      if (overdueCount > 0 && estimatedMissingCount > 0) {
+        parts.push(`(${overdueCount} vencida${overdueCount !== 1 ? 's' : ''}, ${estimatedMissingCount} por generar)`);
+      } else if (estimatedMissingCount > 0) {
+        parts.push(`(por generar)`);
+      }
+    }
+    
+    if (parts.length === 0) {
+      return `Tienes ocurrencias atrasadas. La más antigua es de hace ${daysSinceOldest} días.`;
+    }
+    
+    return `Tienes ${parts.join(' ')}. Se procesarán automáticamente.`;
+  };
 
   const handleConfirmSkip = () => {
     onSkipBacklog()
@@ -56,7 +82,7 @@ export function BacklogAlert({
                 Backlog detectado en "{taskName}"
               </h4>
               <p className="text-xs text-muted-foreground mb-3">
-                Tienes {pendingCount} ocurrencias pendientes. La más antigua es de hace {daysSinceOldest} días.
+                {buildMessage()}
               </p>
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -66,7 +92,7 @@ export function BacklogAlert({
                   disabled={isLoading}
                   className="text-xs h-8"
                 >
-                  {isLoading ? "Procesando..." : "Saltear Backlog"}
+                  {isLoading ? "Procesando..." : "Procesar Backlog"}
                 </Button>
                 <Button
                   size="sm"
@@ -93,13 +119,28 @@ export function BacklogAlert({
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmar Salteo de Backlog</DialogTitle>
+            <DialogTitle>Confirmar Procesamiento de Backlog</DialogTitle>
             <DialogDescription className="space-y-2 pt-2">
               <p>
-                Estás a punto de saltear <strong>{toSkipCount}</strong> ocurrencia{toSkipCount !== 1 ? "s" : ""} de la tarea <strong>"{taskName}"</strong>.
+                Estás a punto de procesar el backlog de la tarea <strong>"{taskName}"</strong>.
               </p>
+              {estimatedMissingCount > 0 && (
+                <p>
+                  Se generarán <strong>{estimatedMissingCount}</strong> ocurrencia{estimatedMissingCount !== 1 ? 's' : ''} faltante{estimatedMissingCount !== 1 ? 's' : ''}.
+                </p>
+              )}
+              {overdueCount > 0 && (
+                <p>
+                  Se saltarán <strong>{overdueCount}</strong> ocurrencia{overdueCount !== 1 ? 's' : ''} vencida{overdueCount !== 1 ? 's' : ''}.
+                </p>
+              )}
+              {estimatedMissingCount > 0 && (
+                <p>
+                  Las ocurrencias generadas que estén vencidas también serán saltadas automáticamente.
+                </p>
+              )}
               <p>
-                Se mantendrá activa solo la ocurrencia más reciente para que puedas ponerte al día sin el peso del backlog acumulado.
+                Solo se mantendrán activas las ocurrencias más recientes que aún estén dentro de su período válido.
               </p>
               <p className="text-xs text-muted-foreground mt-2">
                 Esta acción no se puede deshacer.
@@ -119,7 +160,7 @@ export function BacklogAlert({
               onClick={handleConfirmSkip}
               disabled={isLoading}
             >
-              {isLoading ? "Salteando..." : "Confirmar Salteo"}
+              {isLoading ? "Procesando..." : "Procesar Backlog"}
             </Button>
           </DialogFooter>
         </DialogContent>

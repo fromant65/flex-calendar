@@ -196,12 +196,14 @@ export class TaskLifecycleService {
   }
 
   /**
-   * Skip all backlog occurrences except the most recent one
+   * Skip all backlog occurrences that are overdue
+   * Also generates missing occurrences up to today
    */
-  async skipBacklogOccurrences(taskId: number): Promise<number> {
+  async skipBacklogOccurrences(taskId: number): Promise<{ skippedCount: number; createdCount: number }> {
     return await this.backlogDetection.skipBacklogOccurrences(
       taskId,
-      (occId) => this.skipOccurrence(occId)
+      (occId) => this.skipOccurrence(occId),
+      () => this.scheduler.forceCreateNextOccurrence(taskId)
     );
   }
 

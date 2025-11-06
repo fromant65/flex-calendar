@@ -7,19 +7,23 @@
  */
 
 import { OccurrenceAdapter, TaskAdapter } from "../../adapter";
+import { RecurrenceDateCalculator } from "../scheduling/recurrence-date-calculator.service";
 
 export class BacklogDetectionService {
   private occurrenceAdapter: OccurrenceAdapter;
   private taskAdapter: TaskAdapter;
+  private dateCalculator: RecurrenceDateCalculator;
 
   constructor() {
     this.occurrenceAdapter = new OccurrenceAdapter();
     this.taskAdapter = new TaskAdapter();
+    this.dateCalculator = new RecurrenceDateCalculator();
   }
 
   /**
    * Detect and optionally skip backlog occurrences
-   * Returns information about pending occurrences
+   * Returns information about pending occurrences and estimates missing ones
+   * Now properly detects backlog based on overdue occurrences, not just count
    */
   async detectBacklog(taskId: number): Promise<{
     hasSevereBacklog: boolean;
@@ -27,6 +31,8 @@ export class BacklogDetectionService {
     oldestPendingDate: Date | null;
     estimatedBacklogCount: number;
     pendingOccurrences: Array<{ id: number; startDate: Date; status: string }>;
+    overdueCount: number;
+    estimatedMissingCount: number;
   }> {
     const task = await this.taskAdapter.getTaskWithRecurrence(taskId);
     if (!task?.recurrence) {
@@ -36,138 +42,150 @@ export class BacklogDetectionService {
         oldestPendingDate: null,
         estimatedBacklogCount: 0,
         pendingOccurrences: [],
+        overdueCount: 0,
+        estimatedMissingCount: 0,
       };
     }
 
-    // Get all pending/in-progress occurrences for this task
+    const now = new Date();
+    
+    // Get all occurrences for this task, sorted by startDate
     const allOccurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
-    const pendingOccurrences = allOccurrences
+    const sortedOccurrences = allOccurrences.sort((a, b) => 
+      a.startDate.getTime() - b.startDate.getTime()
+    );
+
+    // Filter pending/in-progress occurrences
+    const pendingOccurrences = sortedOccurrences
       .filter(occ => occ.status === "Pending" || occ.status === "InProgress")
       .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
-    if (pendingOccurrences.length === 0) {
-      return {
-        hasSevereBacklog: false,
-        pendingCount: 0,
-        oldestPendingDate: null,
-        estimatedBacklogCount: 0,
-        pendingOccurrences: [],
-      };
-    }
-
-    const oldestPending = pendingOccurrences[0]!;
-    const now = new Date();
-
-    // Calculate how many occurrences should have been generated based on recurrence pattern
-    let estimatedCount = 0;
-    if (task.recurrence.interval) {
-      const daysSinceOldest = Math.floor(
-        (now.getTime() - oldestPending.startDate.getTime()) / (1000 * 60 * 60 * 24)
-      );
-      const periodsPassed = Math.floor(daysSinceOldest / task.recurrence.interval);
+    // Calculate estimated missing occurrences
+    // Simply check: what should the next occurrence date be, and how many fit until today?
+    let estimatedMissingCount = 0;
+    const lastOccurrence = sortedOccurrences[sortedOccurrences.length - 1];
+    
+    if (lastOccurrence) {
+      let currentDate = new Date(lastOccurrence.startDate);
       
-      if (task.recurrence.maxOccurrences) {
-        estimatedCount = periodsPassed * task.recurrence.maxOccurrences;
-      } else {
-        estimatedCount = periodsPassed;
+      // Calculate how many occurrences should exist after the last one until today
+      while (currentDate < now) {
+        currentDate = this.dateCalculator.calculateNextOccurrenceDate(currentDate, task.recurrence);
+        if (currentDate <= now) {
+          estimatedMissingCount++;
+        }
       }
-    } else if (task.recurrence.daysOfWeek) {
-      estimatedCount = this.countOccurrencesBetweenDates(
-        oldestPending.startDate,
-        now,
-        task.recurrence.daysOfWeek
-      );
-    } else if (task.recurrence.daysOfMonth) {
-      estimatedCount = this.countMonthlyOccurrencesBetweenDates(
-        oldestPending.startDate,
-        now,
-        task.recurrence.daysOfMonth
-      );
     }
 
-    const hasSevereBacklog = pendingOccurrences.length > 5;
+    // Total estimated backlog is existing pending + missing occurrences
+    const totalEstimatedBacklog = pendingOccurrences.length + estimatedMissingCount;
+    
+    // Count overdue occurrences (those whose limitDate has passed)
+    const overdueCount = pendingOccurrences.filter(occ => 
+      occ.limitDate && occ.limitDate < now
+    ).length;
+
+    // IMPROVED: Detect backlog if there are ANY overdue occurrences OR missing occurrences
+    // Not just based on high count
+    const hasSevereBacklog = overdueCount > 0 || estimatedMissingCount > 0;
 
     return {
       hasSevereBacklog,
       pendingCount: pendingOccurrences.length,
-      oldestPendingDate: oldestPending.startDate,
-      estimatedBacklogCount: estimatedCount,
+      oldestPendingDate: pendingOccurrences[0]?.startDate ?? null,
+      estimatedBacklogCount: totalEstimatedBacklog,
       pendingOccurrences: pendingOccurrences.map(occ => ({
         id: occ.id,
         startDate: occ.startDate,
         status: occ.status,
       })),
+      overdueCount,
+      estimatedMissingCount,
     };
   }
 
   /**
-   * Skip all backlog occurrences except the most recent one
-   * Returns the number of occurrences skipped
+   * Skip all backlog occurrences that are overdue
+   * Also generates missing occurrences up to today
+   * Returns the number of occurrences skipped and created
    */
   async skipBacklogOccurrences(
     taskId: number,
-    skipOccurrenceFn: (occurrenceId: number) => Promise<boolean>
-  ): Promise<number> {
-    const backlogInfo = await this.detectBacklog(taskId);
+    skipOccurrenceFn: (occurrenceId: number) => Promise<boolean>,
+    createOccurrenceFn: () => Promise<void>
+  ): Promise<{ skippedCount: number; createdCount: number }> {
+    const task = await this.taskAdapter.getTaskWithRecurrence(taskId);
+    if (!task?.recurrence) {
+      return { skippedCount: 0, createdCount: 0 };
+    }
+
+    const now = new Date();
+    let createdCount = 0;
+    let skippedCount = 0;
+
+    // Step 1: Generate all missing occurrences until today
+    // Keep generating until the latest occurrence's startDate is >= today
+    let shouldContinue = true;
+    const maxIterations = 1000; // Safety limit to prevent infinite loops
+    let iterations = 0;
     
-    if (!backlogInfo.hasSevereBacklog || backlogInfo.pendingOccurrences.length <= 1) {
-      return 0;
-    }
+    while (shouldContinue && iterations < maxIterations) {
+      iterations++;
+      
+      // Get current occurrences
+      const allOccurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
+      const sortedOccurrences = allOccurrences.sort((a, b) => 
+        a.startDate.getTime() - b.startDate.getTime()
+      );
+      
+      const lastOccurrence = sortedOccurrences[sortedOccurrences.length - 1];
+      
+      // Calculate what the next occurrence date would be
+      const nextDate = this.dateCalculator.calculateNextOccurrenceDate(
+        lastOccurrence?.startDate ?? new Date(),
+        task.recurrence
+      );
 
-    // Skip all except the last (most recent) one
-    const toSkip = backlogInfo.pendingOccurrences.slice(0, -1);
-    
-    for (const occ of toSkip) {
-      await skipOccurrenceFn(occ.id);
-    }
-
-    return toSkip.length;
-  }
-
-  /**
-   * Helper: Count how many occurrences of specific days of week exist between two dates
-   */
-  private countOccurrencesBetweenDates(
-    startDate: Date,
-    endDate: Date,
-    daysOfWeek: string[]
-  ): number {
-    const dayMap: Record<string, number> = {
-      Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
-    };
-
-    const targetDays = daysOfWeek.map(day => dayMap[day]).filter(d => d !== undefined);
-    let count = 0;
-    const current = new Date(startDate);
-
-    while (current <= endDate) {
-      if (targetDays.includes(current.getDay())) {
-        count++;
+      // Only create if the next occurrence should start before or on today
+      if (nextDate <= now) {
+        try {
+          await createOccurrenceFn();
+          createdCount++;
+        } catch (error) {
+          console.error("Error creating occurrence during backlog processing:", error);
+          shouldContinue = false;
+        }
+      } else {
+        shouldContinue = false;
       }
-      current.setDate(current.getDate() + 1);
     }
 
-    return count;
-  }
+    if (iterations >= maxIterations) {
+      console.warn(`Reached max iterations (${maxIterations}) when processing backlog for task ${taskId}`);
+    }
 
-  /**
-   * Helper: Count how many occurrences of specific days of month exist between two dates
-   */
-  private countMonthlyOccurrencesBetweenDates(
-    startDate: Date,
-    endDate: Date,
-    daysOfMonth: number[]
-  ): number {
-    let count = 0;
-    const current = new Date(startDate);
+    // Step 2: Skip all overdue occurrences, keeping only the most recent one
+    // Get fresh list of all occurrences after creation
+    const allOccurrencesAfterCreation = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
+    const pendingAfterCreation = allOccurrencesAfterCreation
+      .filter(occ => occ.status === "Pending" || occ.status === "InProgress")
+      .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
-    while (current <= endDate) {
-      if (daysOfMonth.includes(current.getDate())) {
-        count++;
+    // Skip all occurrences whose limitDate has passed, except keep the most recent one
+    for (let i = 0; i < pendingAfterCreation.length - 1; i++) {
+      const occ = pendingAfterCreation[i]!;
+      
+      // Skip if limitDate has passed
+      if (occ.limitDate && occ.limitDate < now) {
+        try {
+          await skipOccurrenceFn(occ.id);
+          skippedCount++;
+        } catch (error) {
+          console.error(`Error skipping occurrence ${occ.id}:`, error);
+        }
       }
-      current.setDate(current.getDate() + 1);
     }
 
-    return count;
+    return { skippedCount, createdCount };
   }
 }
