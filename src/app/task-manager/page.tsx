@@ -12,6 +12,7 @@ import { EditOccurrenceDialog } from "~/components/task-manager/edit-occurrence-
 import { TaskManagerTimeline } from "~/components/task-manager/task-manager-timeline";
 import { TaskManagerFilterBar, type TaskManagerFilter } from "~/components/task-manager/task-manager-filter-bar";
 import { Button } from "~/components/ui/button";
+import { LoadingPage } from "~/components/ui/loading-spinner";
 import type { OccurrenceWithTask } from "~/types";
 
 type TaskWithOccurrences = {
@@ -317,13 +318,9 @@ export default function TaskManagerPage() {
     });
   };
   
-  // Only show loading spinner on initial load (when there's no data yet)
-  if (isLoading && !occurrences) {
-    return (
-      <div className="flex h-full items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+  // Show loading spinner while fetching data
+  if (isLoading) {
+    return <LoadingPage text="Cargando ocurrencias..." />;
   }
 
   // True empty state - no occurrences at all (not just filtered out)

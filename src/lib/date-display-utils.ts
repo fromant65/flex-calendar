@@ -91,7 +91,11 @@ export function getLimitDateDisplay(limitDate: Date | null) {
     };
   }
   
-  const daysUntilLimit = Math.floor((limit.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  // Set both dates to midnight for day comparison
+  const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const limitMidnight = new Date(limit.getFullYear(), limit.getMonth(), limit.getDate());
+  
+  const daysUntilLimit = Math.floor((limitMidnight.getTime() - nowMidnight.getTime()) / (1000 * 60 * 60 * 24));
   
   const dateText = formatDateLong(limitDate);
   const shortText = formatDateShort(limitDate);
