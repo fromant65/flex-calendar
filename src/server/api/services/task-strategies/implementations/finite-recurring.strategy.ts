@@ -15,10 +15,10 @@
 import { AbstractTaskStrategy } from '../base/abstract-task-strategy';
 import type { TaskLifecycleAction } from '../base/task-strategy.interface';
 import type { OccurrenceContext } from '../base/strategy-types';
-import type { TaskType } from '../../types';
+import { TaskType } from '../../types';
 
 export class FiniteRecurringStrategy extends AbstractTaskStrategy {
-  readonly taskType: TaskType = 'Recurrente Finita';
+  readonly taskType: TaskType = TaskType.FINITE_RECURRING;
 
   /**
    * When occurrence is completed, create next if under maxOccurrences

@@ -6,6 +6,7 @@
  */
 
 import { TaskStrategyFactory } from '../task-strategy.factory';
+import { TaskType } from '../../types';
 import { SingleTaskStrategy } from '../implementations/single-task.strategy';
 import { FiniteRecurringStrategy } from '../implementations/finite-recurring.strategy';
 import { HabitStrategy } from '../implementations/habit.strategy';
@@ -44,7 +45,7 @@ describe('TaskStrategyFactory', () => {
       const strategy = factory.getStrategy(task, recurrence);
       
       expect(strategy).toBeInstanceOf(SingleTaskStrategy);
-      expect(strategy.taskType).toBe('Única');
+      expect(strategy.taskType).toBe(TaskType.SINGLE);
     });
 
     it('should return FiniteRecurringStrategy for Recurrente Finita', () => {
@@ -60,7 +61,7 @@ describe('TaskStrategyFactory', () => {
       const strategy = factory.getStrategy(task, recurrence);
       
       expect(strategy).toBeInstanceOf(FiniteRecurringStrategy);
-      expect(strategy.taskType).toBe('Recurrente Finita');
+      expect(strategy.taskType).toBe(TaskType.FINITE_RECURRING);
     });
 
     it('should return HabitStrategy for Hábito', () => {
@@ -76,7 +77,7 @@ describe('TaskStrategyFactory', () => {
       const strategy = factory.getStrategy(task, recurrence);
       
       expect(strategy).toBeInstanceOf(HabitStrategy);
-      expect(strategy.taskType).toBe('Hábito');
+      expect(strategy.taskType).toBe(TaskType.HABIT);
     });
 
     it('should return HabitPlusStrategy for Hábito+ with daysOfWeek', () => {
@@ -92,7 +93,7 @@ describe('TaskStrategyFactory', () => {
       const strategy = factory.getStrategy(task, recurrence);
       
       expect(strategy).toBeInstanceOf(HabitPlusStrategy);
-      expect(strategy.taskType).toBe('Hábito +');
+      expect(strategy.taskType).toBe(TaskType.HABIT_PLUS);
     });
 
     it('should return HabitPlusStrategy for Hábito+ with daysOfMonth', () => {
@@ -108,7 +109,7 @@ describe('TaskStrategyFactory', () => {
       const strategy = factory.getStrategy(task, recurrence);
       
       expect(strategy).toBeInstanceOf(HabitPlusStrategy);
-      expect(strategy.taskType).toBe('Hábito +');
+      expect(strategy.taskType).toBe(TaskType.HABIT_PLUS);
     });
 
     it('should return FixedSingleStrategy for Fija Única', () => {
@@ -124,7 +125,7 @@ describe('TaskStrategyFactory', () => {
       const strategy = factory.getStrategy(task, recurrence);
       
       expect(strategy).toBeInstanceOf(FixedSingleStrategy);
-      expect(strategy.taskType).toBe('Fija Única');
+      expect(strategy.taskType).toBe(TaskType.FIXED_SINGLE);
     });
 
     it('should return FixedRepetitiveStrategy for Fija Repetitiva', () => {
@@ -140,7 +141,7 @@ describe('TaskStrategyFactory', () => {
       const strategy = factory.getStrategy(task, recurrence);
       
       expect(strategy).toBeInstanceOf(FixedRepetitiveStrategy);
-      expect(strategy.taskType).toBe('Fija Repetitiva');
+      expect(strategy.taskType).toBe(TaskType.FIXED_REPETITIVE);
     });
 
     it('should throw error for unknown task type', () => {
@@ -155,10 +156,10 @@ describe('TaskStrategyFactory', () => {
 
   describe('getStrategyByType', () => {
     it('should return correct strategy by explicit type', () => {
-      const strategy = factory.getStrategyByType('Hábito');
+      const strategy = factory.getStrategyByType(TaskType.HABIT);
       
       expect(strategy).toBeInstanceOf(HabitStrategy);
-      expect(strategy.taskType).toBe('Hábito');
+      expect(strategy.taskType).toBe(TaskType.HABIT);
     });
 
     it('should throw error for invalid task type', () => {
@@ -170,12 +171,12 @@ describe('TaskStrategyFactory', () => {
 
   describe('hasStrategy', () => {
     it('should return true for registered task types', () => {
-      expect(factory.hasStrategy('Única')).toBe(true);
-      expect(factory.hasStrategy('Recurrente Finita')).toBe(true);
-      expect(factory.hasStrategy('Hábito')).toBe(true);
-      expect(factory.hasStrategy('Hábito +')).toBe(true);
-      expect(factory.hasStrategy('Fija Única')).toBe(true);
-      expect(factory.hasStrategy('Fija Repetitiva')).toBe(true);
+      expect(factory.hasStrategy(TaskType.SINGLE)).toBe(true);
+      expect(factory.hasStrategy(TaskType.FINITE_RECURRING)).toBe(true);
+      expect(factory.hasStrategy(TaskType.HABIT)).toBe(true);
+      expect(factory.hasStrategy(TaskType.HABIT_PLUS)).toBe(true);
+      expect(factory.hasStrategy(TaskType.FIXED_SINGLE)).toBe(true);
+      expect(factory.hasStrategy(TaskType.FIXED_REPETITIVE)).toBe(true);
     });
 
     it('should return false for unregistered task types', () => {
@@ -188,12 +189,12 @@ describe('TaskStrategyFactory', () => {
       const types = factory.getRegisteredTypes();
       
       expect(types).toHaveLength(6);
-      expect(types).toContain('Única');
-      expect(types).toContain('Recurrente Finita');
-      expect(types).toContain('Hábito');
-      expect(types).toContain('Hábito +');
-      expect(types).toContain('Fija Única');
-      expect(types).toContain('Fija Repetitiva');
+      expect(types).toContain(TaskType.SINGLE);
+      expect(types).toContain(TaskType.FINITE_RECURRING);
+      expect(types).toContain(TaskType.HABIT);
+      expect(types).toContain(TaskType.HABIT_PLUS);
+      expect(types).toContain(TaskType.FIXED_SINGLE);
+      expect(types).toContain(TaskType.FIXED_REPETITIVE);
     });
   });
 });

@@ -15,10 +15,10 @@
 import { AbstractTaskStrategy } from '../base/abstract-task-strategy';
 import type { TaskLifecycleAction } from '../base/task-strategy.interface';
 import type { OccurrenceContext, EventContext } from '../base/strategy-types';
-import type { TaskType } from '../../types';
+import { TaskType } from '../../types';
 
 export class FixedSingleStrategy extends AbstractTaskStrategy {
-  readonly taskType: TaskType = 'Fija Única';
+  readonly taskType: TaskType = TaskType.FIXED_SINGLE;
 
   /**
    * When occurrence is completed, deactivate task

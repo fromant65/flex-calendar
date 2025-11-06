@@ -16,10 +16,10 @@
 import { AbstractTaskStrategy } from '../base/abstract-task-strategy';
 import type { TaskLifecycleAction } from '../base/task-strategy.interface';
 import type { OccurrenceContext } from '../base/strategy-types';
-import type { TaskType } from '../../types';
+import { TaskType } from '../../types';
 
 export class HabitPlusStrategy extends AbstractTaskStrategy {
-  readonly taskType: TaskType = 'Hábito +';
+  readonly taskType: TaskType = TaskType.HABIT_PLUS;
 
   /**
    * When occurrence is completed, always create next

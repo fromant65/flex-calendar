@@ -6,7 +6,17 @@
 export type TaskOccurrenceStatus = 'Pending' | 'In Progress' | 'Completed' | 'Skipped';
 
 // Task Type (based on recurrence pattern)
-export type TaskType = 'Única' | 'Recurrente Finita' | 'Hábito' | 'Hábito +' | 'Fija Única' | 'Fija Repetitiva';
+export enum TaskType {
+  SINGLE = 'Única',
+  FINITE_RECURRING = 'Recurrente Finita',
+  HABIT = 'Hábito',
+  HABIT_PLUS = 'Hábito +',
+  FIXED_SINGLE = 'Fija Única',
+  FIXED_REPETITIVE = 'Fija Repetitiva',
+}
+
+// Legacy type alias for backwards compatibility
+export type TaskTypeString = 'Única' | 'Recurrente Finita' | 'Hábito' | 'Hábito +' | 'Fija Única' | 'Fija Repetitiva';
 
 // Day of Week
 export type DayOfWeek = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';

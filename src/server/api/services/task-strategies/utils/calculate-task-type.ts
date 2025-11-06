@@ -5,7 +5,8 @@
  * importing heavy dependencies in tests.
  */
 
-import type { TaskRecurrence, TaskType } from '../../types';
+import type { TaskRecurrence } from '../../types';
+import { TaskType } from '../../types';
 
 /**
  * Calculate task type based on recurrence pattern and fixed status
@@ -26,23 +27,23 @@ export function calculateTaskType(
   if (task?.isFixed) {
     // Fixed tasks with single occurrence
     if (!recurrence || recurrence.maxOccurrences === 1) {
-      return "Fija Única";
+      return TaskType.FIXED_SINGLE;
     }
     // Fixed tasks with recurring pattern
-    return "Fija Repetitiva";
+    return TaskType.FIXED_REPETITIVE;
   }
 
   // No recurrence = single task
-  if (!recurrence) return "Única";
+  if (!recurrence) return TaskType.SINGLE;
   
   // Explicit single occurrence
   if (recurrence.maxOccurrences === 1 && !recurrence.interval) {
-    return "Única";
+    return TaskType.SINGLE;
   }
   
   // Multiple occurrences without interval
   if (recurrence.maxOccurrences && recurrence.maxOccurrences > 1 && !recurrence.interval) {
-    return "Recurrente Finita";
+    return TaskType.FINITE_RECURRING;
   }
   
   // Has interval (recurring pattern)
@@ -51,13 +52,13 @@ export function calculateTaskType(
     const hasSpecificDays = !!(recurrence.daysOfWeek?.length || recurrence.daysOfMonth?.length);
     const hasMoreThanOneOccurrence = !!(recurrence.maxOccurrences && recurrence.maxOccurrences > 1);
     if (hasSpecificDays || hasMoreThanOneOccurrence) {
-      return "Hábito +";
+      return TaskType.HABIT_PLUS;
     }
     
     // Simple interval-based habit
-    return "Hábito";
+    return TaskType.HABIT;
   }
   
   // Fallback for edge cases
-  return "Única";
+  return TaskType.SINGLE;
 }

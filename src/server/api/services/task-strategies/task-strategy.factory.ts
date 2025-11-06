@@ -12,7 +12,8 @@
 
 import type { ITaskStrategy } from './base/task-strategy.interface';
 import type { StrategyDependencies } from './base/strategy-types';
-import type { Task, TaskRecurrence, TaskType } from '../types';
+import type { Task, TaskRecurrence } from '../types';
+import { TaskType } from '../types';
 import { calculateTaskType } from './utils/calculate-task-type';
 
 // Import strategy implementations
@@ -29,12 +30,12 @@ export class TaskStrategyFactory {
   constructor(dependencies: StrategyDependencies) {
     // Initialize all strategies with dependencies
     this.strategies = new Map<TaskType, ITaskStrategy>([
-      ['Única', new SingleTaskStrategy(dependencies)],
-      ['Recurrente Finita', new FiniteRecurringStrategy(dependencies)],
-      ['Hábito', new HabitStrategy(dependencies)],
-      ['Hábito +', new HabitPlusStrategy(dependencies)],
-      ['Fija Única', new FixedSingleStrategy(dependencies)],
-      ['Fija Repetitiva', new FixedRepetitiveStrategy(dependencies)],
+      [TaskType.SINGLE, new SingleTaskStrategy(dependencies)],
+      [TaskType.FINITE_RECURRING, new FiniteRecurringStrategy(dependencies)],
+      [TaskType.HABIT, new HabitStrategy(dependencies)],
+      [TaskType.HABIT_PLUS, new HabitPlusStrategy(dependencies)],
+      [TaskType.FIXED_SINGLE, new FixedSingleStrategy(dependencies)],
+      [TaskType.FIXED_REPETITIVE, new FixedRepetitiveStrategy(dependencies)],
     ]);
   }
 
