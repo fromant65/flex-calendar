@@ -8,6 +8,7 @@
 
 import { OccurrenceAdapter, TaskAdapter } from "../../adapter";
 import { RecurrenceDateCalculator } from "../scheduling/recurrence-date-calculator.service";
+import { calculateTaskType } from "../../helpers";
 
 export class BacklogDetectionService {
   private occurrenceAdapter: OccurrenceAdapter;
@@ -24,6 +25,7 @@ export class BacklogDetectionService {
    * Detect and optionally skip backlog occurrences
    * Returns information about pending occurrences and estimates missing ones
    * Now properly detects backlog based on overdue occurrences, not just count
+   * Only estimates missing occurrences for Hábito and Hábito+ tasks
    */
   async detectBacklog(taskId: number): Promise<{
     hasSevereBacklog: boolean;
@@ -47,6 +49,10 @@ export class BacklogDetectionService {
       };
     }
 
+    // Determine task type to check if it should generate occurrences
+    const taskType = calculateTaskType(task.recurrence, task);
+    const shouldGenerateOccurrences = taskType === "Hábito" || taskType === "Hábito +";
+
     const now = new Date();
     
     // Get all occurrences for this task, sorted by startDate
@@ -60,19 +66,21 @@ export class BacklogDetectionService {
       .filter(occ => occ.status === "Pending" || occ.status === "InProgress")
       .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
-    // Calculate estimated missing occurrences
-    // Simply check: what should the next occurrence date be, and how many fit until today?
+    // Calculate estimated missing occurrences ONLY for Hábito and Hábito+
     let estimatedMissingCount = 0;
-    const lastOccurrence = sortedOccurrences[sortedOccurrences.length - 1];
     
-    if (lastOccurrence) {
-      let currentDate = new Date(lastOccurrence.startDate);
+    if (shouldGenerateOccurrences) {
+      const lastOccurrence = sortedOccurrences[sortedOccurrences.length - 1];
       
-      // Calculate how many occurrences should exist after the last one until today
-      while (currentDate < now) {
-        currentDate = this.dateCalculator.calculateNextOccurrenceDate(currentDate, task.recurrence);
-        if (currentDate <= now) {
-          estimatedMissingCount++;
+      if (lastOccurrence) {
+        let currentDate = new Date(lastOccurrence.startDate);
+        
+        // Calculate how many occurrences should exist after the last one until today
+        while (currentDate < now) {
+          currentDate = this.dateCalculator.calculateNextOccurrenceDate(currentDate, task.recurrence);
+          if (currentDate <= now) {
+            estimatedMissingCount++;
+          }
         }
       }
     }
@@ -106,7 +114,7 @@ export class BacklogDetectionService {
 
   /**
    * Skip all backlog occurrences that are overdue
-   * Also generates missing occurrences up to today
+   * Also generates missing occurrences up to today (ONLY for Hábito and Hábito+ tasks)
    * Returns the number of occurrences skipped and created
    */
   async skipBacklogOccurrences(
@@ -119,49 +127,55 @@ export class BacklogDetectionService {
       return { skippedCount: 0, createdCount: 0 };
     }
 
+    // Determine task type - only Hábito and Hábito+ should generate occurrences
+    const taskType = calculateTaskType(task.recurrence, task);
+    const shouldGenerateOccurrences = taskType === "Hábito" || taskType === "Hábito +";
+
     const now = new Date();
     let createdCount = 0;
     let skippedCount = 0;
 
-    // Step 1: Generate all missing occurrences until today
+    // Step 1: Generate all missing occurrences until today (ONLY for Hábito/Hábito+)
     // Keep generating until the latest occurrence's startDate is >= today
-    let shouldContinue = true;
-    const maxIterations = 1000; // Safety limit to prevent infinite loops
-    let iterations = 0;
-    
-    while (shouldContinue && iterations < maxIterations) {
-      iterations++;
+    if (shouldGenerateOccurrences) {
+      let shouldContinue = true;
+      const maxIterations = 1000; // Safety limit to prevent infinite loops
+      let iterations = 0;
       
-      // Get current occurrences
-      const allOccurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
-      const sortedOccurrences = allOccurrences.sort((a, b) => 
-        a.startDate.getTime() - b.startDate.getTime()
-      );
-      
-      const lastOccurrence = sortedOccurrences[sortedOccurrences.length - 1];
-      
-      // Calculate what the next occurrence date would be
-      const nextDate = this.dateCalculator.calculateNextOccurrenceDate(
-        lastOccurrence?.startDate ?? new Date(),
-        task.recurrence
-      );
+      while (shouldContinue && iterations < maxIterations) {
+        iterations++;
+        
+        // Get current occurrences
+        const allOccurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
+        const sortedOccurrences = allOccurrences.sort((a, b) => 
+          a.startDate.getTime() - b.startDate.getTime()
+        );
+        
+        const lastOccurrence = sortedOccurrences[sortedOccurrences.length - 1];
+        
+        // Calculate what the next occurrence date would be
+        const nextDate = this.dateCalculator.calculateNextOccurrenceDate(
+          lastOccurrence?.startDate ?? new Date(),
+          task.recurrence
+        );
 
-      // Only create if the next occurrence should start before or on today
-      if (nextDate <= now) {
-        try {
-          await createOccurrenceFn();
-          createdCount++;
-        } catch (error) {
-          console.error("Error creating occurrence during backlog processing:", error);
+        // Only create if the next occurrence should start before or on today
+        if (nextDate <= now) {
+          try {
+            await createOccurrenceFn();
+            createdCount++;
+          } catch (error) {
+            console.error("Error creating occurrence during backlog processing:", error);
+            shouldContinue = false;
+          }
+        } else {
           shouldContinue = false;
         }
-      } else {
-        shouldContinue = false;
       }
-    }
 
-    if (iterations >= maxIterations) {
-      console.warn(`Reached max iterations (${maxIterations}) when processing backlog for task ${taskId}`);
+      if (iterations >= maxIterations) {
+        console.warn(`Reached max iterations (${maxIterations}) when processing backlog for task ${taskId}`);
+      }
     }
 
     // Step 2: Skip all overdue occurrences, keeping only the most recent one
