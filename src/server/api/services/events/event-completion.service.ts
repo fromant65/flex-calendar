@@ -9,19 +9,26 @@
 import { CalendarEventAdapter, OccurrenceAdapter, TaskAdapter } from "../../adapter";
 import { TaskSchedulerService } from "../scheduling/task-scheduler.service";
 import type { TaskSchedulerServiceInterface } from "../scheduling";
-import { calculateTaskType } from "../../helpers";
+import { TaskStrategyFactory } from "../task-strategies/task-strategy.factory";
+import type { EventContext } from "../task-strategies/base/strategy-types";
 
 export class EventCompletionService {
   private eventAdapter: CalendarEventAdapter;
   private occurrenceAdapter: OccurrenceAdapter;
   private taskAdapter: TaskAdapter;
   private schedulerService: TaskSchedulerServiceInterface;
+  private strategyFactory: TaskStrategyFactory;
 
   constructor(schedulerService?: TaskSchedulerServiceInterface) {
     this.eventAdapter = new CalendarEventAdapter();
     this.occurrenceAdapter = new OccurrenceAdapter();
     this.taskAdapter = new TaskAdapter();
     this.schedulerService = schedulerService ?? new TaskSchedulerService();
+    
+    // Initialize strategy factory
+    this.strategyFactory = new TaskStrategyFactory({
+      scheduler: this.schedulerService,
+    });
   }
 
   /**
@@ -112,7 +119,7 @@ export class EventCompletionService {
   }
 
   /**
-   * Complete a fixed task occurrence
+   * Complete a fixed task occurrence using strategy pattern
    */
   private async completeFixedTaskOccurrence(
     occurrenceId: number,
@@ -126,15 +133,34 @@ export class EventCompletionService {
       const recurrence = await this.schedulerService.getRecurrence(task.recurrenceId);
       
       if (recurrence) {
-        await this.schedulerService.incrementCompletedOccurrences(task.recurrenceId, occurrence.startDate);
+        // Get events for context
+        const events = await this.eventAdapter.getEventsByOccurrenceId(occurrenceId);
+        const event = events[0]; // Get first event for context
+        
+        if (!event) return; // No event to work with
+        
+        // Get strategy for this task type
+        const strategy = this.strategyFactory.getStrategy(task, recurrence);
+        
+        // Build context
+        const context: EventContext = {
+          event: event as import("../types").CalendarEvent,
+          occurrence,
+          task,
+          recurrence,
+        };
 
-        // Fija Única: maxOccurrences = 1
-        if (recurrence.maxOccurrences === 1) {
+        // Execute strategy action
+        const action = await strategy.onEventCompleted(context);
+
+        // Handle the action
+        if (action.type === 'DEACTIVATE_TASK') {
           await this.taskAdapter.deleteTask(task.id);
         }
-        // Fija Repetitiva: Check if all occurrences are completed
-        else {
-          await this.checkAndDeactivateIfAllCompleted(task.id);
+        // For fixed tasks, CREATE_NEXT_OCCURRENCE shouldn't happen,
+        // but we handle it for completeness
+        else if (action.type === 'CREATE_NEXT_OCCURRENCE' && action.params) {
+          await this.schedulerService.createNextOccurrence(task.id, action.params);
         }
       }
     }
@@ -155,7 +181,7 @@ export class EventCompletionService {
   }
 
   /**
-   * Complete an occurrence (delegates to OccurrenceCompletionService logic)
+   * Complete an occurrence using strategy pattern
    */
   private async completeOccurrence(occurrenceId: number, completedAt?: Date): Promise<void> {
     const occurrence = await this.occurrenceAdapter.getOccurrenceWithTask(occurrenceId);
@@ -174,25 +200,30 @@ export class EventCompletionService {
 
     await this.occurrenceAdapter.completeOccurrence(occurrenceId, completedAt);
 
-    if (task.recurrence) {
-      const recurrence = task.recurrence;
-      await this.schedulerService.incrementCompletedOccurrences(recurrence.id, occurrence.startDate);
+    if (task.recurrence && events.length > 0) {
+      // Get strategy for this task type
+      const strategy = this.strategyFactory.getStrategy(task, task.recurrence);
       
-      if (recurrence.maxOccurrences === 1 && !recurrence.interval) {
+      // Build context with the first event
+      const context: EventContext = {
+        event: events[0] as import("../types").CalendarEvent,
+        occurrence,
+        task,
+        recurrence: task.recurrence,
+      };
+
+      // Execute strategy action
+      const action = await strategy.onEventCompleted(context);
+
+      // Handle the action
+      if (action.type === 'COMPLETE_TASK') {
         await this.taskAdapter.completeTask(task.id);
-      } else if (recurrence.maxOccurrences && recurrence.maxOccurrences > 1 && !recurrence.interval) {
-        const occurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(task.id);
-        const completedCount = occurrences.filter(o => o.status === "Completed").length;
-        
-        if (completedCount < recurrence.maxOccurrences) {
-          await this.schedulerService.createNextOccurrence(task.id, {
-            targetTimeConsumption: occurrence.targetTimeConsumption ?? undefined,
-          });
+      } else if (action.type === 'CREATE_NEXT_OCCURRENCE') {
+        if (action.params) {
+          await this.schedulerService.createNextOccurrence(task.id, action.params);
         } else {
-          await this.taskAdapter.completeTask(task.id);
+          await this.schedulerService.createNextOccurrence(task.id);
         }
-      } else if (recurrence.interval) {
-        await this.schedulerService.createNextOccurrence(task.id);
       }
     }
   }
@@ -211,14 +242,16 @@ export class EventCompletionService {
   }
 
   /**
-   * Skip an occurrence (delegates to OccurrenceCompletionService logic)
+   * Skip an occurrence using strategy pattern
    */
   private async skipOccurrence(occurrenceId: number): Promise<void> {
     const occurrence = await this.occurrenceAdapter.getOccurrenceWithTask(occurrenceId);
     if (!occurrence) return;
 
-    // Delete all events
+    // Get events before deleting them (for context)
     const events = await this.eventAdapter.getEventsByOccurrenceId(occurrenceId);
+    
+    // Delete all events
     for (const event of events) {
       await this.eventAdapter.deleteEvent(event.id);
     }
@@ -226,26 +259,29 @@ export class EventCompletionService {
     await this.occurrenceAdapter.skipOccurrence(occurrenceId);
 
     const task = await this.taskAdapter.getTaskWithRecurrence(occurrence.task.id);
-    if (task?.recurrence) {
-      await this.schedulerService.incrementCompletedOccurrences(task.recurrence.id, occurrence.startDate);
+    if (task?.recurrence && events.length > 0) {
+      // Get strategy for this task type
+      const strategy = this.strategyFactory.getStrategy(task, task.recurrence);
       
-      // Use the helper to determine task type
-      const taskType = calculateTaskType(task.recurrence, task);
-      
-      // Only Hábito, Hábito+ and Recurrente Finita generate occurrences dynamically
-      const needsDynamicGeneration = taskType === "Hábito" || taskType === "Hábito +" || taskType === "Recurrente Finita";
-      
-      if (needsDynamicGeneration) {
-        await this.schedulerService.createNextOccurrence(task.id);
-      } else {
-        // For tasks with pre-generated occurrences (Fija Única, Fija Repetitiva)
-        // Check if all occurrences are completed/skipped and deactivate task
-        if (task.recurrence.maxOccurrences === 1) {
-          // Single occurrence task - deactivate immediately
-          await this.taskAdapter.deleteTask(task.id);
+      // Build context with the first event (before it was deleted)
+      const context: EventContext = {
+        event: events[0] as import("../types").CalendarEvent,
+        occurrence,
+        task,
+        recurrence: task.recurrence,
+      };
+
+      // Execute strategy action
+      const action = await strategy.onEventSkipped(context);
+
+      // Handle the action
+      if (action.type === 'DEACTIVATE_TASK') {
+        await this.taskAdapter.deleteTask(task.id);
+      } else if (action.type === 'CREATE_NEXT_OCCURRENCE') {
+        if (action.params) {
+          await this.schedulerService.createNextOccurrence(task.id, action.params);
         } else {
-          // Multiple occurrences - check if all are finished
-          await this.checkAndDeactivateIfAllCompleted(task.id);
+          await this.schedulerService.createNextOccurrence(task.id);
         }
       }
     }

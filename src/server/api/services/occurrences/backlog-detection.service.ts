@@ -8,17 +8,24 @@
 
 import { OccurrenceAdapter, TaskAdapter } from "../../adapter";
 import { RecurrenceDateCalculator } from "../scheduling/recurrence-date-calculator.service";
-import { calculateTaskType } from "../../helpers";
+import { TaskSchedulerService } from "../scheduling/task-scheduler.service";
+import { TaskStrategyFactory } from "../task-strategies";
 
 export class BacklogDetectionService {
   private occurrenceAdapter: OccurrenceAdapter;
   private taskAdapter: TaskAdapter;
   private dateCalculator: RecurrenceDateCalculator;
+  private strategyFactory: TaskStrategyFactory;
 
-  constructor() {
+  constructor(strategyFactory?: TaskStrategyFactory) {
     this.occurrenceAdapter = new OccurrenceAdapter();
     this.taskAdapter = new TaskAdapter();
     this.dateCalculator = new RecurrenceDateCalculator();
+    
+    // Initialize strategy factory with dependencies
+    this.strategyFactory = strategyFactory ?? new TaskStrategyFactory({
+      scheduler: new TaskSchedulerService(),
+    });
   }
 
   /**
@@ -49,9 +56,9 @@ export class BacklogDetectionService {
       };
     }
 
-    // Determine task type to check if it should generate occurrences
-    const taskType = calculateTaskType(task.recurrence, task);
-    const shouldGenerateOccurrences = taskType === "Hábito" || taskType === "Hábito +";
+    // Determine if task should generate occurrences using strategy
+    const strategy = this.strategyFactory.getStrategy(task, task.recurrence);
+    const shouldGenerateOccurrences = strategy.shouldGenerateBacklogOccurrences();
 
     const now = new Date();
     
@@ -127,9 +134,9 @@ export class BacklogDetectionService {
       return { skippedCount: 0, createdCount: 0 };
     }
 
-    // Determine task type - only Hábito and Hábito+ should generate occurrences
-    const taskType = calculateTaskType(task.recurrence, task);
-    const shouldGenerateOccurrences = taskType === "Hábito" || taskType === "Hábito +";
+    // Determine if task should generate occurrences using strategy
+    const strategy = this.strategyFactory.getStrategy(task, task.recurrence);
+    const shouldGenerateOccurrences = strategy.shouldGenerateBacklogOccurrences();
 
     const now = new Date();
     let createdCount = 0;
