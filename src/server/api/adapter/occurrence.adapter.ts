@@ -8,6 +8,7 @@ import type {
   UpdateOccurrenceDTO,
   TaskOccurrence,
   TaskOccurrenceStatus,
+  OccurrenceWithTask,
 } from "../services/types";
 import { calculateTaskType, normalizeDates, normalizeDatesArray } from "../helpers";
 
@@ -53,17 +54,18 @@ export class OccurrenceAdapter {
   /**
    * Get occurrence with task details
    */
-  async getOccurrenceWithTask(occurrenceId: number) {
-    return await this.occurrenceRepo.findWithTask(occurrenceId);
+  async getOccurrenceWithTask(occurrenceId: number): Promise<OccurrenceWithTask | undefined> {
+    const result = await this.occurrenceRepo.findWithTask(occurrenceId);
+    return result as OccurrenceWithTask | undefined;
   }
 
   /**
    * Get all occurrences for a task
    */
-  async getOccurrencesByTaskId(taskId: number) {
+  async getOccurrencesByTaskId(taskId: number): Promise<TaskOccurrence[]> {
     const occurrences = await this.occurrenceRepo.findByTaskId(taskId);
     // Normalize dates for all occurrences
-    return normalizeDatesArray(occurrences, ['startDate', 'limitDate', 'targetDate', 'createdAt', 'updatedAt']);
+    return normalizeDatesArray(occurrences, ['startDate', 'limitDate', 'targetDate', 'createdAt', 'updatedAt']) as TaskOccurrence[];
   }
 
   /**
@@ -115,24 +117,25 @@ export class OccurrenceAdapter {
     
     // Enrich each occurrence's task with taskType
     const enrichedOccurrences = await Promise.all(
-      occurrences.map(async (occurrence: any) => {
-        if (occurrence.task) {
+      occurrences.map(async (occurrence) => {
+        const typedOccurrence = occurrence as OccurrenceWithTask;
+        if (typedOccurrence.task) {
           // Get recurrence for the task using the recurrenceId
           let recurrence = null;
-          if (occurrence.task.recurrenceId) {
-            recurrence = await this.recurrenceRepo.findById(occurrence.task.recurrenceId);
+          if (typedOccurrence.task.recurrenceId) {
+            recurrence = await this.recurrenceRepo.findById(typedOccurrence.task.recurrenceId);
           }
           
           // Calculate and add taskType
           return {
-            ...occurrence,
+            ...typedOccurrence,
             task: {
-              ...occurrence.task,
-              taskType: calculateTaskType(recurrence, occurrence.task),
+              ...typedOccurrence.task,
+              taskType: calculateTaskType(recurrence, typedOccurrence.task),
             },
           };
         }
-        return occurrence;
+        return typedOccurrence;
       })
     );
     

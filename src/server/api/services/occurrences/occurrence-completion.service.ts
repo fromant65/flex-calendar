@@ -4,23 +4,36 @@
  * Handles completion and skipping logic for occurrences.
  * Manages the task lifecycle when occurrences are completed/skipped.
  * Extracted from TaskLifecycleService for better modularity.
+ * 
+ * Refactored to use TaskStrategyFactory (Strategy Pattern) to eliminate
+ * conditional logic for different task types.
  */
 
 import { OccurrenceAdapter, CalendarEventAdapter, TaskAdapter } from "../../adapter";
 import { TaskSchedulerService } from "../scheduling/task-scheduler.service";
 import type { TaskSchedulerServiceInterface } from "../scheduling";
+import { TaskStrategyFactory } from "../task-strategies/task-strategy.factory";
+import { calculateTaskType } from "../task-strategies/utils/calculate-task-type";
+import type { OccurrenceContext } from "../task-strategies/base/strategy-types";
+import type { OccurrenceWithTask, TaskOccurrence } from "../types";
 
 export class OccurrenceCompletionService {
   private occurrenceAdapter: OccurrenceAdapter;
   private eventAdapter: CalendarEventAdapter;
   private taskAdapter: TaskAdapter;
   private schedulerService: TaskSchedulerServiceInterface;
+  private strategyFactory: TaskStrategyFactory;
 
   constructor(schedulerService?: TaskSchedulerServiceInterface) {
     this.occurrenceAdapter = new OccurrenceAdapter();
     this.eventAdapter = new CalendarEventAdapter();
     this.taskAdapter = new TaskAdapter();
     this.schedulerService = schedulerService ?? new TaskSchedulerService();
+    
+    // Initialize strategy factory with dependencies
+    this.strategyFactory = new TaskStrategyFactory({
+      scheduler: this.schedulerService,
+    });
   }
 
   /**
@@ -53,38 +66,46 @@ export class OccurrenceCompletionService {
     // Mark occurrence as completed with completedAt timestamp
     await this.occurrenceAdapter.completeOccurrence(occurrenceId, completedAt);
 
-    // Handle task lifecycle based on recurrence
+    // Handle task lifecycle using Strategy Pattern
     if (task.recurrence) {
       const recurrence = task.recurrence;
 
-      // Increment completed occurrences counter for the period
-      await this.schedulerService.incrementCompletedOccurrences(recurrence.id, occurrence.startDate);
-      
-      // Tarea Única: maxOccurrences = 1, no interval
-      if (recurrence.maxOccurrences === 1 && !recurrence.interval) {
-        await this.taskAdapter.completeTask(task.id);
-      }
-      // Tarea Fija (Única o Repetitiva): Check if all occurrences are done
-      else if (task.isFixed) {
-        await this.checkAndCompleteIfAllDone(task.id);
-      }
-      // Recurrente Finita: maxOccurrences > 1, no interval
-      else if (recurrence.maxOccurrences && recurrence.maxOccurrences > 1 && !recurrence.interval) {
-        const occurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(task.id);
-        // Count both completed and skipped occurrences as "discarded"
-        const discardedCount = occurrences.filter(o => o.status === "Completed" || o.status === "Skipped").length;
-        
-        if (discardedCount < recurrence.maxOccurrences) {
+      // Get the appropriate strategy for this task type
+      const taskType = calculateTaskType(recurrence, task);
+      const strategy = this.strategyFactory.getStrategy(task, recurrence);
+
+      // Build context for the strategy
+      const allOccurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(task.id);
+      const context: OccurrenceContext = {
+        task,
+        recurrence,
+        occurrence: occurrence as OccurrenceWithTask,
+        allOccurrences: allOccurrences as TaskOccurrence[],
+      };
+
+      // Execute strategy lifecycle action
+      const action = await strategy.onOccurrenceCompleted(context);
+
+      // Apply the action returned by the strategy
+      switch (action.type) {
+        case 'CREATE_NEXT_OCCURRENCE':
           await this.schedulerService.createNextOccurrence(task.id, {
             targetTimeConsumption: occurrence.targetTimeConsumption ?? undefined,
           });
-        } else {
+          break;
+        
+        case 'COMPLETE_TASK':
           await this.taskAdapter.completeTask(task.id);
-        }
-      }
-      // Hábito or Hábito+: has interval (infinite recurrence)
-      else if (recurrence.interval) {
-        await this.schedulerService.createNextOccurrence(task.id);
+          break;
+        
+        case 'DEACTIVATE_TASK':
+          // Deactivate is same as complete for now (can be extended later)
+          await this.taskAdapter.completeTask(task.id);
+          break;
+        
+        case 'NO_ACTION':
+          // No action needed
+          break;
       }
     }
 
@@ -109,54 +130,49 @@ export class OccurrenceCompletionService {
     // Mark as skipped
     await this.occurrenceAdapter.skipOccurrence(occurrenceId);
 
-    // Handle task lifecycle based on recurrence (same logic as completion)
+    // Handle task lifecycle using Strategy Pattern (same as completion)
     const task = await this.taskAdapter.getTaskWithRecurrence(occurrence.task.id);
     if (task?.recurrence) {
       const recurrence = task.recurrence;
 
-      // Increment completed occurrences counter for the period (skipped counts)
-      await this.schedulerService.incrementCompletedOccurrences(recurrence.id, occurrence.startDate);
-      
-      // Tarea Única: maxOccurrences = 1, no interval
-      if (recurrence.maxOccurrences === 1 && !recurrence.interval) {
-        await this.taskAdapter.completeTask(task.id);
-      }
-      // Tarea Fija (Única o Repetitiva): Check if all occurrences are done
-      else if (task.isFixed) {
-        await this.checkAndCompleteIfAllDone(task.id);
-      }
-      // Recurrente Finita: maxOccurrences > 1, no interval
-      else if (recurrence.maxOccurrences && recurrence.maxOccurrences > 1 && !recurrence.interval) {
-        const occurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(task.id);
-        const discardedCount = occurrences.filter(o => o.status === "Completed" || o.status === "Skipped").length;
-        
-        if (discardedCount < recurrence.maxOccurrences) {
+      // Get the appropriate strategy for this task type
+      const taskType = calculateTaskType(recurrence, task);
+      const strategy = this.strategyFactory.getStrategy(task, recurrence);
+
+      // Build context for the strategy
+      const allOccurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(task.id);
+      const context: OccurrenceContext = {
+        task,
+        recurrence,
+        occurrence: occurrence as OccurrenceWithTask,
+        allOccurrences: allOccurrences as TaskOccurrence[],
+      };
+
+      // Execute strategy lifecycle action
+      const action = await strategy.onOccurrenceSkipped(context);
+
+      // Apply the action returned by the strategy
+      switch (action.type) {
+        case 'CREATE_NEXT_OCCURRENCE':
           await this.schedulerService.createNextOccurrence(task.id);
-        } else {
+          break;
+        
+        case 'COMPLETE_TASK':
           await this.taskAdapter.completeTask(task.id);
-        }
-      }
-      // Hábito or Hábito+: has interval (infinite recurrence)
-      else if (recurrence.interval) {
-        await this.schedulerService.createNextOccurrence(task.id);
+          break;
+        
+        case 'DEACTIVATE_TASK':
+          // Deactivate is same as complete for now (can be extended later)
+          await this.taskAdapter.completeTask(task.id);
+          break;
+        
+        case 'NO_ACTION':
+          // No action needed
+          break;
       }
     }
 
     return true;
-  }
-
-  /**
-   * Check if all occurrences are completed/skipped and complete the task
-   * This ensures tasks are completed when all work is done (either completed or skipped)
-   */
-  private async checkAndCompleteIfAllDone(taskId: number): Promise<void> {
-    const occurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
-    const finishedCount = occurrences.filter(o => o.status === "Completed" || o.status === "Skipped").length;
-    const totalOccurrences = occurrences.length;
-    
-    if (finishedCount >= totalOccurrences) {
-      await this.taskAdapter.completeTask(taskId);
-    }
   }
 
   /**

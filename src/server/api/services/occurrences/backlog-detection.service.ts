@@ -63,7 +63,7 @@ export class BacklogDetectionService {
 
     // Filter pending/in-progress occurrences
     const pendingOccurrences = sortedOccurrences
-      .filter(occ => occ.status === "Pending" || occ.status === "InProgress")
+      .filter(occ => occ.status === "Pending" || occ.status === "In Progress")
       .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
     // Calculate estimated missing occurrences ONLY for Hábito and Hábito+
@@ -182,7 +182,7 @@ export class BacklogDetectionService {
     // Get fresh list of all occurrences after creation
     const allOccurrencesAfterCreation = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
     const pendingAfterCreation = allOccurrencesAfterCreation
-      .filter(occ => occ.status === "Pending" || occ.status === "InProgress")
+      .filter(occ => occ.status === "Pending" || occ.status === "In Progress")
       .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
     // Skip all occurrences whose limitDate has passed, except keep the most recent one

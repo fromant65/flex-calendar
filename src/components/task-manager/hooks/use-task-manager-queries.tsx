@@ -32,7 +32,7 @@ export function useTaskManagerQueries(
       }
       
       // Task type filter
-      if (filters.taskTypeFilter !== "all" && occ.task.taskType !== filters.taskTypeFilter) {
+      if (filters.taskTypeFilter !== "all" && 'taskType' in occ.task && occ.task.taskType !== filters.taskTypeFilter) {
         return false;
       }
       
