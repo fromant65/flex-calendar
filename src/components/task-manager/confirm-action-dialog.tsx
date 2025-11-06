@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,6 +9,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "~/components/ui/alert-dialog";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 
 interface ConfirmActionDialogProps {
   action: {
@@ -15,7 +18,7 @@ interface ConfirmActionDialogProps {
     occurrenceId: number;
     taskName: string;
   } | null;
-  onConfirm: (type: "complete" | "skip", occurrenceId: number) => void;
+  onConfirm: (type: "complete" | "skip", occurrenceId: number, timeConsumed?: number) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -26,6 +29,15 @@ export function ConfirmActionDialog({
   onCancel,
   isLoading = false,
 }: ConfirmActionDialogProps) {
+  const [timeConsumed, setTimeConsumed] = useState<string>("");
+
+  // Reset time consumed when dialog opens/closes
+  useEffect(() => {
+    if (action) {
+      setTimeConsumed("");
+    }
+  }, [action]);
+
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       onCancel();
@@ -46,7 +58,7 @@ export function ConfirmActionDialog({
             {action?.type === "complete" ? (
               <>
                 ¿Estás seguro de que deseas completar esta ocurrencia de <strong>{action?.taskName}</strong>?
-                {" "}Esto generará la siguiente ocurrencia si la tarea es recurrente y eliminará todos los eventos asociados.
+                {" "}Esto generará la siguiente ocurrencia si la tarea es recurrente y marcará todos los eventos asociados como completados.
               </>
             ) : (
               <>
@@ -56,6 +68,29 @@ export function ConfirmActionDialog({
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
+
+        {/* Show time consumed input only when completing */}
+        {action?.type === "complete" && (
+          <div className="space-y-2">
+            <Label htmlFor="timeConsumed">
+              Tiempo dedicado (horas) <span className="text-muted-foreground text-xs">(opcional)</span>
+            </Label>
+            <Input
+              id="timeConsumed"
+              type="number"
+              min="0"
+              step="0.25"
+              value={timeConsumed}
+              onChange={(e) => setTimeConsumed(e.target.value)}
+              placeholder="Ej: 2.5"
+              disabled={isLoading}
+            />
+            <p className="text-xs text-muted-foreground">
+              Indica cuántas horas dedicaste a esta tarea
+            </p>
+          </div>
+        )}
+
         <AlertDialogFooter>
           <AlertDialogCancel className="cursor-pointer" disabled={isLoading}>
             Cancelar
@@ -65,7 +100,10 @@ export function ConfirmActionDialog({
             className="cursor-pointer"
             onClick={() => {
               if (action) {
-                onConfirm(action.type, action.occurrenceId);
+                const time = timeConsumed && !isNaN(parseFloat(timeConsumed)) 
+                  ? parseFloat(timeConsumed) 
+                  : undefined;
+                onConfirm(action.type, action.occurrenceId, time);
               }
             }}
           >

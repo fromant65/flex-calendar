@@ -77,9 +77,12 @@ export function useTaskManagerMutations(
   });
 
   // Handlers
-  const handleConfirmAction = (type: "complete" | "skip", occurrenceId: number) => {
+  const handleConfirmAction = (type: "complete" | "skip", occurrenceId: number, timeConsumed?: number) => {
     if (type === "complete") {
-      completeOccurrence.mutate({ id: occurrenceId });
+      completeOccurrence.mutate({ 
+        id: occurrenceId,
+        timeConsumed: timeConsumed ?? undefined 
+      });
     } else {
       skipOccurrence.mutate({ id: occurrenceId });
     }

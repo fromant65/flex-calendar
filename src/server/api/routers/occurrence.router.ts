@@ -131,14 +131,15 @@ export const occurrenceRouter = createTRPCRouter({
   complete: protectedProcedure
     .input(z.object({ 
       id: z.number(),
-      completedAt: z.date().optional() // Custom completion date/time
+      completedAt: z.date().optional(), // Custom completion date/time
+      timeConsumed: z.number().nonnegative().optional() // Time consumed in hours
     }))
     .mutation(async ({ ctx, input }) => {
       // Verify ownership before completing
       await verifyOccurrenceOwnership(input.id, ctx.session.user.id);
       
       const service = new TaskLifecycleService();
-      return await service.completeOccurrence(input.id, input.completedAt);
+      return await service.completeOccurrence(input.id, input.completedAt, input.timeConsumed);
     }),
 
   /**

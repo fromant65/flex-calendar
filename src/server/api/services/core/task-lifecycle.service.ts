@@ -170,8 +170,8 @@ export class TaskLifecycleService {
   /**
    * Complete an occurrence and trigger next occurrence creation if recurring
    */
-  async completeOccurrence(occurrenceId: number, completedAt?: Date) {
-    return await this.occurrenceCompletion.completeOccurrence(occurrenceId, completedAt);
+  async completeOccurrence(occurrenceId: number, completedAt?: Date, timeConsumed?: number) {
+    return await this.occurrenceCompletion.completeOccurrence(occurrenceId, completedAt, timeConsumed);
   }
 
   /**
