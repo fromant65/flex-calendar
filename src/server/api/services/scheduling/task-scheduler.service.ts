@@ -3,13 +3,14 @@
  */
 
 import { TaskAdapter, OccurrenceAdapter, CalendarEventAdapter, RecurrenceAdapter } from "../../adapter";
-import type { CreateOccurrenceDTO, DayOfWeek, TaskRecurrence, CreateRecurrenceDTO } from "../types";
+import type { TaskRecurrence, CreateRecurrenceDTO } from "../types";
 import { TaskAnalyticsService } from "../analytics/task-analytics.service";
 import { RecurrenceDateCalculator } from "./recurrence-date-calculator.service";
 import { PeriodManager } from "./period-manager.service";
 import { OccurrenceCreationService } from "./occurrence-creation.service";
 import { OccurrencePreviewService } from "./occurrence-preview.service";
 import { FixedTaskService } from "./fixed-task.service";
+import { TaskStrategyFactory } from "../task-strategies";
 
 export class TaskSchedulerService {
   private taskAdapter: TaskAdapter;
@@ -22,6 +23,7 @@ export class TaskSchedulerService {
   private occurrenceCreation: OccurrenceCreationService;
   private occurrencePreview: OccurrencePreviewService;
   private fixedTaskService: FixedTaskService;
+  private strategyFactory: TaskStrategyFactory;
 
   constructor() {
     this.taskAdapter = new TaskAdapter();
@@ -31,6 +33,13 @@ export class TaskSchedulerService {
     this.analyticsService = new TaskAnalyticsService();
     this.dateCalculator = new RecurrenceDateCalculator();
     this.periodManager = new PeriodManager(this.recurrenceAdapter);
+    
+    // Create strategy factory - pass 'this' for scheduler dependency
+    // This is safe because we're not calling any methods during construction
+    this.strategyFactory = new TaskStrategyFactory({
+      scheduler: this,
+    });
+    
     this.occurrenceCreation = new OccurrenceCreationService(
       this.taskAdapter,
       this.occurrenceAdapter,
@@ -42,7 +51,8 @@ export class TaskSchedulerService {
       this.taskAdapter,
       this.occurrenceAdapter,
       this.dateCalculator,
-      this.periodManager
+      this.periodManager,
+      this.strategyFactory
     );
     this.fixedTaskService = new FixedTaskService(
       this.occurrenceAdapter,
@@ -99,41 +109,6 @@ export class TaskSchedulerService {
   }
 
   /**
-   * Check if max occurrences reached for current period
-   */
-  private hasReachedPeriodLimit(recurrence: TaskRecurrence): boolean {
-    return this.periodManager.hasReachedPeriodLimit(recurrence);
-  }
-
-  /**
-   * Get the end of the current period based on recurrence type
-   */
-  private getPeriodEnd(
-    periodStart: Date,
-    recurrence: {
-      interval?: number | null;
-      daysOfWeek?: string[] | null;
-      daysOfMonth?: number[] | null;
-    }
-  ): Date {
-    return this.periodManager.getPeriodEnd(periodStart, recurrence);
-  }
-
-  /**
-   * Get the start of the next period based on recurrence type
-   */
-  private getNextPeriodStartByType(
-    currentPeriodStart: Date,
-    recurrence: {
-      interval?: number | null;
-      daysOfWeek?: string[] | null;
-      daysOfMonth?: number[] | null;
-    }
-  ): Date {
-    return this.periodManager.getNextPeriodStartByType(currentPeriodStart, recurrence);
-  }
-
-  /**
    * Calculate the next occurrence date based on recurrence pattern
    */
   calculateNextOccurrenceDate(
@@ -147,21 +122,6 @@ export class TaskSchedulerService {
     }
   ): Date {
     return this.dateCalculator.calculateNextOccurrenceDate(lastOccurrenceDate, recurrence);
-  }
-
-  /**
-   * Calculate target and limit dates for a recurring occurrence
-   * Based on interval and recurrence pattern
-   */
-  private calculateOccurrenceDates(
-    startDate: Date,
-    recurrence: {
-      interval?: number | null;
-      daysOfWeek?: string[] | null;
-      daysOfMonth?: number[] | null;
-    }
-  ): { targetDate: Date; limitDate: Date } {
-    return this.dateCalculator.calculateOccurrenceDates(startDate, recurrence);
   }
 
   /**

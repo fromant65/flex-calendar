@@ -39,8 +39,14 @@ export class OccurrenceCreationService {
     const updatedRecurrence = await this.recurrenceAdapter.getRecurrenceById(task.recurrence.id);
     if (!updatedRecurrence) return;
 
+    // Check if this is a single-occurrence task
+    const isUniqueTask = updatedRecurrence.maxOccurrences === 1 && 
+                        !updatedRecurrence.interval && 
+                        (!updatedRecurrence.daysOfWeek || updatedRecurrence.daysOfWeek.length === 0) &&
+                        (!updatedRecurrence.daysOfMonth || updatedRecurrence.daysOfMonth.length === 0);
+
     // Handle unique tasks (single occurrence, no pattern)
-    if (this.isUniqueTask(updatedRecurrence)) {
+    if (isUniqueTask) {
       await this.createUniqueOccurrence(taskId, initialDates);
       return;
     }
@@ -67,16 +73,6 @@ export class OccurrenceCreationService {
     };
 
     await this.occurrenceAdapter.createOccurrence(occurrenceData);
-  }
-
-  /**
-   * Check if task is a unique task (single occurrence)
-   */
-  private isUniqueTask(recurrence: TaskRecurrence): boolean {
-    return recurrence.maxOccurrences === 1 && 
-           !recurrence.interval && 
-           (!recurrence.daysOfWeek || recurrence.daysOfWeek.length === 0) &&
-           (!recurrence.daysOfMonth || recurrence.daysOfMonth.length === 0);
   }
 
   /**

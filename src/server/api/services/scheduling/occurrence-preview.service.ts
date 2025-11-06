@@ -9,13 +9,15 @@ import type { TaskAdapter, OccurrenceAdapter } from "../../adapter";
 import type { RecurrenceDateCalculator } from "./recurrence-date-calculator.service";
 import type { PeriodManager } from "./period-manager.service";
 import type { TaskRecurrence } from "../types";
+import { TaskStrategyFactory } from "../task-strategies";
 
 export class OccurrencePreviewService {
   constructor(
     private taskAdapter: TaskAdapter,
     private occurrenceAdapter: OccurrenceAdapter,
     private dateCalculator: RecurrenceDateCalculator,
-    private periodManager: PeriodManager
+    private periodManager: PeriodManager,
+    private strategyFactory: TaskStrategyFactory
   ) {}
 
   /**
@@ -29,16 +31,21 @@ export class OccurrencePreviewService {
     }
 
     const recurrence = task.recurrence;
+    const allOccurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
     const latestOccurrence = await this.occurrenceAdapter.getLatestOccurrenceByTaskId(taskId);
 
-    // Unique task: no next occurrence
-    if (this.isUniqueTask(recurrence)) {
-      return null;
-    }
+    // Use strategy to determine if next occurrence should be created
+    const strategy = this.strategyFactory.getStrategy(task, recurrence);
+    const shouldCreateNext = strategy.shouldCreateNextOccurrence({
+      task,
+      recurrence,
+      allOccurrences: allOccurrences as any[],
+      lastOccurrence: latestOccurrence as any,
+    });
 
-    // Finite recurrent: check if limit reached
-    if (this.isFiniteRecurrent(recurrence)) {
-      return await this.previewFiniteRecurrent(taskId, recurrence);
+    // If strategy says no next occurrence, return null
+    if (!shouldCreateNext) {
+      return null;
     }
 
     // Habit or Habit+: calculate based on pattern
@@ -46,38 +53,8 @@ export class OccurrencePreviewService {
       return this.previewRecurringTask(latestOccurrence, recurrence);
     }
 
-    return null;
-  }
-
-  /**
-   * Check if task is unique (single occurrence)
-   */
-  private isUniqueTask(recurrence: TaskRecurrence): boolean {
-    return recurrence.maxOccurrences === 1 && !recurrence.interval;
-  }
-
-  /**
-   * Check if task is finite recurrent (multiple occurrences, no interval)
-   */
-  private isFiniteRecurrent(recurrence: TaskRecurrence): boolean {
-    return !!(recurrence.maxOccurrences && recurrence.maxOccurrences > 1 && !recurrence.interval);
-  }
-
-  /**
-   * Preview for finite recurrent tasks
-   */
-  private async previewFiniteRecurrent(
-    taskId: number,
-    recurrence: TaskRecurrence
-  ): Promise<Date | null> {
-    const occurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
-    const completedCount = occurrences.filter(o => o.status === "Completed").length;
-    
-    if (completedCount >= recurrence.maxOccurrences! - 1) {
-      return null; // This is the last occurrence
-    }
-    
-    return new Date(); // Next would be created immediately
+    // For other types (finite recurring): immediate creation
+    return new Date();
   }
 
   /**
