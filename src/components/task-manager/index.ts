@@ -12,3 +12,20 @@ export { OccurrenceCard } from "./occurrence-card"
 export { ConfirmActionDialog } from "./confirm-action-dialog"
 export { EditOccurrenceDialog } from "./edit-occurrence-dialog"
 export { BacklogAlert } from "./backlog-alert"
+
+// Task Manager Page Components
+export { TaskManagerHeader } from "./task-manager-header"
+export { TaskManagerListView } from "./task-manager-list-view"
+export { TaskManagerEmptyState } from "./task-manager-empty-state"
+export { useTaskManagerData } from "./use-task-manager-data"
+export type { TaskWithOccurrences } from "./use-task-manager-data"
+
+// Task Manager Hooks (for advanced usage)
+export { useTaskManagerState } from "./hooks/use-task-manager-state"
+export { useTaskManagerQueries } from "./hooks/use-task-manager-queries"
+export { useTaskManagerMutations } from "./hooks/use-task-manager-mutations"
+export { useTaskManagerComputed } from "./hooks/use-task-manager-computed"
+
+// Filters
+export { TaskManagerFilterBar } from "./task-manager-filter-bar"
+export type { TaskManagerFilter } from "./task-manager-filter-bar"
