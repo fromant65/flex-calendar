@@ -82,9 +82,9 @@ export function EisenhowerMatrix({
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Filters section */}
-      <div className="flex flex-col gap-3 p-2 border-b border-border bg-card/50">
+      <div className="flex flex-col gap-3 p-2 border-b border-border bg-card/50 flex-shrink-0">
         {/* Search bar */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -146,7 +146,7 @@ export function EisenhowerMatrix({
           </div>
         </div>
       </div>
-      <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-px bg-border p-px overflow-hidden">
+      <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-px bg-border p-px min-h-0">
         {/* Top Left: Not Urgent but Important */}
         <QuadrantPanel
           title={getQuadrantLabel("not-urgent-important")}

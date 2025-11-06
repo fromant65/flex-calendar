@@ -161,7 +161,7 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
   const weekEventsTyped = weekEvents as EventWithDetails[]
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col min-h-full bg-background">
       {/* Header */}
       <div className="border-b border-border bg-card/50 backdrop-blur-sm flex-shrink-0">
         <div className="container mx-auto px-4 lg:px-6 py-6">
@@ -173,7 +173,7 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 lg:px-6 py-6 flex-1 overflow-y-auto">
+      <div className="container mx-auto px-4 lg:px-6 py-6 pb-8 flex-1">
         {/* Tareas Grid */}
         <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-2 mb-6">
           {/* Tareas Urgentes */}

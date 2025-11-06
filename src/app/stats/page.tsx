@@ -97,7 +97,7 @@ export default function StatsPage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col min-h-full">
       <div className="container mx-auto p-4 md:p-8">
         <StatsPageHeader />
       </div>
@@ -107,7 +107,7 @@ export default function StatsPage() {
         <StatsTabs activeSection={activeSection} onSectionChange={setActiveSection} />
       </div>
 
-      <div className="container mx-auto p-4 md:p-8 flex-1 pb-16 lg:mb-0">
+      <div className="container mx-auto p-4 md:p-8 flex-1 pb-20 lg:pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-4 lg:gap-8">
           {/* Desktop Navigation - Sidebar */}
           <aside className="hidden lg:block">

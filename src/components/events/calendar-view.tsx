@@ -92,7 +92,7 @@ export function CalendarViewComponent({
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex flex-col h-full overflow-hidden">
       <CalendarHeader
         currentDate={currentDate}
         view={view}
@@ -104,7 +104,7 @@ export function CalendarViewComponent({
       />
 
       {/* Calendar Content */}
-      <div className="flex-1 overflow-auto scrollbar-themed">
+      <div className="flex-1 min-h-0 overflow-auto scrollbar-themed">
         {view === "day" && (
           <DayView
             date={currentDate}

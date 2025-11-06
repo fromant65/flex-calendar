@@ -71,9 +71,9 @@ export function DesktopLayout({
   }, [isDragging])
 
   return (
-    <div ref={containerRef} className="hidden lg:flex flex-1 overflow-hidden">
+    <div ref={containerRef} className="hidden lg:flex flex-1 min-h-0">
       {/* Left Panel: Eisenhower Matrix */}
-      <div className="border-r border-border bg-card overflow-hidden flex-shrink-0" style={{ width: `${leftWidth}%` }}>
+      <div className="border-r border-border bg-card h-full flex-shrink-0" style={{ width: `${leftWidth}%` }}>
         <EisenhowerMatrix
           occurrences={availableOccurrences}
           onTaskSelect={onTaskSelect}
@@ -96,7 +96,7 @@ export function DesktopLayout({
       </div>
 
       {/* Right Panel: Calendar */}
-      <div className="flex-1 bg-background overflow-hidden">
+      <div className="flex-1 bg-background h-full">
         <CalendarViewComponent
           events={events}
           view={calendarView}

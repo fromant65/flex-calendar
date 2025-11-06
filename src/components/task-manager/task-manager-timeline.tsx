@@ -165,9 +165,9 @@ export function TaskManagerTimeline({
   }
 
   return (
-    <div className="flex h-full flex-col bg-background">
+    <div className="flex flex-col h-full overflow-hidden bg-background">
       {/* Compact Header with Controls */}
-      <div className="border-b bg-card/50 px-3 py-2">
+      <div className="border-b bg-card/50 px-3 py-2 flex-shrink-0">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <TimelineNavigationControls
             currentDate={currentDate}
@@ -232,7 +232,7 @@ export function TaskManagerTimeline({
       </div>
 
       {/* Timeline Content */}
-      <div className="flex-1 overflow-auto p-3 sm:p-4">
+      <div className="flex-1 min-h-0 overflow-auto p-3 sm:p-4">
         <AnimatePresence mode="wait">
           <motion.div
             key={`${startDate.toISOString()}-${viewMode}`}

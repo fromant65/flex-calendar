@@ -34,9 +34,9 @@ export function MobileLayout({
   const { mobileView, calendarView, setCalendarView, selectedTask } = useEventsContext()
 
   return (
-    <div className="flex lg:hidden flex-1 overflow-hidden w-full">
+    <div className="flex lg:hidden flex-1 min-h-0 w-full">
       {mobileView === "matrix" ? (
-        <div className="w-full bg-card overflow-hidden">
+        <div className="w-full bg-card h-full">
           <EisenhowerMatrix
             occurrences={availableOccurrences}
             onTaskSelect={onTaskSelectMobile}
@@ -46,7 +46,7 @@ export function MobileLayout({
           />
         </div>
       ) : (
-        <div className="w-full bg-background overflow-hidden">
+        <div className="w-full bg-background h-full">
           <CalendarViewComponent
             events={events}
             view={calendarView}

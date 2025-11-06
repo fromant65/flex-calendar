@@ -228,11 +228,11 @@ function EventsPageContent() {
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col bg-background">
+    <div className="flex flex-col h-full bg-background">
       <EventsPageHeader />
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden relative">
+      <div className="flex-1 flex min-h-0 relative">
         <DesktopLayout
           availableOccurrences={availableOccurrences}
           events={events}

@@ -326,7 +326,7 @@ export default function TaskManagerPage() {
   // True empty state - no occurrences at all (not just filtered out)
   if (!allOccurrences || allOccurrences.length === 0) {
     return (
-      <div className="flex flex-col h-full bg-background">
+      <div className="flex flex-col min-h-full bg-background">
         {/* Header */}
         <div className="border-b border-border bg-card/50 backdrop-blur-sm flex-shrink-0">
           <div className="container mx-auto px-4 lg:px-6 py-6">
@@ -354,7 +354,7 @@ export default function TaskManagerPage() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col min-h-full bg-background">
       {/* Header */}
       <div className="border-b border-border bg-card/50 backdrop-blur-sm flex-shrink-0">
         <div className="container mx-auto px-4 lg:px-6 py-3">
@@ -420,7 +420,7 @@ export default function TaskManagerPage() {
 
       {/* Content - Timeline View */}
       {viewMode === "timeline" ? (
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 min-h-0">
           <TaskManagerTimeline
             occurrences={occurrences ?? []}
             onOccurrenceClick={handleTimelineOccurrenceClick}
@@ -431,7 +431,7 @@ export default function TaskManagerPage() {
         </div>
       ) : (
         /* Content - List View */
-        <div className="container mx-auto px-4 lg:px-6 py-6 flex-1 overflow-y-auto">
+        <div className="container mx-auto px-4 lg:px-6 py-6 flex-1 pb-8">
           {/* Filter Bar - Always visible */}
           <div className="mb-6">
             <TaskManagerFilterBar
