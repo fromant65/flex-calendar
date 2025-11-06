@@ -236,7 +236,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
           {/* Task Information Component - displays comprehensive task details */}
           <TaskInfo task={task} />
 
-          {/* Occurrence Information Component */}
+          {/* Occurrence Information Component - show only once */}
           <OccurrenceInfo displayOccurrence={displayOccurrence} />
 
           {event && (
@@ -260,48 +260,6 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
 
                   {event.isFixed && !isEditing && <FixedInfo />}
             </>
-          )}
-
-          {displayOccurrence && !event && (
-            <div className="border-t border-border pt-4 space-y-3">
-              <h4 className="text-sm font-semibold text-foreground">Detalles de la Ocurrencia</h4>
-
-              {displayOccurrence.targetDate && (
-                <div className="flex items-center gap-2.5 rounded-lg bg-muted/20 p-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-                    <Target className="w-4 h-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Fecha Objetivo</p>
-                    <p className="text-sm font-semibold text-foreground">
-                      {new Date(displayOccurrence.targetDate).toLocaleDateString("es-ES", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {displayOccurrence.limitDate && (
-                <div className="flex items-center gap-2.5 rounded-lg bg-destructive/10 p-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-destructive/20">
-                    <Calendar className="w-4 h-4 text-destructive" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Fecha Límite</p>
-                    <p className="text-sm font-semibold text-destructive">
-                      {new Date(displayOccurrence.limitDate).toLocaleDateString("es-ES", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
           )}
         </div>
 

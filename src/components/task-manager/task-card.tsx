@@ -9,6 +9,7 @@ import { OccurrenceCard } from "./occurrence-card";
 import { BacklogAlert } from "./backlog-alert";
 import { CompletionStreakBadge } from "./completion-streak-badge";
 import { api } from "~/trpc/react";
+import { formatDateShort } from "~/lib/date-display-utils";
 
 interface TaskCardProps {
   task: any;
@@ -26,14 +27,10 @@ interface TaskCardProps {
   isSkippingBacklog?: boolean;
 }
 
-// Helper to format dates
+// Helper to format dates using the proper display utility
 const formatDate = (date: Date | null | undefined) => {
   if (!date) return "N/A";
-  return new Date(date).toLocaleDateString("es-AR", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  return formatDateShort(date);
 };
 
 // Helper to get task type color

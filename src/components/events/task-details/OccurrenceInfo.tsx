@@ -2,7 +2,7 @@
 
 import type { OccurrenceWithTask } from "~/types"
 import { Calendar, Clock, Target, CheckCircle2 } from "lucide-react"
-import { getLimitDateDisplay } from "~/lib/date-display-utils"
+import { getLimitDateDisplay, formatDateShort } from "~/lib/date-display-utils"
 
 export function OccurrenceInfo({ displayOccurrence }: { displayOccurrence?: OccurrenceWithTask | null }) {
   if (!displayOccurrence) return null
@@ -17,11 +17,7 @@ export function OccurrenceInfo({ displayOccurrence }: { displayOccurrence?: Occu
           <div>
             <p className="text-xs text-muted-foreground">Fecha Objetivo</p>
             <p className="text-sm font-semibold text-foreground">
-              {new Date(displayOccurrence.targetDate).toLocaleDateString("es-ES", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
+              {formatDateShort(displayOccurrence.targetDate)}
             </p>
           </div>
         </div>

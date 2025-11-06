@@ -10,6 +10,7 @@ import {
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
+import { normalizeDateForDisplay } from "~/lib/date-display-utils";
 
 interface EditOccurrenceDialogProps {
   occurrence: {
@@ -45,18 +46,32 @@ export function EditOccurrenceDialog({
       setTimeConsumed(occurrence.timeConsumed);
       setTargetTimeConsumption(occurrence.targetTimeConsumption);
       
-      // Set target date if exists
+      // Set target date if exists - use normalized date to avoid timezone issues
       if (occurrence.targetDate) {
-        const date = new Date(occurrence.targetDate);
-        setTargetDate(date.toISOString().split('T')[0] ?? "");
+        const normalized = normalizeDateForDisplay(occurrence.targetDate);
+        if (normalized) {
+          const year = normalized.getFullYear();
+          const month = String(normalized.getMonth() + 1).padStart(2, '0');
+          const day = String(normalized.getDate()).padStart(2, '0');
+          setTargetDate(`${year}-${month}-${day}`);
+        } else {
+          setTargetDate("");
+        }
       } else {
         setTargetDate("");
       }
       
-      // Set limit date if exists
+      // Set limit date if exists - use normalized date to avoid timezone issues
       if (occurrence.limitDate) {
-        const date = new Date(occurrence.limitDate);
-        setLimitDate(date.toISOString().split('T')[0] ?? "");
+        const normalized = normalizeDateForDisplay(occurrence.limitDate);
+        if (normalized) {
+          const year = normalized.getFullYear();
+          const month = String(normalized.getMonth() + 1).padStart(2, '0');
+          const day = String(normalized.getDate()).padStart(2, '0');
+          setLimitDate(`${year}-${month}-${day}`);
+        } else {
+          setLimitDate("");
+        }
       } else {
         setLimitDate("");
       }
