@@ -109,9 +109,21 @@ export function EditOccurrenceDialog({
     onSave(occurrence.id, data);
   };
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      onCancel();
+    }
+  };
+
   return (
-    <Dialog open={!!occurrence} onOpenChange={onCancel}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={!!occurrence} onOpenChange={handleOpenChange} modal={true}>
+      <DialogContent 
+        className="sm:max-w-md"
+        onCloseAutoFocus={(e) => {
+          // Prevent focus from returning to the dropdown trigger
+          e.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Editar Ocurrencia</DialogTitle>
           <DialogDescription>

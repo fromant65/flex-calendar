@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Card } from "~/components/ui/card"
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
@@ -77,6 +78,7 @@ export function OccurrenceTimelineCard({
   onEdit,
   compact = false,
 }: OccurrenceTimelineCardProps) {
+  const [dropdownOpen, setDropdownOpen] = useState(false)
   const StatusIcon = statusConfig[occurrence.status].icon
   const statusStyle = statusConfig[occurrence.status]
   
@@ -96,6 +98,29 @@ export function OccurrenceTimelineCard({
 
   const isApproachingDeadline = daysToLimit !== null && daysToLimit <= 2 && daysToLimit >= 0 &&
     occurrence.status !== "Completed" && occurrence.status !== "Skipped"
+
+  // Handlers that close dropdown before executing action
+  const handleEdit = () => {
+    setDropdownOpen(false)
+    // Small delay to ensure dropdown closes before opening dialog
+    setTimeout(() => {
+      onEdit?.()
+    }, 0)
+  }
+
+  const handleComplete = () => {
+    setDropdownOpen(false)
+    setTimeout(() => {
+      onComplete?.()
+    }, 0)
+  }
+
+  const handleSkip = () => {
+    setDropdownOpen(false)
+    setTimeout(() => {
+      onSkip?.()
+    }, 0)
+  }
 
   if (compact) {
     return (
@@ -175,7 +200,7 @@ export function OccurrenceTimelineCard({
             </Badge>
           </div>
 
-          <DropdownMenu>
+          <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
@@ -189,7 +214,7 @@ export function OccurrenceTimelineCard({
             <DropdownMenuContent align="end">
               {onEdit && (
                 <>
-                  <DropdownMenuItem onClick={onEdit} className="text-xs">
+                  <DropdownMenuItem onClick={handleEdit} className="text-xs">
                     <Edit className="mr-2 h-3.5 w-3.5" />
                     Editar
                   </DropdownMenuItem>
@@ -197,13 +222,13 @@ export function OccurrenceTimelineCard({
                 </>
               )}
               {onComplete && occurrence.status !== "Completed" && (
-                <DropdownMenuItem onClick={onComplete} className="text-xs">
+                <DropdownMenuItem onClick={handleComplete} className="text-xs">
                   <Check className="mr-2 h-3.5 w-3.5" />
                   Completar
                 </DropdownMenuItem>
               )}
               {onSkip && occurrence.status !== "Skipped" && occurrence.status !== "Completed" && (
-                <DropdownMenuItem onClick={onSkip} className="text-xs">
+                <DropdownMenuItem onClick={handleSkip} className="text-xs">
                   <SkipForward className="mr-2 h-3.5 w-3.5" />
                   Saltar
                 </DropdownMenuItem>

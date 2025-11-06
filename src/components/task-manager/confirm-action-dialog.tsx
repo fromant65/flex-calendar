@@ -26,9 +26,18 @@ export function ConfirmActionDialog({
   onCancel,
   isLoading = false,
 }: ConfirmActionDialogProps) {
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      onCancel();
+    }
+  };
+
   return (
-    <AlertDialog open={!!action} onOpenChange={onCancel}>
-      <AlertDialogContent>
+    <AlertDialog open={!!action} onOpenChange={handleOpenChange}>
+      <AlertDialogContent onCloseAutoFocus={(e) => {
+        // Prevent focus from returning to the dropdown trigger
+        e.preventDefault();
+      }}>
         <AlertDialogHeader>
           <AlertDialogTitle>
             {action?.type === "complete" ? "Completar ocurrencia" : "Saltar ocurrencia"}
