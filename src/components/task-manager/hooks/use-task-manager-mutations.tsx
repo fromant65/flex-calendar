@@ -9,7 +9,13 @@ export function useTaskManagerMutations(
 
   const completeOccurrence = api.occurrence.complete.useMutation({
     onSuccess: () => {
+      // Invalidate all relevant queries
       void utils.occurrence.getMyOccurrencesWithTask.invalidate();
+      void utils.occurrence.detectBacklog.invalidate(); // Update backlog display
+      void utils.task.getMyTasks.invalidate(); // Update task list
+      void utils.task.getByUrgency.invalidate(); // Update dashboard
+      void utils.task.getByImportance.invalidate(); // Update dashboard
+      
       setConfirmAction(null);
       toast.success("Ocurrencia completada", { 
         description: "La ocurrencia fue marcada como completada" 
@@ -25,7 +31,13 @@ export function useTaskManagerMutations(
   
   const skipOccurrence = api.occurrence.skip.useMutation({
     onSuccess: () => {
+      // Invalidate all relevant queries
       void utils.occurrence.getMyOccurrencesWithTask.invalidate();
+      void utils.occurrence.detectBacklog.invalidate(); // Update backlog display
+      void utils.task.getMyTasks.invalidate(); // Update task list
+      void utils.task.getByUrgency.invalidate(); // Update dashboard
+      void utils.task.getByImportance.invalidate(); // Update dashboard
+      
       setConfirmAction(null);
       toast.info("Ocurrencia saltada", { 
         description: "La ocurrencia fue marcada como saltada" 
@@ -57,7 +69,13 @@ export function useTaskManagerMutations(
 
   const skipBacklog = api.occurrence.skipBacklog.useMutation({
     onSuccess: (result) => {
+      // Invalidate all relevant queries
       void utils.occurrence.getMyOccurrencesWithTask.invalidate();
+      void utils.occurrence.detectBacklog.invalidate(); // Update backlog display - CRITICAL
+      void utils.task.getMyTasks.invalidate(); // Update task list
+      void utils.task.getByUrgency.invalidate(); // Update dashboard
+      void utils.task.getByImportance.invalidate(); // Update dashboard
+      
       const messages = [];
       if (result.createdCount > 0) {
         messages.push(`${result.createdCount} ocurrencia${result.createdCount !== 1 ? 's' : ''} generada${result.createdCount !== 1 ? 's' : ''}`);

@@ -130,7 +130,8 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
         onEventCompleted()
       } else {
         await utils.calendarEvent.getMyEventsWithDetails.invalidate()
-        await utils.occurrence.invalidate()
+        await utils.occurrence.invalidate() // Invalidate all occurrence queries
+        await utils.task.invalidate() // Invalidate all task queries (for task state updates)
       }
       onOpenChange(false)
       setDedicatedTime("")
@@ -157,6 +158,7 @@ export function TaskDetailsModal({ open, onOpenChange, task: taskProp, occurrenc
       } else {
         await utils.calendarEvent.getMyEventsWithDetails.invalidate()
         await utils.occurrence.invalidate()
+        await utils.task.invalidate() // Invalidate all task queries (for task state updates)
       }
       onOpenChange(false)
       setSkipOccurrence(false)
