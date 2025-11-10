@@ -1,8 +1,9 @@
 "use client"
 
 import { CheckCircle2 } from "lucide-react"
+import type { EventWithDetails } from "~/types"
 
-export function CompletedPanel({ event }: any) {
+export function CompletedPanel({ event }: { event: EventWithDetails }) {
   if (!event?.isCompleted) return null
   return (
     <div className="border-t border-border pt-4">

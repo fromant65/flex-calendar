@@ -5,8 +5,26 @@ import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 import { LoadingSpinner } from "~/components/ui/loading-spinner"
+import type { EventWithDetails } from "~/types"
 
-export function EventSchedule({ event, isEditing, startEditMode, cancelEdit, editDate, editStartTime, editEndTime, setEditDate, setEditStartTime, setEditEndTime, handleSaveEdit, updateEventMutation }: any) {
+interface EventScheduleProps {
+  event: EventWithDetails;
+  isEditing: boolean;
+  startEditMode: () => void;
+  cancelEdit: () => void;
+  editDate: string;
+  editStartTime: string;
+  editEndTime: string;
+  setEditDate: (value: string) => void;
+  setEditStartTime: (value: string) => void;
+  setEditEndTime: (value: string) => void;
+  handleSaveEdit: () => void;
+  updateEventMutation: {
+    isPending?: boolean;
+  };
+}
+
+export function EventSchedule({ event, isEditing, startEditMode, cancelEdit, editDate, editStartTime, editEndTime, setEditDate, setEditStartTime, setEditEndTime, handleSaveEdit, updateEventMutation }: EventScheduleProps) {
   return (
     <div className="border-t border-border pt-4 space-y-3">
       <div className="flex items-center justify-between">

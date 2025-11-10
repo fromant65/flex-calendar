@@ -8,7 +8,7 @@
 import type { TaskAdapter, OccurrenceAdapter } from "../../adapter";
 import type { RecurrenceDateCalculator } from "./recurrence-date-calculator.service";
 import type { PeriodManager } from "./period-manager.service";
-import type { TaskRecurrence } from "../types";
+import type { TaskRecurrence, TaskOccurrence } from "../types";
 import { TaskStrategyFactory } from "../task-strategies";
 
 export class OccurrencePreviewService {
@@ -39,8 +39,8 @@ export class OccurrencePreviewService {
     const shouldCreateNext = strategy.shouldCreateNextOccurrence({
       task,
       recurrence,
-      allOccurrences: allOccurrences as any[],
-      lastOccurrence: latestOccurrence as any,
+      allOccurrences: allOccurrences as TaskOccurrence[],
+      lastOccurrence: latestOccurrence as TaskOccurrence | undefined,
     });
 
     // If strategy says no next occurrence, return null
@@ -61,7 +61,7 @@ export class OccurrencePreviewService {
    * Preview for recurring tasks (habits/habits+)
    */
   private previewRecurringTask(
-    latestOccurrence: any,
+    latestOccurrence: Awaited<ReturnType<OccurrenceAdapter['getLatestOccurrenceByTaskId']>>,
     recurrence: TaskRecurrence
   ): Date | null {
     if (!latestOccurrence) {

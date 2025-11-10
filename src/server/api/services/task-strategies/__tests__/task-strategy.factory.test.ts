@@ -146,10 +146,10 @@ describe('TaskStrategyFactory', () => {
 
     it('should throw error for unknown task type', () => {
       // This shouldn't happen in practice, but test error handling
-      const task: any = { isFixed: false };
-      const recurrence: any = null;
+      const task: Partial<Task> = { isFixed: false };
+      const recurrence: TaskRecurrence | null = null;
 
-      expect(() => factory.getStrategy(task, recurrence)).not.toThrow();
+      expect(() => factory.getStrategy(task as Task, recurrence)).not.toThrow();
       // Should return SingleTaskStrategy for null recurrence
     });
   });

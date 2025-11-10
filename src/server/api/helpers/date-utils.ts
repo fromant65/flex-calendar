@@ -97,6 +97,8 @@ export function normalizeDates<T extends Record<string, any>>(obj: T, dateFields
   
   for (const field of dateFields) {
     if (field in normalized) {
+      // Type assertion needed: we're dynamically accessing and transforming fields
+      // The field value could be Date | string | null, and we're ensuring it becomes Date | null
       normalized[field] = ensureDate(normalized[field] as any) as any;
     }
   }

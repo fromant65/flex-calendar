@@ -6,6 +6,7 @@
 import '../mocks';
 import { TaskSchedulerService } from '../../scheduling/task-scheduler.service';
 import type { MockTask } from '../test-types';
+import type { CreateCalendarEventDTO, CreateOccurrenceDTO } from '~/types';
 
 describe('Repetitive Fixed Task Creation', () => {
   let schedulerService: TaskSchedulerService;
@@ -62,7 +63,7 @@ describe('Repetitive Fixed Task Creation', () => {
     
     // Mock createOccurrence to return different occurrences
     let occurrenceCount = 0;
-    mockOccurrenceAdapter.createOccurrence.mockImplementation(async (data: any) => {
+    mockOccurrenceAdapter.createOccurrence.mockImplementation(async (data: CreateOccurrenceDTO) => {
       occurrenceCount++;
       return {
         ...data,
@@ -73,7 +74,7 @@ describe('Repetitive Fixed Task Creation', () => {
 
     // Mock createEvent
     let eventCount = 0;
-    mockEventAdapter.createEvent.mockImplementation(async (ownerId: string, data: any) => {
+    mockEventAdapter.createEvent.mockImplementation(async (ownerId: string, data: CreateCalendarEventDTO) => {
       eventCount++;
       return {
         ...data,
@@ -111,13 +112,13 @@ describe('Repetitive Fixed Task Creation', () => {
     futureEndDate.setMonth(futureEndDate.getMonth() + 6);
 
     let occurrenceId = 0;
-    mockOccurrenceAdapter.createOccurrence.mockImplementation(async (data: any) => {
+    mockOccurrenceAdapter.createOccurrence.mockImplementation(async (data: CreateOccurrenceDTO) => {
       occurrenceId++;
       return { ...data, id: occurrenceId, status: 'Pending' };
     });
 
-    const capturedEvents: any[] = [];
-    mockEventAdapter.createEvent.mockImplementation(async (ownerId: string, data: any) => {
+    const capturedEvents: CreateCalendarEventDTO[] = [];
+    mockEventAdapter.createEvent.mockImplementation(async (ownerId: string, data: CreateCalendarEventDTO) => {
       capturedEvents.push(data);
       return { ...data, id: capturedEvents.length, isCompleted: false };
     });
@@ -190,10 +191,10 @@ describe('Repetitive Fixed Task Creation', () => {
     const futureEndDate = new Date(today);
     futureEndDate.setMonth(futureEndDate.getMonth() + 6);
 
-    mockOccurrenceAdapter.createOccurrence.mockImplementation(async (data: any) => {
+    mockOccurrenceAdapter.createOccurrence.mockImplementation(async (data: CreateOccurrenceDTO) => {
       return { ...data, id: 1, status: 'Pending' };
     });
-    mockEventAdapter.createEvent.mockImplementation(async (ownerId: string, data: any) => {
+    mockEventAdapter.createEvent.mockImplementation(async (ownerId: string, data: CreateCalendarEventDTO) => {
       return { ...data, id: 1, isCompleted: false };
     });
 

@@ -8,6 +8,30 @@ import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
 import { Checkbox } from "~/components/ui/checkbox"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
+import type { EventWithDetails } from "~/types"
+
+interface CompleteFooterProps {
+  event: EventWithDetails | null;
+  eventHasStarted: boolean;
+  completeEventMutation: {
+    isPending?: boolean;
+  };
+  completeEventHandler: () => void;
+  skipEventMutation: {
+    isPending?: boolean;
+  };
+  skipEventHandler: () => void;
+  completeOccurrence: boolean;
+  setCompleteOccurrence: (value: boolean) => void;
+  skipOccurrence: boolean;
+  setSkipOccurrence: (value: boolean) => void;
+  dedicatedTime: string;
+  setDedicatedTime: (value: string) => void;
+  completionDate: string;
+  setCompletionDate: (value: string) => void;
+  completionTime: string;
+  setCompletionTime: (value: string) => void;
+}
 
 export function CompleteFooter({ 
   event, 
@@ -26,7 +50,7 @@ export function CompleteFooter({
   setCompletionDate,
   completionTime,
   setCompletionTime
-}: any) {
+}: CompleteFooterProps) {
   if (!event || event.isCompleted) return null
 
   return (

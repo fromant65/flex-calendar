@@ -1,4 +1,4 @@
-import type { TaskWithRecurrence, OccurrenceWithTask, EventWithDetails } from "~/types"
+import type { TaskWithRecurrence, OccurrenceWithTask, EventWithDetails, DayOfWeek } from "~/types"
 
 // Mock data generator for timeline
 export interface TimelineData {
@@ -180,8 +180,8 @@ const generateOccurrences = (): OccurrenceWithTask[] => {
       }
       
       allDates.forEach((date) => {
-        const dayOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][date.getDay()]
-        if (task.recurrence?.daysOfWeek?.includes(dayOfWeek as any)) {
+        const dayOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][date.getDay()] as DayOfWeek | undefined
+        if (dayOfWeek && task.recurrence?.daysOfWeek?.includes(dayOfWeek)) {
           // Randomly skip some occurrences (10% chance)
           const shouldSkip = Math.random() < 0.1
           

@@ -5,8 +5,29 @@ import { LoadingSpinner } from "~/components/ui/loading-spinner"
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "~/components/ui/alert-dialog"
 import { Checkbox } from "~/components/ui/checkbox"
 import { Trash2, CheckCircle2 } from "lucide-react"
+import type { EventWithDetails } from "~/types"
 
-export function EventActions({ event, deleteEventMutation, deleteEventHandler, completeEventMutation, handleCompleteEvent, skipEventMutation, handleSkipEvent, skipOccurrence, setSkipOccurrence, completeOccurrence, setCompleteOccurrence }: any) {
+interface EventActionsProps {
+  event: EventWithDetails;
+  deleteEventMutation: {
+    isPending: boolean;
+  };
+  deleteEventHandler: () => void;
+  completeEventMutation: {
+    isPending?: boolean;
+  };
+  handleCompleteEvent: () => void;
+  skipEventMutation: {
+    isPending?: boolean;
+  };
+  handleSkipEvent: () => void;
+  skipOccurrence: boolean;
+  setSkipOccurrence: (value: boolean) => void;
+  completeOccurrence: boolean;
+  setCompleteOccurrence: (value: boolean) => void;
+}
+
+export function EventActions({ event, deleteEventMutation, deleteEventHandler, completeEventMutation, handleCompleteEvent, skipEventMutation, handleSkipEvent, skipOccurrence, setSkipOccurrence, completeOccurrence, setCompleteOccurrence }: EventActionsProps) {
   return (
     <div className="border-t border-border pt-4">
       <AlertDialog>

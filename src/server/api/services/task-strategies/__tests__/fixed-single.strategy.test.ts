@@ -12,7 +12,7 @@ import type { Task, TaskRecurrence, TaskOccurrence, CalendarEvent } from '../../
 describe('FixedSingleStrategy', () => {
   let strategy: FixedSingleStrategy;
   let mockDependencies: StrategyDependencies;
-  let mockScheduler: any;
+  let mockScheduler: jest.Mocked<Pick<StrategyDependencies['scheduler'], 'incrementCompletedOccurrences'>>;
 
   beforeEach(() => {
     mockScheduler = {
@@ -20,7 +20,7 @@ describe('FixedSingleStrategy', () => {
     };
 
     mockDependencies = {
-      scheduler: mockScheduler,
+      scheduler: mockScheduler as unknown as StrategyDependencies['scheduler'],
     };
 
     strategy = new FixedSingleStrategy(mockDependencies);

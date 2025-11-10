@@ -116,7 +116,7 @@ export class TaskStreakService {
   }
 
   /**
-   * Get streaks for all tasks owned by a user
+   * Get streaks for all tasks of a user
    * @param userId - The user ID
    * @returns Array of streak info for all user's tasks
    */
@@ -124,12 +124,13 @@ export class TaskStreakService {
     const occurrences = await this.occurrenceAdapter.getOccurrencesByOwnerWithTask(userId);
     
     // Group by task ID
+    // Cast needed: adapter returns occurrence with string status instead of literal type
     const occurrencesByTask = new Map<number, TaskOccurrence[]>();
-    occurrences.forEach((occ: any) => {
+    occurrences.forEach((occ) => {
       if (!occurrencesByTask.has(occ.associatedTaskId)) {
         occurrencesByTask.set(occ.associatedTaskId, []);
       }
-      occurrencesByTask.get(occ.associatedTaskId)!.push(occ);
+      occurrencesByTask.get(occ.associatedTaskId)!.push(occ as TaskOccurrence);
     });
 
     // Calculate streak for each task

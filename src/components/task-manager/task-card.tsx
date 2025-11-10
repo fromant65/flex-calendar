@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/com
 import { Badge } from "~/components/ui/badge";
 import { CheckCircle2, Circle, Clock, TrendingUp, Calendar, ChevronDown, ChevronRight } from "lucide-react";
 import type { TaskType } from "~/server/api/services/types";
+import type { TaskOccurrence } from "~/types";
 import { OccurrenceCard } from "./occurrence-card";
 import { BacklogAlert } from "./backlog-alert";
 import { CompletionStreakBadge } from "./completion-streak-badge";
@@ -14,7 +15,7 @@ import { formatDateShort } from "~/lib/date-display-utils";
 interface TaskCardProps {
   task: any;
   taskType: TaskType;
-  occurrences: any[];
+  occurrences: TaskOccurrence[];
   isExpanded: boolean;
   nextOccurrenceDate: Date | null | undefined;
   onToggle: () => void;
@@ -69,19 +70,19 @@ export function TaskCard({
     { enabled: isExpanded }
   );
   const activeOccurrences = occurrences.filter(
-    (o: any) => o.status === "Pending" || o.status === "In Progress"
+    (o) => o.status === "Pending" || o.status === "In Progress"
   );
-  const completedOccurrences = occurrences.filter((o: any) => o.status === "Completed");
-  const skippedOccurrences = occurrences.filter((o: any) => o.status === "Skipped");
+  const completedOccurrences = occurrences.filter((o) => o.status === "Completed");
+  const skippedOccurrences = occurrences.filter((o) => o.status === "Skipped");
   const completedSkippedOccurrences = [...completedOccurrences, ...skippedOccurrences];
   const totalTimeConsumed = occurrences.reduce(
-    (sum: number, o: any) => sum + (o.timeConsumed ?? 0),
+    (sum, o) => sum + (o.timeConsumed ?? 0),
     0
   );
 
   // Filter occurrences to show: only active, not completed or skipped
   const visibleOccurrences = occurrences.filter(
-    (o: any) => o.status !== "Completed" && o.status !== "Skipped"
+    (o) => o.status !== "Completed" && o.status !== "Skipped"
   );
 
   return (
@@ -182,7 +183,7 @@ export function TaskCard({
                 )}
               </h3>
               {visibleOccurrences.length > 0 ? (
-                visibleOccurrences.map((occurrence: any) => (
+                visibleOccurrences.map((occurrence) => (
                   <OccurrenceCard
                     key={occurrence.id}
                     occurrence={occurrence}
@@ -216,7 +217,7 @@ export function TaskCard({
                   
                   {showCompletedSkipped && (
                     <div className="mt-2.5 space-y-2.5">
-                      {completedSkippedOccurrences.map((occurrence: any) => (
+                      {completedSkippedOccurrences.map((occurrence) => (
                         <OccurrenceCard
                           key={occurrence.id}
                           occurrence={occurrence}

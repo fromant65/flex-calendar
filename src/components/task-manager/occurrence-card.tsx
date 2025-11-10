@@ -4,9 +4,10 @@ import { Button } from "~/components/ui/button";
 import { CheckCircle2, Edit, AlertCircle, SkipForward } from "lucide-react";
 import HelpTip from "~/components/ui/help-tip"
 import { normalizeDateForDisplay, formatDateLong, getLimitDateDisplay as getLimit } from "~/lib/date-display-utils";
+import type { TaskOccurrence } from "~/types";
 
 interface OccurrenceCardProps {
-  occurrence: any;
+  occurrence: TaskOccurrence;
   taskName: string;
   taskImportance: number;
   onEdit: (id: number, timeConsumed: number | null, targetTimeConsumption: number | null, targetDate: Date | null, limitDate: Date | null) => void;

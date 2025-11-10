@@ -6,6 +6,7 @@
 import '../mocks';
 import { TaskSchedulerService } from '../../scheduling/task-scheduler.service';
 import type { MockTask } from '../test-types';
+import type { CreateCalendarEventDTO, CreateOccurrenceDTO } from '~/types';
 
 describe('Single Fixed Task Creation', () => {
   let schedulerService: TaskSchedulerService;
@@ -111,8 +112,8 @@ describe('Single Fixed Task Creation', () => {
       status: 'Pending',
     });
 
-    let capturedEvent: any;
-    mockEventAdapter.createEvent.mockImplementation(async (ownerId: string, data: any) => {
+    let capturedEvent: CreateCalendarEventDTO | undefined;
+    mockEventAdapter.createEvent.mockImplementation(async (ownerId: string, data: CreateCalendarEventDTO) => {
       capturedEvent = data;
       return { ...data, id: 2, isCompleted: false };
     });
@@ -128,9 +129,9 @@ describe('Single Fixed Task Creation', () => {
 
     // Assert: Event has correct time fields
     expect(capturedEvent).toBeDefined();
-    expect(capturedEvent.isFixed).toBe(true);
-    expect(capturedEvent.start).toBeDefined();
-    expect(capturedEvent.finish).toBeDefined();
+    expect(capturedEvent!.isFixed).toBe(true);
+    expect(capturedEvent!.start).toBeDefined();
+    expect(capturedEvent!.finish).toBeDefined();
   });
 
   it('should create occurrence with correct date for single fixed task', async () => {
@@ -139,8 +140,8 @@ describe('Single Fixed Task Creation', () => {
     const startDateTime = new Date('2024-11-01T09:00:00.000Z');
     const endDateTime = new Date('2024-11-01T10:00:00.000Z');
 
-    let capturedOccurrence: any;
-    mockOccurrenceAdapter.createOccurrence.mockImplementation(async (data: any) => {
+    let capturedOccurrence: CreateOccurrenceDTO | undefined;
+    mockOccurrenceAdapter.createOccurrence.mockImplementation(async (data: CreateOccurrenceDTO) => {
       capturedOccurrence = data;
       return { ...data, id: 3, status: 'Pending' };
     });
@@ -161,7 +162,7 @@ describe('Single Fixed Task Creation', () => {
 
     // Assert: Occurrence was created
     expect(capturedOccurrence).toBeDefined();
-    expect(capturedOccurrence.associatedTaskId).toBe(taskId);
-    expect(capturedOccurrence.startDate).toBeDefined();
+    expect(capturedOccurrence!.associatedTaskId).toBe(taskId);
+    expect(capturedOccurrence!.startDate).toBeDefined();
   });
 });

@@ -21,6 +21,7 @@ export class BaseRepository<TTable extends PgTable> {
    * Find record by ID
    */
   async findById(id: number): Promise<TTable["$inferSelect"] | undefined> {
+    // Type assertion needed: Drizzle doesn't expose column types at compile time
     const [result] = await db
       .select()
       .from(this.table as any)
@@ -32,6 +33,7 @@ export class BaseRepository<TTable extends PgTable> {
    * Find all records matching a condition
    */
   async findMany(condition?: SQL): Promise<TTable["$inferSelect"][]> {
+    // Type assertion needed: Drizzle doesn't expose table types correctly for .from()
     if (condition) {
       return await db.select().from(this.table as any).where(condition);
     }
@@ -45,6 +47,7 @@ export class BaseRepository<TTable extends PgTable> {
     id: number,
     data: Partial<TTable["$inferInsert"]>
   ): Promise<TTable["$inferSelect"] | undefined> {
+    // Type assertion needed: Drizzle doesn't expose column types at compile time
     const [result] = await db
       .update(this.table)
       .set(data)
@@ -57,6 +60,7 @@ export class BaseRepository<TTable extends PgTable> {
    * Delete a record by ID
    */
   async deleteById(id: number): Promise<boolean> {
+    // Type assertion needed: Drizzle doesn't expose column types and result metadata
     const result = await db.delete(this.table).where(eq((this.table as any).id, id));
     return (result as any).rowCount > 0;
   }
@@ -65,6 +69,7 @@ export class BaseRepository<TTable extends PgTable> {
    * Count records matching a condition
    */
   async count(condition?: SQL): Promise<number> {
+    // Type assertion needed: Drizzle doesn't expose table types correctly for .from()
     const result = condition
       ? await db.select().from(this.table as any).where(condition)
       : await db.select().from(this.table as any);

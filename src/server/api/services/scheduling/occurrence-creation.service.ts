@@ -6,7 +6,7 @@
  */
 
 import type { TaskAdapter, OccurrenceAdapter, RecurrenceAdapter } from "../../adapter";
-import type { CreateOccurrenceDTO, DayOfWeek, TaskRecurrence } from "../types";
+import type { CreateOccurrenceDTO, DayOfWeek, TaskRecurrence, TaskOccurrence } from "../types";
 import type { RecurrenceDateCalculator } from "./recurrence-date-calculator.service";
 import type { PeriodManager } from "./period-manager.service";
 
@@ -106,7 +106,7 @@ export class OccurrenceCreationService {
    * Calculate the next occurrence date
    */
   private calculateNextDate(
-    latestOccurrence: any,
+    latestOccurrence: Awaited<ReturnType<OccurrenceAdapter['getLatestOccurrenceByTaskId']>>,
     recurrence: TaskRecurrence
   ): Date {
     if (!latestOccurrence) {
@@ -173,7 +173,7 @@ export class OccurrenceCreationService {
       limitDate?: Date;
       targetTimeConsumption?: number;
     },
-    latestOccurrence?: any
+    latestOccurrence?: Awaited<ReturnType<OccurrenceAdapter['getLatestOccurrenceByTaskId']>>
   ): { targetDate: Date; limitDate: Date } {
     if (initialDates?.targetDate || initialDates?.limitDate) {
       const calculated = this.dateCalculator.calculateOccurrenceDates(nextDate, recurrence);
