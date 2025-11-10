@@ -22,6 +22,8 @@ jest.mock('../../adapter', () => ({
     createOccurrence: jest.fn(),
     getOccurrencesByTaskId: jest.fn(),
     getOccurrenceWithTask: jest.fn(),
+    getOccurrenceById: jest.fn(),
+    updateOccurrence: jest.fn(),
     completeOccurrence: jest.fn(),
     skipOccurrence: jest.fn(),
     getCompletedOccurrencesByOwnerAndDateRange: jest.fn(),
@@ -30,8 +32,11 @@ jest.mock('../../adapter', () => ({
   CalendarEventAdapter: jest.fn().mockImplementation(() => ({
     createEvent: jest.fn(),
     getEventsByOccurrenceId: jest.fn(),
+    getEventWithDetails: jest.fn(),
+    updateEvent: jest.fn(),
     completeEvent: jest.fn(),
     deleteEvent: jest.fn(),
+    syncOccurrenceTimeFromEvents: jest.fn(),
     getCompletedEventsByOccurrenceIds: jest.fn(),
   })),
   RecurrenceAdapter: jest.fn().mockImplementation(() => ({
