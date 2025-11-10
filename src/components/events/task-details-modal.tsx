@@ -1,7 +1,6 @@
 "use client"
 
 import type { EventWithDetails, OccurrenceWithTask, TaskWithRecurrence } from "~/types"
-import { Calendar, Target } from "lucide-react"
 import { Dialog, DialogContent} from "../ui/dialog"
 import { useState } from "react"
 import { api } from "~/trpc/react"
