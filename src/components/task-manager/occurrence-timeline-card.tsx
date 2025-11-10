@@ -28,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu"
 import { getTaskTypeColors } from "~/lib/task-type-colors"
-import { formatDateShort as formatDate, normalizeDateForDisplay } from "~/lib/date-display-utils"
+import { formatDateShort as formatDate } from "~/lib/date-display-utils"
 
 interface OccurrenceTimelineCardProps {
   occurrence: OccurrenceWithTask
@@ -151,8 +151,8 @@ export function OccurrenceTimelineCard({
           {occurrence.targetDate && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Target className="h-3 w-3" aria-hidden="true" />
-              <span aria-label={`Fecha objetivo: ${formatDate(normalizeDateForDisplay(occurrence.targetDate))}`}>
-                {formatDate(normalizeDateForDisplay(occurrence.targetDate))}
+              <span aria-label={`Fecha objetivo: ${formatDate(occurrence.targetDate)}`}>
+                {formatDate(occurrence.targetDate)}
               </span>
             </div>
           )}
@@ -244,7 +244,7 @@ export function OccurrenceTimelineCard({
             <div className="flex items-center gap-1.5 text-xs">
               <Target className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
               <span className="text-muted-foreground">Objetivo:</span>
-              <span className="font-medium">{formatDate(normalizeDateForDisplay(occurrence.targetDate))}</span>
+              <span className="font-medium">{formatDate(occurrence.targetDate)}</span>
               {daysToTarget !== null && (
                 <Badge variant="secondary" className="text-xs h-4 px-1">
                   {daysToTarget === 0 
@@ -272,7 +272,7 @@ export function OccurrenceTimelineCard({
                 isOverdue && "text-red-600 dark:text-red-400",
                 isApproachingDeadline && !isOverdue && "text-orange-600 dark:text-orange-400"
               )}>
-                {formatDate(normalizeDateForDisplay(occurrence.limitDate))}
+                {formatDate(occurrence.limitDate)}
               </span>
               {daysToLimit !== null && (
                 <Badge 

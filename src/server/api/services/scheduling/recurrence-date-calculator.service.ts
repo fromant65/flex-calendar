@@ -5,11 +5,15 @@
  * - Interval-based (every N days)
  * - Days of week (e.g., Mon, Wed, Fri)
  * - Days of month (e.g., 1st, 15th, 30th)
+ * 
+ * Refactored to use DateDomainService for consistent date handling
  */
 
 import type { DayOfWeek } from "../types";
+import { DateDomainService, Deadline } from "../dates";
 
 export class RecurrenceDateCalculator {
+  private readonly dateService = new DateDomainService();
   private readonly DAY_MAP: Record<DayOfWeek, number> = {
     Sun: 0,
     Mon: 1,
@@ -33,17 +37,18 @@ export class RecurrenceDateCalculator {
       completedOccurrences?: number | null;
     }
   ): Date {
-    const nextDate = new Date(lastOccurrenceDate);
+    const lastDeadline = this.dateService.dateToDeadline(lastOccurrenceDate);
 
     // Case 1: Interval-based (every N days/weeks/months)
     if (recurrence.interval) {
       if (recurrence.maxOccurrences && recurrence.maxOccurrences > 1) {
         const distributedInterval = Math.floor(recurrence.interval / recurrence.maxOccurrences);
-        nextDate.setDate(nextDate.getDate() + distributedInterval);
+        const nextDeadline = this.dateService.addDays(lastDeadline, distributedInterval);
+        return nextDeadline.toDate();
       } else {
-        nextDate.setDate(nextDate.getDate() + recurrence.interval);
+        const nextDeadline = this.dateService.addDays(lastDeadline, recurrence.interval);
+        return nextDeadline.toDate();
       }
-      return nextDate;
     }
 
     // Case 2: Specific days of week
@@ -57,8 +62,8 @@ export class RecurrenceDateCalculator {
     }
 
     // Default: next day
-    nextDate.setDate(nextDate.getDate() + 1);
-    return nextDate;
+    const nextDeadline = this.dateService.addDays(lastDeadline, 1);
+    return nextDeadline.toDate();
   }
 
   /**
@@ -72,33 +77,34 @@ export class RecurrenceDateCalculator {
       daysOfMonth?: number[] | null;
     }
   ): { targetDate: Date; limitDate: Date } {
-    const targetDate = new Date(startDate);
-    const limitDate = new Date(startDate);
+    const startDeadline = this.dateService.dateToDeadline(startDate);
 
     if (recurrence.interval) {
       const targetDays = Math.floor(recurrence.interval * 0.6);
       const limitDays = recurrence.interval;
-      targetDate.setDate(targetDate.getDate() + targetDays);
-      limitDate.setDate(limitDate.getDate() + limitDays);
+      const targetDeadline = this.dateService.addDays(startDeadline, targetDays);
+      const limitDeadline = this.dateService.addDays(startDeadline, limitDays);
+      return { targetDate: targetDeadline.toDate(), limitDate: limitDeadline.toDate() };
     } 
     else if (recurrence.daysOfWeek && recurrence.daysOfWeek.length > 0) {
       const nextOccurrence = this.calculateNextOccurrenceDate(startDate, recurrence);
-      const daysUntilNext = Math.floor((nextOccurrence.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-      targetDate.setDate(targetDate.getDate() + Math.max(1, Math.floor(daysUntilNext * 0.6)));
-      limitDate.setTime(nextOccurrence.getTime());
+      const nextDeadline = this.dateService.dateToDeadline(nextOccurrence);
+      const daysUntilNext = this.dateService.calculateDaysBetween(startDeadline, nextDeadline);
+      const targetDeadline = this.dateService.addDays(startDeadline, Math.max(1, Math.floor(daysUntilNext * 0.6)));
+      return { targetDate: targetDeadline.toDate(), limitDate: nextOccurrence };
     }
     else if (recurrence.daysOfMonth && recurrence.daysOfMonth.length > 0) {
       const nextOccurrence = this.calculateNextOccurrenceDate(startDate, recurrence);
-      const daysUntilNext = Math.floor((nextOccurrence.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-      targetDate.setDate(targetDate.getDate() + Math.max(1, Math.floor(daysUntilNext * 0.6)));
-      limitDate.setTime(nextOccurrence.getTime());
+      const nextDeadline = this.dateService.dateToDeadline(nextOccurrence);
+      const daysUntilNext = this.dateService.calculateDaysBetween(startDeadline, nextDeadline);
+      const targetDeadline = this.dateService.addDays(startDeadline, Math.max(1, Math.floor(daysUntilNext * 0.6)));
+      return { targetDate: targetDeadline.toDate(), limitDate: nextOccurrence };
     }
     else {
-      targetDate.setDate(targetDate.getDate() + 1);
-      limitDate.setDate(limitDate.getDate() + 7);
+      const targetDeadline = this.dateService.addDays(startDeadline, 1);
+      const limitDeadline = this.dateService.addDays(startDeadline, 7);
+      return { targetDate: targetDeadline.toDate(), limitDate: limitDeadline.toDate() };
     }
-
-    return { targetDate, limitDate };
   }
 
   /**
@@ -106,10 +112,8 @@ export class RecurrenceDateCalculator {
    */
   getNextDayOfWeek(fromDate: Date, daysOfWeek: DayOfWeek[]): Date {
     const targetDays = daysOfWeek.map((day) => this.DAY_MAP[day]).sort((a, b) => a - b);
-    const currentDay = fromDate.getUTCDay();
-    const currentYear = fromDate.getUTCFullYear();
-    const currentMonth = fromDate.getUTCMonth();
-    const currentDate = fromDate.getUTCDate();
+    const fromDeadline = this.dateService.dateToDeadline(fromDate);
+    const currentDay = fromDeadline.getDayOfWeek();
 
     let daysToAdd = 0;
     let found = false;
@@ -126,7 +130,8 @@ export class RecurrenceDateCalculator {
       daysToAdd = 7 - currentDay + targetDays[0]!;
     }
 
-    return new Date(Date.UTC(currentYear, currentMonth, currentDate + daysToAdd));
+    const nextDeadline = this.dateService.addDays(fromDeadline, daysToAdd);
+    return nextDeadline.toDate();
   }
 
   /**
@@ -134,20 +139,20 @@ export class RecurrenceDateCalculator {
    */
   getFirstDayOfWeekInPeriod(periodStart: Date, daysOfWeek: DayOfWeek[]): Date {
     const targetDays = daysOfWeek.map((day) => this.DAY_MAP[day]).sort((a, b) => a - b);
-    const periodStartDay = periodStart.getUTCDay();
-    const periodStartYear = periodStart.getUTCFullYear();
-    const periodStartMonth = periodStart.getUTCMonth();
-    const periodStartDate = periodStart.getUTCDate();
+    const periodDeadline = this.dateService.dateToDeadline(periodStart);
+    const periodStartDay = periodDeadline.getDayOfWeek();
     
     for (const targetDay of targetDays) {
       if (targetDay >= periodStartDay) {
         const daysToAdd = targetDay - periodStartDay;
-        return new Date(Date.UTC(periodStartYear, periodStartMonth, periodStartDate + daysToAdd));
+        const nextDeadline = this.dateService.addDays(periodDeadline, daysToAdd);
+        return nextDeadline.toDate();
       }
     }
     
     const daysToAdd = 7 - periodStartDay + targetDays[0]!;
-    return new Date(Date.UTC(periodStartYear, periodStartMonth, periodStartDate + daysToAdd));
+    const nextDeadline = this.dateService.addDays(periodDeadline, daysToAdd);
+    return nextDeadline.toDate();
   }
 
   /**
@@ -155,31 +160,47 @@ export class RecurrenceDateCalculator {
    */
   getNextDayOfMonth(fromDate: Date, daysOfMonth: number[]): Date {
     const sortedDays = [...daysOfMonth].sort((a, b) => a - b);
-    const currentDay = fromDate.getUTCDate();
-    const currentMonth = fromDate.getUTCMonth();
-    const currentYear = fromDate.getUTCFullYear();
+    const fromDeadline = this.dateService.dateToDeadline(fromDate);
+    const currentDay = fromDeadline.getDayOfMonth();
+    const components = fromDeadline.getComponents();
 
     // Try current month
     for (const day of sortedDays) {
       if (day > currentDay) {
-        const testDate = new Date(Date.UTC(currentYear, currentMonth, day));
-        if (testDate.getUTCMonth() === currentMonth) {
-          return testDate;
+        try {
+          // Use Date.UTC directly to check if the day is valid for this month
+          const testDate = new Date(Date.UTC(components.year, components.month - 1, day));
+          // Verify the month didn't overflow
+          if (testDate.getUTCMonth() === components.month - 1) {
+            return testDate;
+          }
+        } catch {
+          // Invalid date, continue to next
+          continue;
         }
       }
     }
 
     // Try next month
-    const nextMonth = currentMonth + 1;
+    const nextMonth = components.month % 12; // 1-12 -> next month (wraps to 0 for Dec->Jan)
+    const nextYear = components.month === 12 ? components.year + 1 : components.year;
     for (const day of sortedDays) {
-      const testDate = new Date(Date.UTC(currentYear, nextMonth, day));
-      if (testDate.getUTCMonth() === (nextMonth % 12)) {
-        return testDate;
+      try {
+        const testDate = new Date(Date.UTC(nextYear, nextMonth, day));
+        // Verify the month didn't overflow
+        if (testDate.getUTCMonth() === nextMonth) {
+          return testDate;
+        }
+      } catch {
+        continue;
       }
     }
 
-    // Fallback
-    return new Date(Date.UTC(currentYear, currentMonth + 2, sortedDays[0]));
+    // Fallback to month after next
+    const monthAfterNext = (components.month + 1) % 12;
+    const yearAfterNext = components.month >= 11 ? components.year + 1 : components.year;
+    const fallbackDate = new Date(Date.UTC(yearAfterNext, monthAfterNext, sortedDays[0]!));
+    return fallbackDate;
   }
 
   /**
@@ -187,30 +208,45 @@ export class RecurrenceDateCalculator {
    */
   getFirstDayOfMonthInPeriod(periodStart: Date, daysOfMonth: number[]): Date {
     const sortedDays = [...daysOfMonth].sort((a, b) => a - b);
-    const periodStartDay = periodStart.getUTCDate();
-    const periodStartMonth = periodStart.getUTCMonth();
-    const periodStartYear = periodStart.getUTCFullYear();
+    const periodDeadline = this.dateService.dateToDeadline(periodStart);
+    const periodStartDay = periodDeadline.getDayOfMonth();
+    const components = periodDeadline.getComponents();
 
     // Try current month
     for (const day of sortedDays) {
       if (day >= periodStartDay) {
-        const testDate = new Date(Date.UTC(periodStartYear, periodStartMonth, day));
-        if (testDate.getUTCMonth() === periodStartMonth) {
-          return testDate;
+        try {
+          // Use Date.UTC directly to check if the day is valid for this month
+          const testDate = new Date(Date.UTC(components.year, components.month - 1, day));
+          // Verify the month didn't overflow
+          if (testDate.getUTCMonth() === components.month - 1) {
+            return testDate;
+          }
+        } catch {
+          continue;
         }
       }
     }
 
     // Try next month
-    const nextMonth = periodStartMonth + 1;
+    const nextMonth = components.month % 12;
+    const nextYear = components.month === 12 ? components.year + 1 : components.year;
     for (const day of sortedDays) {
-      const testDate = new Date(Date.UTC(periodStartYear, nextMonth, day));
-      if (testDate.getUTCMonth() === (nextMonth % 12)) {
-        return testDate;
+      try {
+        const testDate = new Date(Date.UTC(nextYear, nextMonth, day));
+        // Verify the month didn't overflow
+        if (testDate.getUTCMonth() === nextMonth) {
+          return testDate;
+        }
+      } catch {
+        continue;
       }
     }
 
-    // Fallback
-    return new Date(Date.UTC(periodStartYear, periodStartMonth + 2, sortedDays[0]));
+    // Fallback to month after next
+    const monthAfterNext = (components.month + 1) % 12;
+    const yearAfterNext = components.month >= 11 ? components.year + 1 : components.year;
+    const fallbackDate = new Date(Date.UTC(yearAfterNext, monthAfterNext, sortedDays[0]!));
+    return fallbackDate;
   }
 }

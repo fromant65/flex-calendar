@@ -3,14 +3,19 @@
  * 
  * Handles the complex logic of creating next occurrences for recurring tasks.
  * Extracted from TaskSchedulerService to reduce file size and improve maintainability.
+ * 
+ * Refactored to use DateDomainService for consistent date handling
  */
 
 import type { TaskAdapter, OccurrenceAdapter, RecurrenceAdapter } from "../../adapter";
 import type { CreateOccurrenceDTO, DayOfWeek, TaskRecurrence, TaskOccurrence } from "../types";
 import type { RecurrenceDateCalculator } from "./recurrence-date-calculator.service";
 import type { PeriodManager } from "./period-manager.service";
+import { DateDomainService } from "../dates";
 
 export class OccurrenceCreationService {
+  private readonly dateService = new DateDomainService();
+
   constructor(
     private taskAdapter: TaskAdapter,
     private occurrenceAdapter: OccurrenceAdapter,
@@ -86,10 +91,11 @@ export class OccurrenceCreationService {
       targetTimeConsumption?: number;
     }
   ): Promise<void> {
-    const startDate = new Date();
+    const today = this.dateService.today();
+    const startDate = today.toDate();
     
-    const targetDate = initialDates?.targetDate ?? new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const limitDate = initialDates?.limitDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const targetDate = initialDates?.targetDate ?? this.dateService.addDays(today, 1).toDate();
+    const limitDate = initialDates?.limitDate ?? this.dateService.addDays(today, 7).toDate();
 
     const occurrenceData: CreateOccurrenceDTO = {
       associatedTaskId: taskId,

@@ -10,8 +10,8 @@ import { UrgencyCalculator } from "../../utils/urgency-calculator";
 import { OccurrenceAdapter, TaskAdapter } from "../../adapter";
 
 export class TaskAnalyticsService {
-  private occurrenceAdapter: OccurrenceAdapter;
-  private taskAdapter: TaskAdapter;
+  private readonly occurrenceAdapter: OccurrenceAdapter;
+  private readonly taskAdapter: TaskAdapter;
 
   constructor() {
     this.occurrenceAdapter = new OccurrenceAdapter();
@@ -21,7 +21,11 @@ export class TaskAnalyticsService {
   /**
    * Calculate and add urgency to an occurrence (no DB update)
    */
-  enrichOccurrenceWithUrgency<T extends { createdAt: Date; targetDate: Date | null; limitDate: Date | null }>(
+  enrichOccurrenceWithUrgency<T extends { 
+    createdAt: Date; 
+    targetDate: Date | null; 
+    limitDate: Date | null 
+  }>(
     occurrence: T
   ): T & { urgency: number } {
     const result = UrgencyCalculator.calculateUrgency({
@@ -40,7 +44,11 @@ export class TaskAnalyticsService {
   /**
    * Calculate and add urgency to multiple occurrences (no DB update)
    */
-  enrichOccurrencesWithUrgency<T extends { createdAt: Date; targetDate: Date | null; limitDate: Date | null }>(
+  enrichOccurrencesWithUrgency<T extends { 
+    createdAt: Date; 
+    targetDate: Date | null; 
+    limitDate: Date | null 
+  }>(
     occurrences: T[]
   ): Array<T & { urgency: number }> {
     return occurrences.map(occ => this.enrichOccurrenceWithUrgency(occ));

@@ -10,7 +10,7 @@ import {
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
-import { normalizeDateForDisplay } from "~/lib/date-display-utils";
+import { toDateInputValue } from "~/lib/date-display-utils";
 
 interface EditOccurrenceDialogProps {
   occurrence: {
@@ -46,32 +46,18 @@ export function EditOccurrenceDialog({
       setTimeConsumed(occurrence.timeConsumed);
       setTargetTimeConsumption(occurrence.targetTimeConsumption);
       
-      // Set target date if exists - use normalized date to avoid timezone issues
+      // Set target date if exists - use toDateInputValue for proper formatting
       if (occurrence.targetDate) {
-        const normalized = normalizeDateForDisplay(occurrence.targetDate);
-        if (normalized) {
-          const year = normalized.getFullYear();
-          const month = String(normalized.getMonth() + 1).padStart(2, '0');
-          const day = String(normalized.getDate()).padStart(2, '0');
-          setTargetDate(`${year}-${month}-${day}`);
-        } else {
-          setTargetDate("");
-        }
+        const dateValue = toDateInputValue(occurrence.targetDate);
+        setTargetDate(dateValue);
       } else {
         setTargetDate("");
       }
       
-      // Set limit date if exists - use normalized date to avoid timezone issues
+      // Set limit date if exists - use toDateInputValue for proper formatting
       if (occurrence.limitDate) {
-        const normalized = normalizeDateForDisplay(occurrence.limitDate);
-        if (normalized) {
-          const year = normalized.getFullYear();
-          const month = String(normalized.getMonth() + 1).padStart(2, '0');
-          const day = String(normalized.getDate()).padStart(2, '0');
-          setLimitDate(`${year}-${month}-${day}`);
-        } else {
-          setLimitDate("");
-        }
+        const dateValue = toDateInputValue(occurrence.limitDate);
+        setLimitDate(dateValue);
       } else {
         setLimitDate("");
       }

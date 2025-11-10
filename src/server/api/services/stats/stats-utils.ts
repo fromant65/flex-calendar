@@ -1,29 +1,32 @@
 /**
  * Stats Utils - Shared utility functions for statistics calculations
+ * 
+ * Refactored to use DateDomainService for consistent date handling
  */
 
 import type { HabitCompliancePoint } from "~/types";
 import type { StatsTask, StatsRecurrence } from "./stats-types";
+import { DateDomainService } from "../dates";
 
 export class StatsUtils {
+  private static readonly dateService = new DateDomainService();
+
   /**
    * Get week key in format YYYY-Www
    */
   static getWeekKey(date: Date): string {
-    const year = date.getFullYear();
-    const weekNum = this.getWeekNumber(date);
-    return `${year}-W${String(weekNum).padStart(2, "0")}`;
+    const deadline = this.dateService.dateToDeadline(date);
+    const components = deadline.getComponents();
+    const weekNum = this.dateService.getWeekNumber(deadline);
+    return `${components.year}-W${String(weekNum).padStart(2, "0")}`;
   }
 
   /**
    * Get ISO week number for a date
    */
   static getWeekNumber(date: Date): number {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+    const deadline = this.dateService.dateToDeadline(date);
+    return this.dateService.getWeekNumber(deadline);
   }
 
   /**
@@ -35,15 +38,20 @@ export class StatsUtils {
     const week = Number(parts[1]);
 
     if (isNaN(year) || isNaN(week)) {
-      return new Date();
+      return this.dateService.today().toDate();
     }
 
-    const simple = new Date(year, 0, 1 + (week - 1) * 7);
-    const dow = simple.getDay();
-    const isoWeekStart = simple;
-    if (dow <= 4) isoWeekStart.setDate(simple.getDate() - simple.getDay() + 1);
-    else isoWeekStart.setDate(simple.getDate() + 8 - simple.getDay());
-    return isoWeekStart;
+    // Create January 1st of the year
+    const jan1 = this.dateService.createDeadline({ year, month: 1, day: 1 });
+    const jan1DayOfWeek = jan1.getDayOfWeek();
+    
+    // Calculate days to add to get to week 1
+    const daysToWeek1 = jan1DayOfWeek <= 4 ? 1 - jan1DayOfWeek : 8 - jan1DayOfWeek;
+    const week1Start = this.dateService.addDays(jan1, daysToWeek1);
+    
+    // Add weeks
+    const targetWeek = this.dateService.addDays(week1Start, (week - 1) * 7);
+    return targetWeek.toDate();
   }
 
   /**
@@ -60,9 +68,11 @@ export class StatsUtils {
     let tempStreak = 0;
 
     // Sort by date
-    const sorted = [...compliance].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+    const sorted = [...compliance].sort((a, b) => {
+      const dateA = this.dateService.dateToDeadline(a.date);
+      const dateB = this.dateService.dateToDeadline(b.date);
+      return dateA.isBefore(dateB) ? -1 : 1;
+    });
 
     for (let i = 0; i < sorted.length; i++) {
       const point = sorted[i];

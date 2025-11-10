@@ -3,12 +3,17 @@
  * 
  * Manages period boundaries, occurrence counters, and period transitions
  * for recurring tasks with maxOccurrences.
+ * 
+ * Refactored to use DateDomainService for consistent date handling
  */
 
 import type { TaskRecurrence } from "../types";
 import type { RecurrenceAdapter } from "../../adapter";
+import { DateDomainService } from "../dates";
 
 export class PeriodManager {
+  private readonly dateService = new DateDomainService();
+
   constructor(private recurrenceAdapter: RecurrenceAdapter) {}
 
   /**
@@ -22,27 +27,24 @@ export class PeriodManager {
       daysOfMonth?: number[] | null;
     }
   ): Date {
+    const periodStartObj = this.dateService.dateToPeriodStart(periodStart);
+
     if (recurrence.interval) {
       // Interval-based: add interval days
-      const periodEnd = new Date(periodStart);
-      periodEnd.setUTCDate(periodEnd.getUTCDate() + recurrence.interval);
-      return periodEnd;
+      const periodEnd = this.dateService.calculatePeriodEnd(periodStartObj, 'interval', recurrence.interval);
+      return periodEnd.toDate();
     } else if (recurrence.daysOfWeek && recurrence.daysOfWeek.length > 0) {
       // Week-based: period is 7 days (one week)
-      const periodEnd = new Date(periodStart);
-      periodEnd.setUTCDate(periodEnd.getUTCDate() + 7);
-      return periodEnd;
+      const periodEnd = this.dateService.calculatePeriodEnd(periodStartObj, 'weekly');
+      return periodEnd.toDate();
     } else if (recurrence.daysOfMonth && recurrence.daysOfMonth.length > 0) {
       // Month-based: period ends at start of next month
-      const year = periodStart.getUTCFullYear();
-      const month = periodStart.getUTCMonth();
-      const periodEnd = new Date(Date.UTC(year, month + 1, 1));
-      return periodEnd;
+      const periodEnd = this.dateService.calculatePeriodEnd(periodStartObj, 'monthly');
+      return periodEnd.toDate();
     }
     
     // Default
-    const periodEnd = new Date(periodStart);
-    return periodEnd;
+    return periodStart;
   }
 
   /**
@@ -56,27 +58,24 @@ export class PeriodManager {
       daysOfMonth?: number[] | null;
     }
   ): Date {
+    const periodStartObj = this.dateService.dateToPeriodStart(currentPeriodStart);
+
     if (recurrence.interval) {
       // Interval-based: add interval days
-      const result = new Date(currentPeriodStart);
-      result.setUTCDate(result.getUTCDate() + recurrence.interval);
-      return result;
+      const nextPeriod = this.dateService.calculateNextPeriod(periodStartObj, 'interval', recurrence.interval);
+      return nextPeriod.toDate();
     } else if (recurrence.daysOfWeek && recurrence.daysOfWeek.length > 0) {
       // Week-based: add 7 days (one week)
-      const result = new Date(currentPeriodStart);
-      result.setUTCDate(result.getUTCDate() + 7);
-      return result;
+      const nextPeriod = this.dateService.calculateNextPeriod(periodStartObj, 'weekly');
+      return nextPeriod.toDate();
     } else if (recurrence.daysOfMonth && recurrence.daysOfMonth.length > 0) {
       // Month-based: go to next month, use first day of month as period start
-      const year = currentPeriodStart.getUTCFullYear();
-      const month = currentPeriodStart.getUTCMonth();
-      // Next period starts on the 1st of the next month
-      const result = new Date(Date.UTC(year, month + 1, 1));
-      return result;
+      const nextPeriod = this.dateService.calculateNextPeriod(periodStartObj, 'monthly');
+      return nextPeriod.toDate();
     }
     
     // Default: return current period start (shouldn't happen)
-    return new Date(currentPeriodStart);
+    return currentPeriodStart;
   }
 
   /**
@@ -95,13 +94,16 @@ export class PeriodManager {
     if (!recurrence) return;
 
     // Determine which period the occurrence belongs to
-    const currentPeriodStart = recurrence.lastPeriodStart ?? new Date();
-    const currentPeriodEnd = this.getPeriodEnd(currentPeriodStart, recurrence);
+    const currentPeriodStart = this.dateService.dateToDeadline(recurrence.lastPeriodStart ?? new Date());
+    const currentPeriodEnd = this.dateService.dateToDeadline(
+      this.getPeriodEnd(currentPeriodStart.toDate(), recurrence)
+    );
+    const occurrenceDate = this.dateService.dateToDeadline(occurrenceStartDate);
 
     // Check if the occurrence belongs to the current period
     const occurrenceInCurrentPeriod = 
-      occurrenceStartDate >= currentPeriodStart && 
-      occurrenceStartDate < currentPeriodEnd;
+      !occurrenceDate.isBefore(currentPeriodStart) && 
+      occurrenceDate.isBefore(currentPeriodEnd);
 
     if (occurrenceInCurrentPeriod) {
       // Increment in current period
@@ -109,9 +111,9 @@ export class PeriodManager {
         completedOccurrences: (recurrence.completedOccurrences ?? 0) + 1,
       });
     }
-    else if (occurrenceStartDate >= currentPeriodEnd) {
+    else if (!occurrenceDate.isBefore(currentPeriodEnd)) {
       // The occurrence is in a future period, advance to that period and set count to 1
-      const nextPeriodStart = this.getNextPeriodStartByType(currentPeriodStart, recurrence);
+      const nextPeriodStart = this.getNextPeriodStartByType(currentPeriodStart.toDate(), recurrence);
       await this.recurrenceAdapter.updateRecurrence(recurrenceId, {
         completedOccurrences: 1,
         lastPeriodStart: nextPeriodStart,
@@ -145,7 +147,11 @@ export class PeriodManager {
     if (!recurrence.maxOccurrences) return false;
     if (!recurrence.lastPeriodStart) return false;
 
-    const periodEnd = this.getPeriodEnd(recurrence.lastPeriodStart, recurrence);
-    return fromDate >= periodEnd;
+    const periodEnd = this.dateService.dateToDeadline(
+      this.getPeriodEnd(recurrence.lastPeriodStart, recurrence)
+    );
+    const currentDate = this.dateService.dateToDeadline(fromDate);
+    
+    return !currentDate.isBefore(periodEnd);
   }
 }

@@ -3,7 +3,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { CheckCircle2, Edit, AlertCircle, SkipForward } from "lucide-react";
 import HelpTip from "~/components/ui/help-tip"
-import { normalizeDateForDisplay, formatDateLong, getLimitDateDisplay as getLimit } from "~/lib/date-display-utils";
+import { formatDateLong, getLimitDateDisplay as getLimit } from "~/lib/date-display-utils";
 import type { TaskOccurrence } from "~/types";
 
 interface OccurrenceCardProps {

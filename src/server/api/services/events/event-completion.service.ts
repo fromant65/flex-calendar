@@ -4,6 +4,8 @@
  * Handles completion and skipping logic for calendar events.
  * Manages task lifecycle when events are completed/skipped.
  * Extracted from TaskLifecycleService for better modularity.
+ * 
+ * Refactored to use DateDomainService for consistent date handling
  */
 
 import { CalendarEventAdapter, OccurrenceAdapter, TaskAdapter } from "../../adapter";
@@ -19,14 +21,16 @@ import type {
   TaskWithDetails,
   OccurrenceWithTask 
 } from "../types";
+import { DateDomainService } from "../dates";
 
 export class EventCompletionService {
-  private eventAdapter: CalendarEventAdapter;
-  private occurrenceAdapter: OccurrenceAdapter;
-  private taskAdapter: TaskAdapter;
-  private schedulerService: TaskSchedulerServiceInterface;
-  private strategyFactory: TaskStrategyFactory;
-  private occurrenceCompletionService: OccurrenceCompletionService;
+  private readonly eventAdapter: CalendarEventAdapter;
+  private readonly occurrenceAdapter: OccurrenceAdapter;
+  private readonly taskAdapter: TaskAdapter;
+  private readonly schedulerService: TaskSchedulerServiceInterface;
+  private readonly strategyFactory: TaskStrategyFactory;
+  private readonly occurrenceCompletionService: OccurrenceCompletionService;
+  private readonly dateService = new DateDomainService();
 
   constructor(schedulerService?: TaskSchedulerServiceInterface) {
     this.eventAdapter = new CalendarEventAdapter();
@@ -53,8 +57,9 @@ export class EventCompletionService {
     }
 
     // Validate that the event has already started
-    const now = new Date();
-    if (eventDetails.start > now) {
+    const now = this.dateService.now();
+    const eventStart = this.dateService.dateToTimestamp(eventDetails.start);
+    if (eventStart.isAfter(now)) {
       throw new Error("Cannot complete an event that hasn't started yet");
     }
 
@@ -63,7 +68,7 @@ export class EventCompletionService {
       (eventDetails.finish.getTime() - eventDetails.start.getTime()) / (1000 * 60 * 60);
 
     // Use provided completedAt or default to now
-    const actualCompletedAt = completedAt ?? new Date();
+    const actualCompletedAt = completedAt ?? now.toDate();
 
     // Mark event as completed
     const event = await this.eventAdapter.updateEvent(eventId, {

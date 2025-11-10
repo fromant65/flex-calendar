@@ -9,10 +9,13 @@
  * - Streak breaks on SKIPPED occurrences
  * - Streak resets to 0 if there's an EXPIRED occurrence (pending/in-progress past limit date)
  * - Only counts the LAST streak, not the maximum streak
+ * 
+ * Refactored to use DateDomainService for consistent date handling
  */
 
 import type { TaskOccurrence } from "../types";
 import { OccurrenceAdapter } from "../../adapter";
+import { DateDomainService } from "../dates";
 
 export interface TaskStreakInfo {
   taskId: number;
@@ -23,7 +26,8 @@ export interface TaskStreakInfo {
 }
 
 export class TaskStreakService {
-  private occurrenceAdapter: OccurrenceAdapter;
+  private readonly occurrenceAdapter: OccurrenceAdapter;
+  private readonly dateService = new DateDomainService();
 
   constructor() {
     this.occurrenceAdapter = new OccurrenceAdapter();
@@ -48,18 +52,21 @@ export class TaskStreakService {
     }
 
     // Sort by start date descending (most recent first)
-    const sorted = [...occurrences].sort(
-      (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
-    );
+    const sorted = [...occurrences].sort((a, b) => {
+      const dateA = this.dateService.dateToDeadline(a.startDate);
+      const dateB = this.dateService.dateToDeadline(b.startDate);
+      return dateB.isBefore(dateA) ? -1 : 1;
+    });
 
-    const now = new Date();
+    const now = this.dateService.now();
     let currentStreak = 0;
 
     // Check for expired occurrences first - these reset the streak
     const hasExpiredOccurrence = sorted.some((occ) => {
       if (occ.status === "Pending" || occ.status === "In Progress") {
-        if (occ.limitDate && new Date(occ.limitDate) < now) {
-          return true; // Found expired occurrence
+        if (occ.limitDate) {
+          const limitTimestamp = this.dateService.dateToTimestamp(occ.limitDate);
+          return limitTimestamp.isBefore(now);
         }
       }
       return false;
