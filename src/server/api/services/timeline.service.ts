@@ -18,14 +18,14 @@ export class TimelineService {
 
   /**
    * Get timeline data for a user within a date range
-   * Only returns completed occurrences and events
+   * Returns all occurrences and events regardless of status
    */
   async getTimelineData(userId: string, startDate: Date, endDate: Date): Promise<TimelineData> {
-    // Get all completed occurrences within the date range
-    const occurrencesWithTask = await this.occurrenceAdapter.getCompletedOccurrencesByOwnerInDateRange(
-      userId,
+    // Get all occurrences within the date range (regardless of status)
+    const occurrencesWithTask = await this.occurrenceAdapter.getOccurrencesByDateRange(
       startDate,
-      endDate
+      endDate,
+      userId
     );
 
     if (occurrencesWithTask.length === 0) {
@@ -34,30 +34,31 @@ export class TimelineService {
 
     // Extract unique tasks
     const tasksMap = new Map<number, TaskWithRecurrence>();
-    occurrencesWithTask.forEach(occ => {
+    occurrencesWithTask.forEach((occ) => {
       if (occ.task && !tasksMap.has(occ.task.id)) {
         tasksMap.set(occ.task.id, occ.task as TaskWithRecurrence);
       }
     });
     const tasks = Array.from(tasksMap.values());
 
-    // Get occurrence IDs
-    const occurrenceIds = occurrencesWithTask.map(occ => occ.id);
-
-    // Get all completed events for these occurrences
-    const eventsWithDetails = await this.eventAdapter.getCompletedEventsByOccurrenceIds(occurrenceIds);
+    // Get all events in the date range (regardless of completion status)
+    const eventsWithDetails = await this.eventAdapter.getEventsWithDetailsByDateRange(
+      userId,
+      startDate,
+      endDate
+    );
 
     // Transform to proper types
-    const occurrences: OccurrenceWithTask[] = occurrencesWithTask.map(occ => ({
+    const occurrences: OccurrenceWithTask[] = occurrencesWithTask.map((occ) => ({
       ...occ,
       status: occ.status as TaskOccurrenceStatus,
       task: occ.task as TaskWithRecurrence,
     }));
 
-    const events: EventWithDetails[] = eventsWithDetails.map(event => ({
+    const events: EventWithDetails[] = eventsWithDetails.map((event) => ({
       ...event,
       dedicatedTime: event.dedicatedTime ?? 0,
-      occurrence: occurrences.find(occ => occ.id === event.associatedOccurrenceId)!,
+      occurrence: occurrences.find((occ) => occ.id === event.associatedOccurrenceId)!,
     }));
 
     return {

@@ -15,22 +15,22 @@ interface TaskInfoProps {
 
 export function TaskInfo({ task }: TaskInfoProps) {
   return (
-    <div className="space-y-3 p-4 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
-      <h3 className="font-semibold text-sm uppercase tracking-wide text-slate-600 dark:text-slate-400">
-        Información de la Tarea
-      </h3>
-      
+    <div className="space-y-3">
       {task.description && (
-        <div className="text-sm">
-          <span className="font-medium text-slate-700 dark:text-slate-300">Descripción:</span>
-          <p className="mt-1 text-slate-600 dark:text-slate-400">{task.description}</p>
+        <div className="rounded-lg border border-border bg-muted/10 p-3">
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Descripción</h4>
+          <p className="text-sm text-foreground">{task.description}</p>
         </div>
       )}
       
-      <div className="flex items-center gap-2">
-        <Target className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-        <span className="font-medium text-sm text-slate-700 dark:text-slate-300">Importancia:</span>
-        <span className="font-bold text-blue-600 dark:text-blue-400">{task.importance}/10</span>
+      <div className="flex items-center gap-2.5 rounded-lg bg-muted/20 p-2.5">
+        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-amber-500/10">
+          <Target className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">Importancia</p>
+          <p className="text-sm font-semibold text-foreground">{task.importance}/10</p>
+        </div>
       </div>
     </div>
   )

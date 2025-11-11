@@ -216,14 +216,13 @@ export const buildCellDataForTask = (
 ): Map<string, TimelineCellData> => {
   const cellDataMap = new Map<string, TimelineCellData>()
 
-  // Filter occurrences for this task - ONLY Completed and Skipped
+  // Filter occurrences for this task - Include all statuses
   const taskOccurrences = occurrences.filter(
-    (occ) => occ.associatedTaskId === task.id && 
-    (occ.status === "Completed" || occ.status === "Skipped")
+    (occ) => occ.associatedTaskId === task.id
   )
 
   // For each segment
-  segments.forEach((segment) => {
+  segments.forEach((segment, segmentIndex) => {
     const segmentKey = getSegmentKey(segment)
 
     // Find occurrences that fall within this segment
@@ -262,19 +261,24 @@ export const buildCellDataForTask = (
       })
     }
 
-    // Determine status (if any completed, show completed)
+    // Determine status based on priority: completed > in-progress > pending > skipped > not-completed
     let status: TimelineCellData["status"] = "empty"
     const hasCompleted = segmentOccurrences.some((occ) => occ.status === "Completed")
+    const hasInProgress = segmentOccurrences.some((occ) => occ.status === "In Progress")
+    const hasPending = segmentOccurrences.some((occ) => occ.status === "Pending")
     const hasSkipped = segmentOccurrences.some((occ) => occ.status === "Skipped")
-    const hasNotCompleted = segmentOccurrences.some(
-      (occ) => occ.status !== "Completed" && occ.status !== "Skipped"
-    )
 
+    // Priority: show most significant status
     if (hasCompleted) {
       status = "completed"
+    } else if (hasInProgress) {
+      status = "in-progress"
+    } else if (hasPending) {
+      status = "pending"
     } else if (hasSkipped) {
       status = "skipped"
-    } else if (hasNotCompleted) {
+    } else {
+      // Any other status is considered not-completed
       status = "not-completed"
     }
 
@@ -315,15 +319,10 @@ export const getTasksWithActivityInRange = (
   const firstSegment = segments[0]!
   const lastSegment = segments[segments.length - 1]!
 
-  // Get occurrence IDs that fall in the segment range - ONLY Completed and Skipped
+  // Get occurrence IDs that fall in the segment range - Include all statuses
   const activeOccurrenceTaskIds = new Set<number>()
 
   allOccurrences.forEach((occ) => {
-    // Only consider completed or skipped occurrences
-    if (occ.status !== "Completed" && occ.status !== "Skipped") {
-      return
-    }
-    
     const occDate = new Date(occ.startDate)
     // Check if occurrence falls within any segment
     const inRange = segments.some((segment) => isInSegment(occDate, segment))

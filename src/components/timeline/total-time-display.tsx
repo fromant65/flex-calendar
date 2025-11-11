@@ -14,15 +14,13 @@ export function TotalTimeDisplay({ totalMinutes, formatTime }: TotalTimeDisplayP
   if (totalMinutes <= 0) return null
 
   return (
-    <div className="space-y-2 p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50">
-      <div className="flex items-center gap-2">
-        <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-        <span className="font-semibold text-blue-900 dark:text-blue-100">
-          Tiempo Total Dedicado
-        </span>
+    <div className="flex items-center gap-2.5 rounded-lg bg-muted/20 p-2.5">
+      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+        <Clock className="h-4 w-4 text-primary" />
       </div>
-      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-        {formatTime(totalMinutes)}
+      <div>
+        <p className="text-xs text-muted-foreground">Tiempo Total Dedicado</p>
+        <p className="text-sm font-semibold text-foreground">{formatTime(totalMinutes)}</p>
       </div>
     </div>
   )

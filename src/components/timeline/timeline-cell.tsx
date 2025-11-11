@@ -4,11 +4,11 @@
  * Similar to Habits app: shows completion status, time spent, or skip indicator
  */
 
-import { Check, X, Minus, Clock } from "lucide-react"
+import { Check, X, Minus, Clock, Circle, Loader } from "lucide-react"
 import { motion } from "motion/react"
 import { cn } from "~/lib/utils"
 
-export type CellStatus = "completed" | "skipped" | "not-completed" | "empty"
+export type CellStatus = "completed" | "skipped" | "not-completed" | "pending" | "in-progress" | "empty"
 
 export interface TimelineCellData {
   status: CellStatus
@@ -64,7 +64,13 @@ export function TimelineCell({ data, onClick, isCompact = false }: TimelineCellP
         return <Check className={cn("text-green-600 dark:text-green-400", isCompact ? "h-4 w-4" : "h-5 w-5")} />
       
       case "skipped":
-        return <Minus className={cn("text-yellow-600 dark:text-yellow-400", isCompact ? "h-4 w-4" : "h-5 w-5")} />
+        return <Minus className={cn("text-gray-500 dark:text-gray-400", isCompact ? "h-4 w-4" : "h-5 w-5")} />
+      
+      case "in-progress":
+        return <Loader className={cn("text-blue-600 dark:text-blue-400 animate-spin", isCompact ? "h-4 w-4" : "h-5 w-5")} />
+      
+      case "pending":
+        return <Circle className={cn("text-yellow-600 dark:text-yellow-400", isCompact ? "h-4 w-4" : "h-5 w-5")} />
       
       case "not-completed":
         return <X className={cn("text-red-600 dark:text-red-400", isCompact ? "h-4 w-4" : "h-5 w-5")} />
@@ -79,6 +85,10 @@ export function TimelineCell({ data, onClick, isCompact = false }: TimelineCellP
       case "completed":
         return "bg-green-50 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-950/50"
       case "skipped":
+        return "bg-gray-50 dark:bg-gray-950/30 hover:bg-gray-100 dark:hover:bg-gray-950/50"
+      case "in-progress":
+        return "bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50"
+      case "pending":
         return "bg-yellow-50 dark:bg-yellow-950/30 hover:bg-yellow-100 dark:hover:bg-yellow-950/50"
       case "not-completed":
         return "bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/50"

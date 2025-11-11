@@ -3,11 +3,11 @@
 import { useState, useEffect, useMemo } from "react"
 import { motion } from "motion/react"
 import { mockTimelineApi, type TimelineData } from "~/lib/mock-timeline-data"
-import type { OccurrenceWithTask, EventWithDetails } from "~/types"
 import { api } from "~/trpc/react"
 import { toast } from "sonner"
-import { TimelineControls, type NavigationInterval } from "./timeline-controls"
-import { HelpTip } from "~/components/ui/help-tip"
+import { TimelinePageHeader } from "./timeline-page-header"
+import type { NavigationInterval } from "./timeline-controls"
+import type { TimelineFilters as TimelineFiltersType } from "./timeline-filters"
 import { TimelineHeader } from "./timeline-header"
 import { TimelineTaskRow } from "./timeline-task-row"
 import { TimelineModals, type DayCellDetails } from "./timeline-modals"
@@ -15,12 +15,10 @@ import { TimelineFooter } from "./timeline-footer"
 import { 
   useIsMobile,
   useTimelineSegments,
-  useTaskCellData,
   useActiveTasks
 } from "./timeline-hooks"
 import { 
-  buildCellDataForTask, 
-  getSegmentKey,
+  buildCellDataForTask,
   isInSegment,
   type TimeSegment
 } from "./timeline-utils"
@@ -32,28 +30,69 @@ interface TimelineViewProps {
 }
 
 export function TimelineView({ initialDays = 7, useMockData = true }: TimelineViewProps) {
-  const [currentDate, setCurrentDate] = useState(new Date("2025-01-13"))
+  const [currentDate, setCurrentDate] = useState(new Date())
   const [daysToShow, setDaysToShow] = useState(initialDays)
-  const [dataCache, setDataCache] = useState<Map<string, TimelineData>>(new Map())
+  const [dataCache, setDataCache] = useState<TimelineData | null>(null)
+  const [cachedRange, setCachedRange] = useState<{ start: Date; end: Date } | null>(null)
   const [navigationInterval, setNavigationInterval] = useState<NavigationInterval>("day")
   const [selectedDayCell, setSelectedDayCell] = useState<DayCellDetails | null>(null)
   const [direction, setDirection] = useState<"forward" | "backward">("forward")
+  const [filters, setFilters] = useState<TimelineFiltersType>({
+    searchQuery: "",
+    taskTypeFilter: "all",
+    priorityFilter: "all",
+    statusFilter: "all",
+  })
 
   // Custom hooks
   const isMobile = useIsMobile()
   const { timeSegments, visibleSegments, isCompactView, startDate, endDate } = 
     useTimelineSegments(currentDate, daysToShow, isMobile)
 
-  // Fetch real data using tRPC
+  // Calculate extended range for caching (current period + 4x forward + 4x backward)
+  const extendedRange = useMemo(() => {
+    if (!startDate || !endDate) return null
+    
+    const periodDuration = endDate.getTime() - startDate.getTime()
+    const extendedStart = new Date(startDate.getTime() - (periodDuration * 4))
+    const extendedEnd = new Date(endDate.getTime() + (periodDuration * 4))
+    
+    return { start: extendedStart, end: extendedEnd }
+  }, [startDate, endDate])
+
+  // Check if current visible range is covered by cached data
+  const isRangeCovered = useMemo(() => {
+    if (!startDate || !endDate || !cachedRange) return false
+    
+    return (
+      startDate.getTime() >= cachedRange.start.getTime() &&
+      endDate.getTime() <= cachedRange.end.getTime()
+    )
+  }, [startDate, endDate, cachedRange])
+
+  // Determine if we should fetch new data
+  const shouldFetch = !useMockData && !isRangeCovered && !!extendedRange
+
+  // Fetch real data using tRPC with extended range
   const { data: realData, isLoading, error: timelineError } = api.timeline.getTimelineData.useQuery(
     {
-      startDate: startDate!,
-      endDate: endDate!,
+      startDate: extendedRange?.start ?? new Date(),
+      endDate: extendedRange?.end ?? new Date(),
     },
     {
-      enabled: !useMockData,
+      enabled: shouldFetch,
+      staleTime: Infinity, // Never consider data stale
+      gcTime: Infinity, // Never garbage collect
     }
   )
+
+  // Update cache when new data arrives
+  useEffect(() => {
+    if (realData && extendedRange && !useMockData) {
+      setDataCache(realData)
+      setCachedRange(extendedRange)
+    }
+  }, [realData, extendedRange, useMockData])
 
   // Show error toast when timeline data fails to load
   useEffect(() => {
@@ -65,35 +104,118 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
     }
   }, [timelineError])
 
-  // Fetch data with caching for mock data
+  // Fetch mock data with extended range caching
   useEffect(() => {
-    if (!useMockData) return
+    if (!useMockData || !extendedRange || isRangeCovered) return
 
-    const cacheKey = `${startDate?.toISOString()}-${endDate?.toISOString()}`
+    const data = mockTimelineApi.getTimelineData(extendedRange.start, extendedRange.end)
+    setDataCache(data)
+    setCachedRange(extendedRange)
+  }, [useMockData, extendedRange, isRangeCovered])
 
-    if (!dataCache.has(cacheKey)) {
-      const data = mockTimelineApi.getTimelineData(startDate!, endDate!)
-      setDataCache((prev) => new Map(prev).set(cacheKey, data))
-    }
-  }, [startDate, endDate, useMockData, dataCache])
-
-  // Get current data from cache or real data
+  // Get current data filtered to visible range
   const currentData = useMemo(() => {
-    if (!useMockData && realData) {
-      return realData
+    if (!startDate || !endDate || !dataCache) {
+      return { tasks: [], occurrences: [], events: [] }
     }
 
-    if (useMockData) {
-      const cacheKey = `${startDate!.toISOString()}-${endDate!.toISOString()}`
-      const data = dataCache.get(cacheKey) || { tasks: [], occurrences: [], events: [] }
-      return data
+    // Filter data to visible range
+    const filteredOccurrences = dataCache.occurrences.filter((occ) => {
+      const occDate = new Date(occ.startDate)
+      return occDate >= startDate && occDate <= endDate
+    })
+    
+    const filteredEvents = dataCache.events.filter((event) => {
+      const eventStart = new Date(event.start)
+      return eventStart >= startDate && eventStart <= endDate
+    })
+    
+    // Get unique task IDs from filtered occurrences
+    const taskIds = new Set(filteredOccurrences.map(occ => occ.associatedTaskId))
+    const filteredTasks = dataCache.tasks.filter(task => taskIds.has(task.id))
+    
+    return {
+      tasks: filteredTasks,
+      occurrences: filteredOccurrences,
+      events: filteredEvents,
     }
-
-    return { tasks: [], occurrences: [], events: [] }
-  }, [startDate, endDate, dataCache, useMockData, realData])
+  }, [startDate, endDate, dataCache])
 
   // Filter tasks to only show those with activity in the segment range
   const activeTasks = useActiveTasks(currentData.tasks, currentData.occurrences, timeSegments)
+
+  // Apply filters to active tasks
+  const filteredTasks = useMemo(() => {
+    let filtered = activeTasks
+
+    // Search by name
+    if (filters.searchQuery) {
+      const query = filters.searchQuery.toLowerCase()
+      filtered = filtered.filter((task) => 
+        task.name.toLowerCase().includes(query) ||
+        task.description?.toLowerCase().includes(query)
+      )
+    }
+
+    // Filter by task type
+    if (filters.taskTypeFilter !== "all") {
+      filtered = filtered.filter((task) => task.taskType === filters.taskTypeFilter)
+    }
+
+    // Filter by priority (Eisenhower matrix)
+    if (filters.priorityFilter !== "all") {
+      filtered = filtered.filter((task) => {
+        const taskOccurrences = currentData.occurrences.filter(
+          (occ) => occ.associatedTaskId === task.id
+        )
+        
+        // Calculate if task has occurrences in the selected quadrant
+        return taskOccurrences.some((occ) => {
+          const importance = task.importance || 0
+          const urgency = occ.urgency || 0
+          const isImportant = importance >= 6
+          const isUrgent = urgency >= 6
+          
+          switch (filters.priorityFilter) {
+            case "urgent-important":
+              return isUrgent && isImportant
+            case "not-urgent-important":
+              return !isUrgent && isImportant
+            case "urgent-not-important":
+              return isUrgent && !isImportant
+            case "not-urgent-not-important":
+              return !isUrgent && !isImportant
+            default:
+              return false
+          }
+        })
+      })
+    }
+
+    // Filter by occurrence status
+    if (filters.statusFilter !== "all") {
+      filtered = filtered.filter((task) => {
+        const taskOccurrences = currentData.occurrences.filter(
+          (occ) => occ.associatedTaskId === task.id
+        )
+
+        switch (filters.statusFilter) {
+          case "has-pending":
+            return taskOccurrences.some((occ) => occ.status === "Pending")
+          case "has-completed":
+            return taskOccurrences.some((occ) => occ.status === "Completed")
+          case "has-skipped":
+            return taskOccurrences.some((occ) => occ.status === "Skipped")
+          case "all-completed":
+            return taskOccurrences.length > 0 && taskOccurrences.every((occ) => occ.status === "Completed")
+          default:
+            return true
+        }
+      })
+    }
+
+    return filtered
+  }, [activeTasks, filters, currentData.occurrences])
 
   // Navigate timeline based on selected interval
   const goToPrevious = () => {
@@ -198,9 +320,8 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
 
   return (
     <div className="flex h-full flex-col gap-2 bg-background p-4">
-      {/* Header Controls */}
-      <div className="flex items-center justify-between">
-        <TimelineControls
+      {/* Unified Header: Controls, Filters & Help */}
+      <TimelinePageHeader
         navigationInterval={navigationInterval}
         setNavigationInterval={setNavigationInterval}
         daysToShow={daysToShow}
@@ -208,17 +329,11 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
         onPrevious={goToPrevious}
         onNext={goToNext}
         onToday={goToToday}
-        />
-        <div className="ml-2">
-          <HelpTip title="Vista Línea de Tiempo" side="left">
-            <p className="mb-1">
-              Usa la vista para cambiar la granularidad (horas/días/meses). <br />
-              También puedes ajustar qué periodo saltas al moverte con las flechas con la opción de salto. <br />
-              Haz click en una celda para ver ocurrencias y eventos.
-            </p>
-          </HelpTip>
-        </div>
-      </div>
+        filters={filters}
+        onFiltersChange={setFilters}
+        totalTasks={activeTasks.length}
+        filteredCount={filteredTasks.length}
+      />
 
       {/* Timeline Container */}
       <div className="flex-1 overflow-auto rounded-lg border border-border bg-card shadow-sm">
@@ -244,12 +359,14 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
               <div className="flex h-32 items-center justify-center text-muted-foreground">
                 Cargando datos de la línea de tiempo...
               </div>
-            ) : activeTasks.length === 0 ? (
+            ) : filteredTasks.length === 0 ? (
               <div className="flex h-32 items-center justify-center text-muted-foreground">
-                No hay tareas con actividad en este rango de fechas
+                {activeTasks.length === 0 
+                  ? "No hay tareas con actividad en este rango de fechas"
+                  : "No hay tareas que coincidan con los filtros aplicados"}
               </div>
             ) : (
-              activeTasks.map((task) => {
+              filteredTasks.map((task) => {
                 // Build cell data for this task
                 const cellDataBySegment = buildCellDataForTask(
                   task,

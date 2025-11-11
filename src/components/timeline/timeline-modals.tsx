@@ -80,14 +80,14 @@ export function TimelineModals({ selectedDayCell, onClose }: TimelineModalsProps
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+          <DialogTitle className="text-2xl font-bold">
             {selectedDayCell.task.name}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Status Badge */}
-          <div className="flex items-center justify-between">
+        <div className="space-y-4">
+          {/* Status Badge and Date */}
+          <div className="flex items-center gap-3 flex-wrap">
             <StatusBadge status={selectedDayCell.status} />
             <div className="text-sm text-muted-foreground">
               {formatDateOnly(selectedDayCell.date)}
@@ -106,7 +106,7 @@ export function TimelineModals({ selectedDayCell, onClose }: TimelineModalsProps
           {/* Occurrences Details - Accordion style */}
           {selectedDayCell.occurrences.length > 0 && (
             <div className="space-y-2">
-              <h3 className="font-semibold text-sm uppercase tracking-wide text-slate-600 dark:text-slate-400">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Ocurrencias ({selectedDayCell.occurrences.length})
               </h3>
               

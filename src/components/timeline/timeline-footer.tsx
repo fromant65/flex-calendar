@@ -15,18 +15,24 @@ export function TimelineFooter({ currentDate, daysToShow }: TimelineFooterProps)
   return (
     <div className="flex items-center justify-between gap-4 flex-wrap">
       {/* Legend - Left aligned */}
-      <div className="flex items-center gap-6 text-sm flex-wrap">
-        <div className="flex items-center gap-2">
-          <div className="h-6 w-6 rounded flex items-center justify-center bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+      <div className="flex items-center gap-4 text-sm flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <div className="h-5 w-5 rounded flex items-center justify-center bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
             <span className="text-green-600 dark:text-green-400 text-xs">✓</span>
           </div>
-          <span className="text-muted-foreground">Completado</span>
+          <span className="text-muted-foreground text-xs">Completado</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="h-6 w-6 rounded flex items-center justify-center bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800">
-            <span className="text-yellow-600 dark:text-yellow-400 text-xs">−</span>
+        <div className="flex items-center gap-1.5">
+          <div className="h-5 w-5 rounded flex items-center justify-center bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800">
+            <span className="text-yellow-600 dark:text-yellow-400 text-xs">○</span>
           </div>
-          <span className="text-muted-foreground">Salteado</span>
+          <span className="text-muted-foreground text-xs">Pendiente</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="h-5 w-5 rounded flex items-center justify-center bg-gray-50 dark:bg-gray-950/30 border border-gray-200 dark:border-gray-800">
+            <span className="text-gray-500 dark:text-gray-400 text-xs">−</span>
+          </div>
+          <span className="text-muted-foreground text-xs">Salteado</span>
         </div>
       </div>
 

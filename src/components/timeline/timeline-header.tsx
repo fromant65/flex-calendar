@@ -96,12 +96,12 @@ export function TimelineHeader({ segments, isCompact = false, visibleSegments }:
           return (
             <div
               key={index}
-              className={`flex-1 flex flex-col items-center justify-center py-1 sm:py-2 px-1 sm:px-2 border-r border-border/30 min-w-0 max-w-full ${
+              className={`flex-1 flex flex-col items-center justify-center py-1 sm:py-2 px-0.5 sm:px-1 border-r border-border/30 min-w-0 max-w-full ${
                 isTodaySegment ? "bg-primary/10" : ""
               }`}
             >
               <div
-                className={`text-[10px] sm:text-xs font-semibold text-center break-words w-full ${
+                className={`text-[9px] sm:text-xs font-semibold text-center break-words w-full truncate ${
                   isTodaySegment ? "text-primary" : "text-muted-foreground"
                 }`}
               >
@@ -109,7 +109,7 @@ export function TimelineHeader({ segments, isCompact = false, visibleSegments }:
               </div>
               {labels.bottom && (
                 <div
-                  className={`text-xs sm:text-sm font-bold text-center break-words w-full ${
+                  className={`text-[10px] sm:text-sm font-bold text-center break-words w-full truncate ${
                     isTodaySegment ? "text-primary" : "text-foreground"
                   }`}
                 >
