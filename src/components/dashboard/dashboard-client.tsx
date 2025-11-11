@@ -1,5 +1,6 @@
 "use client"
 
+import { motion } from "framer-motion"
 import { api } from "~/trpc/react"
 import { UrgentTasksList } from "~/components/dashboard/urgent-tasks-list"
 import { ImportantTasksList } from "~/components/dashboard/important-tasks-list"
@@ -163,21 +164,31 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
   return (
     <div className="flex flex-col min-h-full bg-background">
       {/* Header */}
-      <div className="border-b border-border bg-card/50 backdrop-blur-sm flex-shrink-0">
+      <motion.div 
+        className="border-b border-border bg-card/50 backdrop-blur-sm flex-shrink-0"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <div className="container mx-auto px-4 lg:px-6 py-6">
           <h1 className="text-3xl font-bold text-foreground">
             Bienvenido, <span className="text-primary">{userName}</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">{userEmail}</p>
         </div>
-      </div>
+      </motion.div>
 
       {/* Main Content */}
       <div className="container mx-auto px-4 lg:px-6 py-6 pb-8 flex-1">
         {/* Tareas Grid */}
         <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-2 mb-6">
           {/* Tareas Urgentes */}
-          <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg">
+          <motion.div 
+            className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-semibold text-foreground">Eventos Urgentes</h2>
@@ -200,10 +211,15 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
               onCompleteTask={handleCompleteTask}
               onSkipTask={handleSkipTask}
             />
-          </div>
+          </motion.div>
 
           {/* Tareas Importantes */}
-          <div className="group rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg">
+          <motion.div 
+            className="group rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-semibold text-foreground">Eventos Importantes</h2>
@@ -226,11 +242,16 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
               onCompleteTask={handleCompleteTask}
               onSkipTask={handleSkipTask}
             />
-          </div>
+          </motion.div>
         </div>
 
         {/* Próximos Eventos */}
-        <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg">
+        <motion.div 
+          className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
           <div className="flex flex-col gap-3 mb-4">
             {/* Title and Help - Always on top */}
             <div className="flex items-center justify-between">
@@ -300,7 +321,7 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Task/Event Details Modal */}

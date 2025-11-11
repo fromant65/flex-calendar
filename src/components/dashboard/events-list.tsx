@@ -1,5 +1,6 @@
 "use client"
 
+import { motion } from "framer-motion"
 import type { EventWithDetails } from "~/types"
 import { Calendar, Clock, CheckCircle2, AlertCircle } from "lucide-react"
 import { cn } from "~/lib/utils"
@@ -25,7 +26,7 @@ export function EventsList({ events, title, emptyMessage = "No hay eventos", onE
 
   return (
     <div className="space-y-2.5">
-      {events.map((event) => {
+      {events.map((event, index) => {
         const task = event.occurrence?.task
         const startTime = new Date(event.start)
         const endTime = new Date(event.finish)
@@ -34,7 +35,7 @@ export function EventsList({ events, title, emptyMessage = "No hay eventos", onE
         const isPast = endTime < new Date()
 
         return (
-          <div
+          <motion.div
             key={event.id}
             onClick={() => onEventClick?.(event)}
             className={cn(
@@ -42,6 +43,9 @@ export function EventsList({ events, title, emptyMessage = "No hay eventos", onE
               isCompleted && "opacity-60 hover:opacity-80",
               isPast && !isCompleted && "border-orange-500/30"
             )}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.05 }}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 space-y-1.5">
@@ -106,7 +110,7 @@ export function EventsList({ events, title, emptyMessage = "No hay eventos", onE
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )
       })}
     </div>
@@ -151,7 +155,12 @@ export function DayWeekEvents({ todayEvents, weekEvents, onEventClick }: DayWeek
       </div>
 
       {/* Content */}
-      <div>
+      <motion.div
+        key={activeTab}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         {activeTab === "day" ? (
           <EventsList
             events={todayEvents}
@@ -167,7 +176,7 @@ export function DayWeekEvents({ todayEvents, weekEvents, onEventClick }: DayWeek
             onEventClick={onEventClick}
           />
         )}
-      </div>
+      </motion.div>
     </div>
   )
 }

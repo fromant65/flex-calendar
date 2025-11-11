@@ -1,11 +1,11 @@
 "use client"
 
+import { motion } from "framer-motion"
 import type { OccurrenceWithTask } from "~/types"
-import { Star, Calendar, Clock, Flag, AlertCircle } from "lucide-react"
+import { Star, Calendar, Clock, Flag } from "lucide-react"
 import { cn } from "~/lib/utils"
 import { TaskActionButtons } from "./task-action-buttons"
 import { getLimitDateDisplay } from "~/lib/date-display-utils"
-import { Badge } from "~/components/ui/badge"
 
 interface ImportantTasksListProps {
   occurrences: OccurrenceWithTask[]
@@ -53,12 +53,15 @@ export function ImportantTasksList({ occurrences, onTaskClick, onCompleteTask, o
         }
 
         return (
-          <div
+          <motion.div
             key={occurrence.id}
             className={cn(
               "group relative rounded-lg border p-3.5 transition-all hover:shadow-md",
               importanceColors[importanceLevel]
             )}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.05 }}
           >
             {/* Importance icon */}
             <div className="absolute -left-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-background border-2 border-current shadow-sm">
@@ -119,7 +122,7 @@ export function ImportantTasksList({ occurrences, onTaskClick, onCompleteTask, o
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
         )
       })}
     </div>
