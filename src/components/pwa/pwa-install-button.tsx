@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "~/components/ui/button";
-import { Download, Loader2, Check } from "lucide-react";
+import { Download, Loader2, Check, Info } from "lucide-react";
 import { useInstallPWA } from "~/lib/pwa-utils";
 import { useState } from "react";
 
@@ -31,20 +31,20 @@ export function PWAInstallButton({
     }
   };
 
-  if (!isInstallable) {
-    return (
-      <Button variant="outline" size={size} disabled className={className}>
-        <Check className="h-4 w-4 mr-2" />
-        Ya instalada
-      </Button>
-    );
-  }
-
   if (installed) {
     return (
       <Button variant="default" size={size} disabled className={className}>
         <Check className="h-4 w-4 mr-2" />
         ¡Instalada!
+      </Button>
+    );
+  }
+
+  if (!isInstallable) {
+    return (
+      <Button variant="outline" size={size} disabled className={className}>
+        <Info className="h-4 w-4 mr-2" />
+        No disponible
       </Button>
     );
   }

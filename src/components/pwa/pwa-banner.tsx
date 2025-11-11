@@ -18,15 +18,15 @@ export function PWABanner() {
     // Solo mostrar el banner si no es PWA y no fue previamente cerrado
     const wasDismissed = localStorage.getItem(PWA_BANNER_DISMISSED_KEY);
     
-    if (!isPWA && !wasDismissed && isInstallable) {
+    if (!isPWA && !wasDismissed) {
       // Esperar un poco antes de mostrar el banner para no ser intrusivo
       const timer = setTimeout(() => {
         setIsDismissed(false);
-      }, 2000);
+      }, 3000);
       
       return () => clearTimeout(timer);
     }
-  }, [isPWA, isInstallable]);
+  }, [isPWA]);
 
   const handleDismiss = () => {
     setIsDismissed(true);
@@ -42,9 +42,8 @@ export function PWABanner() {
 
   // No mostrar el banner si:
   // - Ya está instalada como PWA
-  // - No es instalable
   // - Fue cerrado por el usuario
-  if (isPWA || !isInstallable || isDismissed) {
+  if (isPWA || isDismissed) {
     return null;
   }
 
@@ -69,7 +68,7 @@ export function PWABanner() {
                   ¡Instala Flex Calendar!
                 </p>
                 <p className="text-xs text-primary-foreground/80 truncate">
-                  Accede más rápido y funciona sin internet.{" "}
+                  Acceso más rápido desde tu pantalla de inicio.{" "}
                   <Link 
                     href="/install-app" 
                     className="underline hover:text-primary-foreground font-medium"
@@ -82,14 +81,26 @@ export function PWABanner() {
 
             {/* Botones de acción */}
             <div className="flex items-center gap-2 shrink-0">
-              <Button
-                size="sm"
-                onClick={handleInstall}
-                className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-medium"
-              >
-                <Download className="h-4 w-4 mr-1.5" />
-                <span className="hidden sm:inline">Instalar</span>
-              </Button>
+              {isInstallable ? (
+                <Button
+                  size="sm"
+                  onClick={handleInstall}
+                  className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-medium"
+                >
+                  <Download className="h-4 w-4 mr-1.5" />
+                  <span className="hidden sm:inline">Instalar</span>
+                </Button>
+              ) : (
+                <Link href="/install-app">
+                  <Button
+                    size="sm"
+                    className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-medium"
+                  >
+                    <Download className="h-4 w-4 mr-1.5" />
+                    <span className="hidden sm:inline">Ver más</span>
+                  </Button>
+                </Link>
+              )}
               <Button
                 size="sm"
                 variant="ghost"

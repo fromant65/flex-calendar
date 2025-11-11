@@ -15,6 +15,7 @@ import { PWAInstallButton } from "~/components/pwa/pwa-install-button";
 import { useIsPWA } from "~/lib/pwa-utils";
 import { redirect } from "next/navigation";
 import { Card } from "~/components/ui/card";
+import { SparkleCalendarBgSubtle } from "~/components/landing/sparkle-calendar-bg-subtle";
 
 const benefits = [
   {
@@ -76,7 +77,13 @@ export default function InstallAppPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="relative min-h-full">
+      {/* Fondo de grilla de calendario */}
+      <div className="fixed inset-0 -z-10">
+        <SparkleCalendarBgSubtle opacity={0.1} />
+      </div>
+
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Header Section */}
       <motion.div
         className="text-center mb-12"
@@ -196,6 +203,7 @@ export default function InstallAppPage() {
           </div>
         </Card>
       </motion.div>
+      </div>
     </div>
   );
 }
