@@ -26,48 +26,69 @@ export class RecurrenceDateCalculator {
 
   /**
    * Calculate the next occurrence date based on recurrence pattern
+   * For Habit+ (maxOccurrences > 1 with interval), this needs period start to calculate correctly
+   * 
+   * @param previousOccurrenceStartDate - The startDate of the previous occurrence (when it was created, not completed)
+   * @param recurrence - The recurrence configuration
+   * @returns The startDate for the next occurrence
    */
   calculateNextOccurrenceDate(
-    lastOccurrenceDate: Date,
+    previousOccurrenceStartDate: Date,
     recurrence: {
       interval?: number | null;
       daysOfWeek?: string[] | null;
       daysOfMonth?: number[] | null;
       maxOccurrences?: number | null;
       completedOccurrences?: number | null;
+      lastPeriodStart?: Date | null;
     }
   ): Date {
-    const lastDeadline = this.dateService.dateToDeadline(lastOccurrenceDate);
+    const previousStartDeadline = this.dateService.dateToDeadline(previousOccurrenceStartDate);
 
     // Case 1: Interval-based (every N days/weeks/months)
     if (recurrence.interval) {
       if (recurrence.maxOccurrences && recurrence.maxOccurrences > 1) {
-        const distributedInterval = Math.floor(recurrence.interval / recurrence.maxOccurrences);
-        const nextDeadline = this.dateService.addDays(lastDeadline, distributedInterval);
+        // Habit+: Calculate based on period start and completed occurrences
+        // Rule: nth occurrence should be at periodStart + round(n * interval / maxOccurrences) days
+        
+        // lastPeriodStart should always be set for Habit+ tasks, but if not, use today as period start
+        // (this would be the first occurrence case where period hasn't been initialized yet)
+        const periodStart = recurrence.lastPeriodStart 
+          ? this.dateService.dateToDeadline(recurrence.lastPeriodStart) 
+          : this.dateService.today();
+        
+        const completedCount = recurrence.completedOccurrences ?? 0;
+        
+        // Calculate days offset from period start using proper rounding
+        // For n-th occurrence (0-indexed): round(n * interval / maxOccurrences)
+        const daysFromStart = Math.round((completedCount * recurrence.interval) / recurrence.maxOccurrences);
+        const nextDeadline = this.dateService.addDays(periodStart, daysFromStart);
         return nextDeadline.toDate();
       } else {
-        const nextDeadline = this.dateService.addDays(lastDeadline, recurrence.interval);
+        // Regular interval: add interval days to previous occurrence's start date
+        const nextDeadline = this.dateService.addDays(previousStartDeadline, recurrence.interval);
         return nextDeadline.toDate();
       }
     }
 
     // Case 2: Specific days of week
     if (recurrence.daysOfWeek && recurrence.daysOfWeek.length > 0) {
-      return this.getNextDayOfWeek(lastOccurrenceDate, recurrence.daysOfWeek as DayOfWeek[]);
+      return this.getNextDayOfWeek(previousOccurrenceStartDate, recurrence.daysOfWeek as DayOfWeek[]);
     }
 
     // Case 3: Specific days of month
     if (recurrence.daysOfMonth && recurrence.daysOfMonth.length > 0) {
-      return this.getNextDayOfMonth(lastOccurrenceDate, recurrence.daysOfMonth);
+      return this.getNextDayOfMonth(previousOccurrenceStartDate, recurrence.daysOfMonth);
     }
 
     // Default: next day
-    const nextDeadline = this.dateService.addDays(lastDeadline, 1);
+    const nextDeadline = this.dateService.addDays(previousStartDeadline, 1);
     return nextDeadline.toDate();
   }
 
   /**
    * Calculate target and limit dates for an occurrence
+   * For Habit+ (maxOccurrences > 1), target is the start date and limit is the end of the period
    */
   calculateOccurrenceDates(
     startDate: Date,
@@ -75,16 +96,26 @@ export class RecurrenceDateCalculator {
       interval?: number | null;
       daysOfWeek?: string[] | null;
       daysOfMonth?: number[] | null;
+      maxOccurrences?: number | null;
+      lastPeriodStart?: Date | null;
     }
   ): { targetDate: Date; limitDate: Date } {
     const startDeadline = this.dateService.dateToDeadline(startDate);
 
     if (recurrence.interval) {
-      const targetDays = Math.floor(recurrence.interval * 0.6);
-      const limitDays = recurrence.interval;
-      const targetDeadline = this.dateService.addDays(startDeadline, targetDays);
-      const limitDeadline = this.dateService.addDays(startDeadline, limitDays);
-      return { targetDate: targetDeadline.toDate(), limitDate: limitDeadline.toDate() };
+      if (recurrence.maxOccurrences && recurrence.maxOccurrences > 1) {
+        // Habit+: target is the start date itself, limit is the end of the period
+        const periodStart = recurrence.lastPeriodStart ? this.dateService.dateToDeadline(recurrence.lastPeriodStart) : startDeadline;
+        const limitDeadline = this.dateService.addDays(periodStart, recurrence.interval);
+        return { targetDate: startDate, limitDate: limitDeadline.toDate() };
+      } else {
+        // Regular interval-based task
+        const targetDays = Math.floor(recurrence.interval * 0.6);
+        const limitDays = recurrence.interval;
+        const targetDeadline = this.dateService.addDays(startDeadline, targetDays);
+        const limitDeadline = this.dateService.addDays(startDeadline, limitDays);
+        return { targetDate: targetDeadline.toDate(), limitDate: limitDeadline.toDate() };
+      }
     } 
     else if (recurrence.daysOfWeek && recurrence.daysOfWeek.length > 0) {
       const nextOccurrence = this.calculateNextOccurrenceDate(startDate, recurrence);

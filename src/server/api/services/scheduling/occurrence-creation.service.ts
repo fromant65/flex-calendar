@@ -116,7 +116,15 @@ export class OccurrenceCreationService {
     recurrence: TaskRecurrence
   ): Date {
     if (!latestOccurrence) {
-      return new Date(); // First occurrence
+      // First occurrence: 
+      // For Habit+, calculateNextOccurrenceDate will use lastPeriodStart (or today) + (0 * interval / maxOccurrences) = periodStart
+      // For regular tasks without lastPeriodStart, it will use today as the base
+      // We pass today() or lastPeriodStart as the "previous" occurrence date
+      const baseDate = (recurrence.maxOccurrences && recurrence.maxOccurrences > 1 && recurrence.lastPeriodStart) 
+        ? recurrence.lastPeriodStart 
+        : new Date();
+      
+      return this.dateCalculator.calculateNextOccurrenceDate(baseDate, recurrence);
     }
     
     return this.dateCalculator.calculateNextOccurrenceDate(

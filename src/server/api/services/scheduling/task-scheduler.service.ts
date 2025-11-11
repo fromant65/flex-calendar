@@ -112,7 +112,7 @@ export class TaskSchedulerService {
    * Calculate the next occurrence date based on recurrence pattern
    */
   calculateNextOccurrenceDate(
-    lastOccurrenceDate: Date,
+    previousOccurrenceStartDate: Date,
     recurrence: {
       interval?: number | null;
       daysOfWeek?: string[] | null;
@@ -121,7 +121,7 @@ export class TaskSchedulerService {
       completedOccurrences?: number | null;
     }
   ): Date {
-    return this.dateCalculator.calculateNextOccurrenceDate(lastOccurrenceDate, recurrence);
+    return this.dateCalculator.calculateNextOccurrenceDate(previousOccurrenceStartDate, recurrence);
   }
 
   /**
