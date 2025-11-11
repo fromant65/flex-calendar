@@ -1,7 +1,7 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, X, GanttChart, Home, CheckSquare, BookmarkCheck, Calendar, BarChart3 } from "lucide-react"
+import { Menu, X, GanttChart, Home, CheckSquare, BookmarkCheck, Calendar, BarChart3, Download } from "lucide-react"
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { Button } from "~/components/ui/button"
@@ -9,6 +9,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LogoutButton } from "./logout-button"
 import { featureFlags } from "~/lib/feature-flags"
+import { useIsPWA } from "~/lib/pwa-utils"
 
 const menuItems = [
   { href: "/dashboard", label: "Inicio", icon: Home },
@@ -23,6 +24,7 @@ export function SideMenu() {
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
+  const isPWA = useIsPWA()
 
   useEffect(() => {
     setMounted(true)
@@ -92,6 +94,20 @@ export function SideMenu() {
                       </Link>
                     )
                   })}
+
+                  {/* Install PWA Link - Only visible on web */}
+                  {!isPWA && (
+                    <Link href="/install-app" onClick={() => setIsOpen(false)}>
+                      <Button
+                        variant={pathname === "/install-app" ? "default" : "ghost"}
+                        className="w-full justify-start gap-2 cursor-pointer"
+                        size="default"
+                      >
+                        <Download className="h-4 w-4" />
+                        <span>Instalar App</span>
+                      </Button>
+                    </Link>
+                  )}
 
                   {/* Divider */}
                   <div className="my-2 border-t border-border" />

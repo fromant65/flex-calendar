@@ -6,11 +6,29 @@ import { Geist } from "next/font/google";
 import { TRPCReactProvider } from "~/trpc/react";
 import { Navbar } from "~/components/navbar/navbar";
 import { Providers } from "~/components/providers";
+import { PWABanner } from "~/components/pwa";
 
 export const metadata: Metadata = {
   title: "Flex Calendar",
   description: "A flexible calendar application to manage your time and tasks.",
   icons: [{ rel: "icon", url: "/flex-calendar-icon.svg" }],
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Flex Calendar",
+  },
+  applicationName: "Flex Calendar",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
 };
 
 const geist = Geist({
@@ -41,6 +59,7 @@ export default function RootLayout({
             <div className="flex h-full flex-col">
               <div className="shrink-0">
                 <Navbar />
+                <PWABanner />
               </div>
               <main className="flex-1 overflow-scroll min-h-0">
                 {children}
