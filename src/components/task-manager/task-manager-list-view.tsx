@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import type { TaskType } from "~/server/api/services/types";
 import type { OccurrenceWithTask } from "~/types";
 import { TaskCard } from "./task-card";
@@ -46,6 +47,16 @@ export function TaskManagerListView({
   isSkipping,
   isSkippingBacklog,
 }: TaskManagerListViewProps) {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.07,
+      },
+    },
+  };
+
   return (
     <div className="container mx-auto px-4 lg:px-6 py-6 flex-1 pb-8">
       {/* Filter Bar - Always visible */}
@@ -62,7 +73,12 @@ export function TaskManagerListView({
       {groupedOccurrences.size === 0 ? (
         <TaskManagerEmptyState type="no-results" />
       ) : (
-        <div className="space-y-4">
+        <motion.div 
+          className="space-y-4"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {sortedTasks.map(({ task, occurrences: taskOccurrences }) => {
             const taskType = task.taskType as TaskType;
             const isExpanded = selectedTaskId === task.id;
@@ -92,7 +108,7 @@ export function TaskManagerListView({
               />
             );
           })}
-        </div>
+        </motion.div>
       )}
     </div>
   );

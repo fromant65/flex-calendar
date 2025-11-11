@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { AlertCircle } from "lucide-react";
 
 interface TaskManagerEmptyStateProps {
@@ -20,15 +21,25 @@ export function TaskManagerEmptyState({ type }: TaskManagerEmptyStateProps) {
 
         {/* Empty State */}
         <div className="container mx-auto px-4 lg:px-6 py-8 flex-1">
-          <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-8">
+          <motion.div 
+            className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-8"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-muted/50">
+              <motion.div 
+                className="mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-muted/50"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
+              >
                 <AlertCircle className="h-8 w-8 text-muted-foreground" />
-              </div>
+              </motion.div>
               <p className="text-lg font-semibold text-foreground mb-1">No hay ocurrencias para mostrar</p>
               <p className="text-sm text-muted-foreground">Crea una tarea para comenzar</p>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     );
@@ -36,11 +47,21 @@ export function TaskManagerEmptyState({ type }: TaskManagerEmptyStateProps) {
 
   // no-results state (filtered out)
   return (
-    <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-8">
+    <motion.div 
+      className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-8"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-muted/50">
+        <motion.div 
+          className="mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-muted/50"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.1, type: "spring", stiffness: 200, damping: 15 }}
+        >
           <AlertCircle className="h-8 w-8 text-muted-foreground" />
-        </div>
+        </motion.div>
         <p className="text-lg font-semibold text-foreground mb-1">
           No se encontraron tareas
         </p>
@@ -48,6 +69,6 @@ export function TaskManagerEmptyState({ type }: TaskManagerEmptyStateProps) {
           Intenta ajustar los filtros de búsqueda
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 }

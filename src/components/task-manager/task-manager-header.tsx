@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { LayoutList, Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { HelpTip } from "~/components/ui/help-tip";
@@ -10,7 +11,12 @@ interface TaskManagerHeaderProps {
 export function TaskManagerHeader({ viewMode, onViewModeChange }: TaskManagerHeaderProps) {
   return (
     <div className="border-b border-border bg-card/50 backdrop-blur-sm flex-shrink-0">
-      <div className="container mx-auto px-4 lg:px-6 py-3">
+      <motion.div 
+        className="container mx-auto px-4 lg:px-6 py-3"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-bold text-foreground">Gestor de Ocurrencias</h1>
@@ -68,7 +74,7 @@ export function TaskManagerHeader({ viewMode, onViewModeChange }: TaskManagerHea
             </Button>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

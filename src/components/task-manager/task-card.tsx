@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "~/components/ui/badge";
 import { CheckCircle2, Circle, Clock, TrendingUp, Calendar, ChevronDown, ChevronRight } from "lucide-react";
 import type { TaskType } from "~/server/api/services/types";
@@ -86,10 +86,18 @@ export function TaskCard({
   );
 
   return (
-    <div className="group rounded-xl border border-border bg-card/50 backdrop-blur-sm transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg overflow-hidden">
-      <div
+    <motion.div 
+      className="group rounded-xl border border-border bg-card/50 backdrop-blur-sm transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg overflow-hidden"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      layout
+      transition={{ duration: 0.2, ease: "easeOut" }}
+    >
+      <motion.div
         className="cursor-pointer p-5 transition-colors hover:bg-accent/20"
         onClick={onToggle}
+        whileTap={{ scale: 0.995 }}
       >
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -135,28 +143,53 @@ export function TaskCard({
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {isExpanded && (
-        <div className="border-t border-border bg-muted/20 p-5">
-          <div className="space-y-4">
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div 
+            className="border-t border-border bg-muted/20 p-5 overflow-hidden"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+          >
+            <div className="space-y-4">
             {/* Backlog Alert */}
-            {backlogInfo?.hasSevereBacklog && backlogInfo.oldestPendingDate && (
-              <BacklogAlert
-                taskId={task.id}
-                taskName={task.name}
-                pendingCount={backlogInfo.pendingCount}
-                oldestPendingDate={backlogInfo.oldestPendingDate}
-                overdueCount={backlogInfo.overdueCount}
-                estimatedMissingCount={backlogInfo.estimatedMissingCount}
-                onSkipBacklog={() => onSkipBacklog(task.id)}
-                isLoading={isSkippingBacklog}
-              />
-            )}
+            <AnimatePresence>
+              {backlogInfo?.hasSevereBacklog && backlogInfo.oldestPendingDate && (
+                <motion.div
+                  layout
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                >
+                  <BacklogAlert
+                    taskId={task.id}
+                    taskName={task.name}
+                    pendingCount={backlogInfo.pendingCount}
+                    oldestPendingDate={backlogInfo.oldestPendingDate}
+                    overdueCount={backlogInfo.overdueCount}
+                    estimatedMissingCount={backlogInfo.estimatedMissingCount}
+                    onSkipBacklog={() => onSkipBacklog(task.id)}
+                    isLoading={isSkippingBacklog}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Next occurrence preview */}
-            {nextOccurrenceDate && (
-              <div className="rounded-lg bg-primary/10 border border-primary/20 p-3.5 mb-4">
+            <AnimatePresence>
+              {nextOccurrenceDate && (
+                <motion.div 
+                  className="rounded-lg bg-primary/10 border border-primary/20 p-3.5 overflow-hidden"
+                  layout
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-primary" />
@@ -168,8 +201,9 @@ export function TaskCard({
                     {formatDate(nextOccurrenceDate)}
                   </span>
                 </div>
-              </div>
+              </motion.div>
             )}
+            </AnimatePresence>
 
             {/* Occurrences list */}
             <div className="space-y-2.5">
@@ -208,15 +242,25 @@ export function TaskCard({
               {/* Toggle for completed/skipped occurrences */}
               {completedSkippedOccurrences.length > 0 && (
                 <div className="pt-2">
-                  <button
+                  <motion.button
                     onClick={() => setShowCompletedSkipped(!showCompletedSkipped)}
                     className="text-xs text-primary hover:underline focus:outline-none w-full text-left cursor-pointer"
+                    whileHover={{ x: 2 }}
+                    whileTap={{ scale: 0.98 }}
                   >
                     {showCompletedSkipped ? "Ocultar" : "Mostrar"} ocurrencias completadas/saltadas ({completedSkippedOccurrences.length})
-                  </button>
+                  </motion.button>
                   
-                  {showCompletedSkipped && (
-                    <div className="mt-2.5 space-y-2.5">
+                  <AnimatePresence>
+                    {showCompletedSkipped && (
+                      <motion.div 
+                        className="mt-2.5 space-y-2.5 overflow-hidden"
+                        layout
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.25, ease: "easeInOut" }}
+                      >
                       {completedSkippedOccurrences.map((occurrence) => (
                         <OccurrenceCard
                           key={occurrence.id}
@@ -230,14 +274,16 @@ export function TaskCard({
                           isSkipping={isSkipping}
                         />
                       ))}
-                    </div>
+                    </motion.div>
                   )}
+                  </AnimatePresence>
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      )}
-    </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
