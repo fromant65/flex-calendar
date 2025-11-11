@@ -1,10 +1,17 @@
+import { motion } from "framer-motion"
+
 interface NoResultsMessageProps {
   onClearFilters: () => void
 }
 
 export function NoResultsMessage({ onClearFilters }: NoResultsMessageProps) {
   return (
-    <div className="text-center py-12">
+    <motion.div 
+      className="text-center py-12"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
       <p className="text-muted-foreground">
         No se encontraron tareas con los filtros aplicados.
       </p>
@@ -14,6 +21,6 @@ export function NoResultsMessage({ onClearFilters }: NoResultsMessageProps) {
       >
         Limpiar filtros
       </button>
-    </div>
+    </motion.div>
   )
 }

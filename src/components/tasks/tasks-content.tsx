@@ -1,4 +1,5 @@
 import { useMemo } from "react"
+import { AnimatePresence } from "framer-motion"
 import type { TaskGetMyTasksOutput } from "~/server/api/routers/derived-endpoint-types"
 import { TaskFilterBar, type TaskFilter } from "./task-filter-bar"
 import { ActiveTasksSection } from "./active-tasks-section"
@@ -77,31 +78,33 @@ export function TasksContent({
         />
       </div>
 
-      {/* No Results Message */}
-      {filteredTasks.length === 0 ? (
-        <NoResultsMessage onClearFilters={handleClearFilters} />
-      ) : (
-        <div className="space-y-8">
-          {/* Active Tasks */}
-          <ActiveTasksSection
-            tasks={activeTasksList}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onView={onView}
-          />
+      {/* Content with animation on filter changes */}
+      <AnimatePresence mode="wait">
+        {filteredTasks.length === 0 ? (
+          <NoResultsMessage onClearFilters={handleClearFilters} />
+        ) : (
+          <div key="tasks-content" className="space-y-8">
+            {/* Active Tasks */}
+            <ActiveTasksSection
+              tasks={activeTasksList}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onView={onView}
+            />
 
-          {/* Statistics */}
-          <StatsSection tasks={tasks} />
+            {/* Statistics */}
+            <StatsSection tasks={tasks} />
 
-          {/* Inactive Tasks */}
-          <InactiveTasksSection
-            tasks={inactiveTasksList}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onView={onView}
-          />
-        </div>
-      )}
+            {/* Inactive Tasks */}
+            <InactiveTasksSection
+              tasks={inactiveTasksList}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onView={onView}
+            />
+          </div>
+        )}
+      </AnimatePresence>
     </>
   )
 }

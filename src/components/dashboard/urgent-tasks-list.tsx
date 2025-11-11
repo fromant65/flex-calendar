@@ -16,6 +16,27 @@ interface UrgentTasksListProps {
   onSkipTask?: (occurrence: OccurrenceWithTask) => void
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: { 
+    opacity: 1, 
+    x: 0,
+    transition: {
+      duration: 0.3,
+    },
+  },
+}
+
 export function UrgentTasksList({ occurrences, onTaskClick, onCompleteTask, onSkipTask }: UrgentTasksListProps) {
   if (occurrences.length === 0) {
     return (
@@ -30,7 +51,12 @@ export function UrgentTasksList({ occurrences, onTaskClick, onCompleteTask, onSk
   }
 
   return (
-    <div className="space-y-2.5">
+    <motion.div 
+      className="space-y-2.5"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {occurrences.map((occurrence, index) => {
         const task = occurrence.task
         const importance = task?.importance ?? 0
@@ -61,9 +87,7 @@ export function UrgentTasksList({ occurrences, onTaskClick, onCompleteTask, onSk
               "group relative rounded-lg border p-3.5 transition-all hover:shadow-md",
               urgencyColors[urgencyLevel]
             )}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.05 }}
+            variants={itemVariants}
           >
             {/* Urgency badge */}
             <div className="absolute -left-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-background border-2 border-current shadow-sm">
@@ -134,6 +158,6 @@ export function UrgentTasksList({ occurrences, onTaskClick, onCompleteTask, onSk
           </motion.div>
         )
       })}
-    </div>
+    </motion.div>
   )
 }

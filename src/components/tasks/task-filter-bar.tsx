@@ -1,5 +1,6 @@
 "use client"
 
+import { motion } from "framer-motion"
 import { Input } from "~/components/ui/input";
 import { 
   Select, 
@@ -73,7 +74,12 @@ export function TaskFilterBar({
     filters.fixedFilter !== "all";
 
   return (
-    <div className="space-y-3">
+    <motion.div 
+      className="space-y-3"
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
       {/* Search and Filters Row */}
       <div className="flex flex-col gap-3">
         {/* Search Input */}
@@ -183,6 +189,6 @@ export function TaskFilterBar({
           </button>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

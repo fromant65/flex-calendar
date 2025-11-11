@@ -1,5 +1,6 @@
 "use client"
 
+import { motion } from "framer-motion"
 import { Plus } from "lucide-react"
 import HelpTip from "~/components/ui/help-tip"
 
@@ -10,7 +11,12 @@ interface TasksHeaderProps {
 export function TasksHeader({ onCreateClick }: TasksHeaderProps) {
   return (
     <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-      <div className="container mx-auto px-6 py-6">
+      <motion.div 
+        className="container mx-auto px-6 py-6"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-3">
@@ -33,7 +39,7 @@ export function TasksHeader({ onCreateClick }: TasksHeaderProps) {
             Nueva Tarea
           </button>
         </div>
-      </div>
+      </motion.div>
     </header>
   )
 }

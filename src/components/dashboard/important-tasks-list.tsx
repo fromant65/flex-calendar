@@ -14,6 +14,27 @@ interface ImportantTasksListProps {
   onSkipTask?: (occurrence: OccurrenceWithTask) => void
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: { 
+    opacity: 1, 
+    x: 0,
+    transition: {
+      duration: 0.3,
+    },
+  },
+}
+
 export function ImportantTasksList({ occurrences, onTaskClick, onCompleteTask, onSkipTask }: ImportantTasksListProps) {
   if (occurrences.length === 0) {
     return (
@@ -28,7 +49,12 @@ export function ImportantTasksList({ occurrences, onTaskClick, onCompleteTask, o
   }
 
   return (
-    <div className="space-y-2.5">
+    <motion.div 
+      className="space-y-2.5"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {occurrences.map((occurrence, index) => {
         const task = occurrence.task
         const importance = task?.importance ?? 0
@@ -59,9 +85,7 @@ export function ImportantTasksList({ occurrences, onTaskClick, onCompleteTask, o
               "group relative rounded-lg border p-3.5 transition-all hover:shadow-md",
               importanceColors[importanceLevel]
             )}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.05 }}
+            variants={itemVariants}
           >
             {/* Importance icon */}
             <div className="absolute -left-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-background border-2 border-current shadow-sm">
@@ -125,6 +149,6 @@ export function ImportantTasksList({ occurrences, onTaskClick, onCompleteTask, o
           </motion.div>
         )
       })}
-    </div>
+    </motion.div>
   )
 }

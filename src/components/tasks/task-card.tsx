@@ -1,5 +1,6 @@
 "use client"
 
+import { motion } from "framer-motion"
 import { Pencil, Trash2, Calendar, Repeat, Target, Clock } from "lucide-react"
 import { Badge } from "~/components/ui/badge"
 import type { TaskGetMyTasksOutput } from "~/server/api/routers/derived-endpoint-types"
@@ -11,9 +12,10 @@ interface TaskCardProps {
   onEdit: (task: TaskFromList) => void
   onDelete: (id: number) => void
   onClick: (task: TaskFromList) => void
+  index?: number
 }
 
-export function TaskCard({ task, onEdit, onDelete, onClick }: TaskCardProps) {
+export function TaskCard({ task, onEdit, onDelete, onClick, index = 0 }: TaskCardProps) {
   const getTaskTypeIcon = () => {
     if (!task.recurrence || task.recurrence.maxOccurrences === 1) return <Calendar className="h-4 w-4" />
     if (task.recurrence.maxOccurrences && task.recurrence.maxOccurrences > 1 && !task.recurrence.interval) {
@@ -29,9 +31,14 @@ export function TaskCard({ task, onEdit, onDelete, onClick }: TaskCardProps) {
   }
 
   return (
-    <div
+    <motion.div
       onClick={() => onClick(task)}
       className="group cursor-pointer rounded-xl border border-border bg-card/50 p-5 backdrop-blur-sm transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg hover:shadow-primary/5"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
+      layout
     >
       <div className="mb-3 flex items-start justify-between">
         <div className="flex flex-wrap items-center gap-2">
@@ -102,6 +109,6 @@ export function TaskCard({ task, onEdit, onDelete, onClick }: TaskCardProps) {
           </Badge>
         )}
       </div>
-    </div>
+    </motion.div>
   )
 }

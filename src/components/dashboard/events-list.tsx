@@ -12,6 +12,27 @@ interface EventsListProps {
   onEventClick?: (event: EventWithDetails) => void
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06,
+    },
+  },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: {
+      duration: 0.3,
+    },
+  },
+}
+
 export function EventsList({ events, title, emptyMessage = "No hay eventos", onEventClick }: EventsListProps) {
   if (events.length === 0) {
     return (
@@ -25,7 +46,12 @@ export function EventsList({ events, title, emptyMessage = "No hay eventos", onE
   }
 
   return (
-    <div className="space-y-2.5">
+    <motion.div 
+      className="space-y-2.5"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {events.map((event, index) => {
         const task = event.occurrence?.task
         const startTime = new Date(event.start)
@@ -43,9 +69,7 @@ export function EventsList({ events, title, emptyMessage = "No hay eventos", onE
               isCompleted && "opacity-60 hover:opacity-80",
               isPast && !isCompleted && "border-orange-500/30"
             )}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.05 }}
+            variants={itemVariants}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 space-y-1.5">
@@ -113,7 +137,7 @@ export function EventsList({ events, title, emptyMessage = "No hay eventos", onE
           </motion.div>
         )
       })}
-    </div>
+    </motion.div>
   )
 }
 
