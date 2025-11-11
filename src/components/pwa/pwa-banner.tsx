@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, Smartphone } from "lucide-react";
+import { X, Download, Smartphone, Sparkles } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { useIsPWA, useInstallPWA } from "~/lib/pwa-utils";
 import Link from "next/link";
@@ -56,47 +56,47 @@ export function PWABanner() {
         transition={{ duration: 0.3, ease: "easeOut" }}
         className="fixed top-16 left-0 right-0 z-40 bg-gradient-to-r from-primary/95 to-primary/90 backdrop-blur-sm shadow-lg border-b border-primary/20"
       >
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between gap-4 py-3">
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="flex items-center justify-between gap-2 sm:gap-4 py-2.5 sm:py-3">
             {/* Icono y mensaje */}
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-foreground/20">
-                <Smartphone className="h-5 w-5 text-primary-foreground" />
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              <div className="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-foreground/20">
+                <Sparkles className="h-4 w-4 text-primary-foreground" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-primary-foreground mb-0.5">
-                  ¡Instala Flex Calendar!
+                <p className="text-xs sm:text-sm font-semibold text-primary-foreground mb-0.5">
+                  Instala Flex Calendar en tu dispositivo
                 </p>
-                <p className="text-xs text-primary-foreground/80 truncate">
-                  Acceso más rápido desde tu pantalla de inicio.{" "}
+                <p className="text-[10px] sm:text-xs text-primary-foreground/90 line-clamp-1 sm:line-clamp-none">
+                  Accede más rápido con un ícono en tu pantalla de inicio.{" "}
                   <Link 
                     href="/install-app" 
-                    className="underline hover:text-primary-foreground font-medium"
+                    className="underline hover:text-primary-foreground font-medium hidden sm:inline"
                   >
-                    Más info
+                    Más información
                   </Link>
                 </p>
               </div>
             </div>
 
             {/* Botones de acción */}
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               {isInstallable ? (
                 <Button
                   size="sm"
                   onClick={handleInstall}
-                  className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-medium"
+                  className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-medium text-xs h-8 px-2 sm:px-3"
                 >
-                  <Download className="h-4 w-4 mr-1.5" />
+                  <Download className="h-3.5 w-3.5 sm:mr-1.5" />
                   <span className="hidden sm:inline">Instalar</span>
                 </Button>
               ) : (
                 <Link href="/install-app">
                   <Button
                     size="sm"
-                    className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-medium"
+                    className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-medium text-xs h-8 px-2 sm:px-3"
                   >
-                    <Download className="h-4 w-4 mr-1.5" />
+                    <Smartphone className="h-3.5 w-3.5 sm:mr-1.5" />
                     <span className="hidden sm:inline">Ver más</span>
                   </Button>
                 </Link>
@@ -105,9 +105,10 @@ export function PWABanner() {
                 size="sm"
                 variant="ghost"
                 onClick={handleDismiss}
-                className="text-primary-foreground hover:bg-primary-foreground/10"
+                className="text-primary-foreground hover:bg-primary-foreground/10 h-8 w-8 p-0"
+                aria-label="Cerrar banner"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>
