@@ -20,8 +20,8 @@ export const metadata: Metadata = {
   },
   applicationName: "Flex Calendar",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
   ],
   viewport: {
     width: "device-width",
