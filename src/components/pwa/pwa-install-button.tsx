@@ -1,16 +1,11 @@
 "use client";
 
 import { Button } from "~/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "~/components/ui/tooltip";
-import { Download, Loader2, Check, Info, HelpCircle } from "lucide-react";
+import { Download, Loader2, Check } from "lucide-react";
 import { useInstallPWA } from "~/lib/pwa-utils";
 import { useState } from "react";
 import type { InstallStatus } from "~/lib/pwa-utils";
+import { HelpTip } from "~/components/ui/help-tip";
 
 interface PWAInstallButtonProps {
   variant?: "default" | "outline" | "ghost";
@@ -87,73 +82,56 @@ export function PWAInstallButton({
 
   if (installed) {
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-block">
-              <Button variant="default" size={size} disabled className={className}>
-                <Check className="h-4 w-4 mr-2" />
-                ¡Instalada!
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>La aplicación se instaló correctamente</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <div className="inline-flex items-center gap-2">
+        <Button variant="default" size={size} disabled className={className}>
+          <Check className="h-4 w-4 mr-2" />
+          ¡Instalada!
+        </Button>
+        <HelpTip title="Instalación exitosa" side="bottom">
+          La aplicación se instaló correctamente
+        </HelpTip>
+      </div>
     );
   }
 
   if (!isInstallable) {
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-block">
-              <Button variant="outline" size={size} disabled className={className}>
-                <HelpCircle className="h-4 w-4 mr-2" />
-                {statusInfo.title}
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent className="max-w-xs">
-            <p className="font-semibold mb-1">{statusInfo.title}</p>
-            <p className="text-xs text-muted-foreground">{statusInfo.description}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <div className="inline-flex items-center gap-2">
+        <Button variant="outline" size={size} disabled className={className}>
+          <Download className="h-4 w-4 mr-2" />
+          {statusInfo.title}
+        </Button>
+        <HelpTip title={statusInfo.title} side="bottom">
+          {statusInfo.description}
+        </HelpTip>
+      </div>
     );
   }
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button 
-            variant={variant} 
-            size={size} 
-            onClick={handleInstall}
-            disabled={isInstalling}
-            className={className}
-          >
-            {isInstalling ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Instalando...
-              </>
-            ) : (
-              <>
-                <Download className="h-4 w-4 mr-2" />
-                Instalar App
-              </>
-            )}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{statusInfo.description}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div className="inline-flex items-center gap-2">
+      <Button 
+        variant={variant} 
+        size={size} 
+        onClick={handleInstall}
+        disabled={isInstalling}
+        className={className}
+      >
+        {isInstalling ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Instalando...
+          </>
+        ) : (
+          <>
+            <Download className="h-4 w-4 mr-2" />
+            Instalar App
+          </>
+        )}
+      </Button>
+      <HelpTip title={statusInfo.title} side="bottom">
+        {statusInfo.description}
+      </HelpTip>
+    </div>
   );
 }
