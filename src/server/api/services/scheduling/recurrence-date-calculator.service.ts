@@ -30,6 +30,7 @@ export class RecurrenceDateCalculator {
    * 
    * @param previousOccurrenceStartDate - The startDate of the previous occurrence (when it was created, not completed)
    * @param recurrence - The recurrence configuration
+   * @param isFirstOccurrence - Whether this is the first occurrence being created (defaults to false)
    * @returns The startDate for the next occurrence
    */
   calculateNextOccurrenceDate(
@@ -41,7 +42,8 @@ export class RecurrenceDateCalculator {
       maxOccurrences?: number | null;
       completedOccurrences?: number | null;
       lastPeriodStart?: Date | null;
-    }
+    },
+    isFirstOccurrence: boolean = false
   ): Date {
     const previousStartDeadline = this.dateService.dateToDeadline(previousOccurrenceStartDate);
 
@@ -65,7 +67,12 @@ export class RecurrenceDateCalculator {
         const nextDeadline = this.dateService.addDays(periodStart, daysFromStart);
         return nextDeadline.toDate();
       } else {
-        // Regular interval: add interval days to previous occurrence's start date
+        // Regular interval-based habit (maxOccurrences = 1)
+        // If this is the first occurrence, start at the period start (don't add interval)
+        if (isFirstOccurrence) {
+          return previousOccurrenceStartDate;
+        }
+        // For subsequent occurrences: add interval days to previous occurrence's start date
         const nextDeadline = this.dateService.addDays(previousStartDeadline, recurrence.interval);
         return nextDeadline.toDate();
       }
@@ -73,12 +80,16 @@ export class RecurrenceDateCalculator {
 
     // Case 2: Specific days of week
     if (recurrence.daysOfWeek && recurrence.daysOfWeek.length > 0) {
-      return this.getNextDayOfWeek(previousOccurrenceStartDate, recurrence.daysOfWeek as DayOfWeek[]);
+      // For first occurrence, start searching from today
+      const searchFromDate = isFirstOccurrence ? new Date() : previousOccurrenceStartDate;
+      return this.getNextDayOfWeek(searchFromDate, recurrence.daysOfWeek as DayOfWeek[]);
     }
 
     // Case 3: Specific days of month
     if (recurrence.daysOfMonth && recurrence.daysOfMonth.length > 0) {
-      return this.getNextDayOfMonth(previousOccurrenceStartDate, recurrence.daysOfMonth);
+      // For first occurrence, start searching from today
+      const searchFromDate = isFirstOccurrence ? new Date() : previousOccurrenceStartDate;
+      return this.getNextDayOfMonth(searchFromDate, recurrence.daysOfMonth);
     }
 
     // Default: next day
