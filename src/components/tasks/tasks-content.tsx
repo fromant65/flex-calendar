@@ -17,6 +17,7 @@ interface TasksContentProps {
   filters: UnifiedFilters
   onFiltersChange: (filters: UnifiedFilters) => void
   onEdit: (task: TaskFromList) => void
+  onDuplicate: (task: TaskFromList) => void
   onDelete: (id: number) => void
   onView: (task: TaskFromList) => void
 }
@@ -26,6 +27,7 @@ export function TasksContent({
   filters,
   onFiltersChange,
   onEdit,
+  onDuplicate,
   onDelete,
   onView,
 }: TasksContentProps) {
@@ -153,6 +155,7 @@ export function TasksContent({
             <ActiveTasksSection
               tasks={activeTasksList}
               onEdit={onEdit}
+              onDuplicate={onDuplicate}
               onDelete={onDelete}
               onView={onView}
             />
@@ -164,6 +167,7 @@ export function TasksContent({
             <InactiveTasksSection
               tasks={inactiveTasksList}
               onEdit={onEdit}
+              onDuplicate={onDuplicate}
               onDelete={onDelete}
               onView={onView}
             />

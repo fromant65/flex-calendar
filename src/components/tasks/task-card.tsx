@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Pencil, Trash2, Calendar, Repeat, Target, Clock } from "lucide-react"
+import { Pencil, Trash2, Calendar, Repeat, Target, Clock, Copy } from "lucide-react"
 import { Badge } from "~/components/ui/badge"
 import type { TaskGetMyTasksOutput } from "~/server/api/routers/derived-endpoint-types"
 
@@ -10,12 +10,13 @@ type TaskFromList = TaskGetMyTasksOutput[number]
 interface TaskCardProps {
   task: TaskFromList
   onEdit: (task: TaskFromList) => void
+  onDuplicate: (task: TaskFromList) => void
   onDelete: (id: number) => void
   onClick: (task: TaskFromList) => void
   index?: number
 }
 
-export function TaskCard({ task, onEdit, onDelete, onClick, index = 0 }: TaskCardProps) {
+export function TaskCard({ task, onEdit, onDuplicate, onDelete, onClick, index = 0 }: TaskCardProps) {
   const getTaskTypeIcon = () => {
     if (!task.recurrence || task.recurrence.maxOccurrences === 1) return <Calendar className="h-4 w-4" />
     if (task.recurrence.maxOccurrences && task.recurrence.maxOccurrences > 1 && !task.recurrence.interval) {
@@ -60,8 +61,19 @@ export function TaskCard({ task, onEdit, onDelete, onClick, index = 0 }: TaskCar
               onEdit(task)
             }}
             className="rounded-lg border border-border bg-background p-2 text-foreground transition-colors hover:bg-muted cursor-pointer"
+            title="Editar tarea"
           >
             <Pencil className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onDuplicate(task)
+            }}
+            className="rounded-lg border border-border bg-background p-2 text-foreground transition-colors hover:bg-muted cursor-pointer"
+            title="Duplicar tarea"
+          >
+            <Copy className="h-3.5 w-3.5" />
           </button>
           {task.isActive && (
             <button
@@ -70,6 +82,7 @@ export function TaskCard({ task, onEdit, onDelete, onClick, index = 0 }: TaskCar
                 onDelete(task.id)
               }}
               className="rounded-lg border border-destructive/30 bg-destructive/10 p-2 text-destructive transition-colors hover:bg-destructive/20 cursor-pointer"
+              title="Eliminar tarea"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>

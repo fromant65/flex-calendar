@@ -7,6 +7,7 @@ type TaskFromList = TaskGetMyTasksOutput[number]
 interface ActiveTasksSectionProps {
   tasks: TaskFromList[]
   onEdit: (task: TaskFromList) => void
+  onDuplicate: (task: TaskFromList) => void
   onDelete: (id: number) => void
   onView: (task: TaskFromList) => void
 }
@@ -24,6 +25,7 @@ const containerVariants = {
 export function ActiveTasksSection({
   tasks,
   onEdit,
+  onDuplicate,
   onDelete,
   onView,
 }: ActiveTasksSectionProps) {
@@ -52,6 +54,7 @@ export function ActiveTasksSection({
             key={task.id}
             task={task}
             onEdit={onEdit}
+            onDuplicate={onDuplicate}
             onDelete={onDelete}
             onClick={onView}
             index={index}

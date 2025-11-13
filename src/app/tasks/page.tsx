@@ -21,6 +21,7 @@ type TaskFromList = TaskGetMyTasksOutput[number]
 export default function TasksPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<TaskFromList | null>(null)
+  const [duplicatingTask, setDuplicatingTask] = useState<TaskFromList | null>(null)
   const [viewingTask, setViewingTask] = useState<TaskFromList | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState<number | null>(null)
@@ -57,6 +58,13 @@ export default function TasksPage() {
 
   const handleEdit = (task: TaskFromList) => {
     setEditingTask(task)
+    setDuplicatingTask(null)
+    setIsFormOpen(true)
+  }
+
+  const handleDuplicate = (task: TaskFromList) => {
+    setDuplicatingTask(task)
+    setEditingTask(null)
     setIsFormOpen(true)
   }
 
@@ -74,6 +82,7 @@ export default function TasksPage() {
   const handleFormClose = () => {
     setIsFormOpen(false)
     setEditingTask(null)
+    setDuplicatingTask(null)
   }
 
   // Only show full-page loading on initial load
@@ -94,6 +103,7 @@ export default function TasksPage() {
             filters={filters}
             onFiltersChange={setFilters}
             onEdit={handleEdit}
+            onDuplicate={handleDuplicate}
             onDelete={handleDelete}
             onView={setViewingTask}
           />
@@ -104,6 +114,7 @@ export default function TasksPage() {
         open={isFormOpen}
         onOpenChange={handleFormClose}
         editingTask={editingTask}
+        duplicatingTask={duplicatingTask}
         onSuccess={async () => {
           await utils.task.getMyTasks.invalidate()
           handleFormClose()
