@@ -5,8 +5,9 @@ import { calculateQuadrant, getQuadrantLabel } from "~/lib/eisenhower-utils"
 import { useMemo, useState } from "react"
 import { QuadrantPanel } from "./quadrant-panel"
 import HelpTip from "~/components/ui/help-tip"
-import { Input } from "~/components/ui/input"
-import { Search, X } from "lucide-react"
+import { UnifiedFilterBar } from "../common/unified-filter-bar"
+import type { UnifiedFilters } from "~/types/filters"
+import { defaultFilters } from "~/types/filters"
 import { useEventsContext } from "./events-context"
 
 // Modularized component - EisenhowerMatrix
@@ -28,7 +29,18 @@ export function EisenhowerMatrix({
   selectedTaskId,
 }: EisenhowerMatrixProps) {
   const { filterStartDate, setFilterStartDate, filterEndDate, setFilterEndDate } = useEventsContext()
-  const [searchQuery, setSearchQuery] = useState("")
+  const [filters, setFilters] = useState<UnifiedFilters>({
+    ...defaultFilters,
+    dateRangeStart: filterStartDate,
+    dateRangeEnd: filterEndDate,
+  })
+
+  // Sync date range with context when filters change
+  const handleFiltersChange = (newFilters: UnifiedFilters) => {
+    setFilters(newFilters)
+    if (newFilters.dateRangeStart) setFilterStartDate(newFilters.dateRangeStart)
+    if (newFilters.dateRangeEnd) setFilterEndDate(newFilters.dateRangeEnd)
+  }
 
   const quadrants = useMemo(() => {
     const grouped: Record<QuadrantPosition["quadrant"], OccurrenceWithTask[]> = {
@@ -39,111 +51,124 @@ export function EisenhowerMatrix({
     }
 
     // Filter by search query
-    const filtered = searchQuery
-      ? occurrences.filter((occ) => {
-          const taskName = occ.task.name.toLowerCase()
-          const taskDescription = occ.task.description?.toLowerCase() ?? ""
-          const query = searchQuery.toLowerCase()
-          return taskName.includes(query) || taskDescription.includes(query)
-        })
-      : occurrences
+    let filtered = occurrences
+    
+    if (filters.searchQuery) {
+      const query = filters.searchQuery.toLowerCase()
+      filtered = filtered.filter((occ) => {
+        const taskName = occ.task.name.toLowerCase()
+        const taskDescription = occ.task.description?.toLowerCase() ?? ""
+        return taskName.includes(query) || taskDescription.includes(query)
+      })
+    }
 
-    filtered.forEach((occurrence) => {
+    // Filter by task type - multi-select support
+    if (filters.taskTypesFilter.length > 0) {
+      filtered = filtered.filter((occ) => {
+        const taskType = 'taskType' in occ.task ? occ.task.taskType : null
+        return taskType && filters.taskTypesFilter.includes(taskType)
+      })
+    } else if (filters.taskTypeFilter !== "all") {
+      // Fallback to single select
+      filtered = filtered.filter((occ) => {
+        const taskType = 'taskType' in occ.task ? occ.task.taskType : null
+        return taskType === filters.taskTypeFilter
+      })
+    }
+
+    // Filter by occurrence status - multi-select support
+    if (filters.taskOccurrenceStatusesFilter.length > 0) {
+      filtered = filtered.filter((occ) => 
+        filters.taskOccurrenceStatusesFilter.includes(occ.status)
+      )
+    } else if (filters.taskOccurrenceStatusFilter !== "all") {
+      // Fallback to single select
+      filtered = filtered.filter((occ) => occ.status === filters.taskOccurrenceStatusFilter)
+    }
+
+    // Apply sorting before grouping
+    const sortedFiltered = [...filtered]
+    switch (filters.sortBy) {
+      case "name-asc":
+        sortedFiltered.sort((a, b) => a.task.name.localeCompare(b.task.name))
+        break
+      case "name-desc":
+        sortedFiltered.sort((a, b) => b.task.name.localeCompare(a.task.name))
+        break
+      case "type":
+        sortedFiltered.sort((a, b) => {
+          const aType = 'taskType' in a.task ? (a.task.taskType ?? '') : ''
+          const bType = 'taskType' in b.task ? (b.task.taskType ?? '') : ''
+          return aType.localeCompare(bType)
+        })
+        break
+      case "closest-target":
+        sortedFiltered.sort((a, b) => {
+          const aDate = a.targetDate ?? a.limitDate
+          const bDate = b.targetDate ?? b.limitDate
+          if (!aDate && !bDate) return 0
+          if (!aDate) return 1
+          if (!bDate) return -1
+          return aDate.getTime() - bDate.getTime()
+        })
+        break
+      case "closest-limit":
+        sortedFiltered.sort((a, b) => {
+          if (!a.limitDate && !b.limitDate) return 0
+          if (!a.limitDate) return 1
+          if (!b.limitDate) return -1
+          return a.limitDate.getTime() - b.limitDate.getTime()
+        })
+        break
+    }
+
+    sortedFiltered.forEach((occurrence) => {
       const quadrant = calculateQuadrant(occurrence).quadrant
       grouped[quadrant].push(occurrence)
     })
 
     return grouped
-  }, [occurrences, searchQuery])
+  }, [occurrences, filters])
 
-  // Format dates for input value (YYYY-MM-DD)
-  const formatDateForInput = (date: Date) => {
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-  }
-
-  // Handle date input changes
-  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = new Date(e.target.value)
-    if (!isNaN(newDate.getTime())) {
-      newDate.setHours(0, 0, 0, 0)
-      setFilterStartDate(newDate)
-    }
-  }
-
-  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = new Date(e.target.value)
-    if (!isNaN(newDate.getTime())) {
-      newDate.setHours(23, 59, 59, 999)
-      setFilterEndDate(newDate)
-    }
-  }
+  // Calculate total count for filter bar
+  const totalOccurrencesCount = occurrences.length
+  const filteredOccurrencesCount = Object.values(quadrants).reduce((sum, arr) => sum + arr.length, 0)
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Filters section */}
-      <div className="flex flex-col gap-3 p-2 border-b border-border bg-card/50 flex-shrink-0">
-        {/* Search bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar tareas por nombre o descripción..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-10 h-9 text-sm"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              aria-label="Limpiar búsqueda"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        {/* Date range filters and help */}
-        <div className="flex justify-between items-start gap-4">
-          <div className="flex flex-col sm:flex-row gap-2 flex-1">
-            <div className="flex flex-col gap-1">
-              <label htmlFor="start-date" className="text-xs text-muted-foreground">Desde</label>
-              <Input
-                id="start-date"
-                type="date"
-                value={formatDateForInput(filterStartDate)}
-                onChange={handleStartDateChange}
-                className="h-8 text-xs w-full sm:w-auto"
-              />
+      {/* Unified Filter Bar */}
+      <div className="p-2 border-b border-border bg-card/50 flex-shrink-0">
+        <UnifiedFilterBar
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          config={{
+            enableSearch: true,
+            enableTaskType: true,
+            enableMultiTaskType: true,
+            enableTaskOccurrenceStatus: true,
+            enableMultiTaskOccurrenceStatus: true,
+            enableSort: true,
+            enableDateRange: true,
+            collapsible: true,
+            defaultExpanded: false,
+          }}
+          totalCount={totalOccurrencesCount}
+          filteredCount={filteredOccurrencesCount}
+        />
+        
+        {/* Help tip */}
+        <div className="mt-2 flex justify-end">
+          <HelpTip title="Matriz Eisenhower">
+            La matriz clasifica ocurrencias según urgencia e importancia. <br />
+            Haz doble click para ver detalles de la misma.
+            <div className="hidden lg:block">
+              Arrastra tareas al calendario para programar su ejecución.
             </div>
-            <div className="flex flex-col gap-1">
-              <label htmlFor="end-date" className="text-xs text-muted-foreground">Hasta</label>
-              <Input
-                id="end-date"
-                type="date"
-                value={formatDateForInput(filterEndDate)}
-                onChange={handleEndDateChange}
-                className="h-8 text-xs w-full sm:w-auto"
-              />
+            <div className="lg:hidden">
+              Selecciona una tarea para programarla en el calendario.
             </div>
-          </div>
-
-          {/* Help tip */}
-          <div className="flex-shrink-0">
-            <HelpTip title="Matriz Eisenhower">
-              La matriz clasifica ocurrencias según urgencia e importancia. <br />
-              Haz doble click para ver detalles de la misma.
-              <div className="hidden lg:block">
-                Arrastra tareas al calendario para programar su ejecución.
-              </div>
-              <div className="lg:hidden">
-                Selecciona una tarea para programarla en el calendario.
-              </div>
-              Usa el buscador y los filtros de fecha para encontrar tareas específicas.
-            </HelpTip>
-          </div>
+            Usa el buscador y los filtros para encontrar tareas específicas.
+          </HelpTip>
         </div>
       </div>
       <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-px bg-border p-px min-h-0">

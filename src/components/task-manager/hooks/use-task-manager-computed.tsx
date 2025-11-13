@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { OccurrenceWithTask } from "~/types";
-import type { TaskManagerFilter } from "../task-manager-filter-bar";
+import type { UnifiedFilters } from "~/types/filters";
 
 export type TaskWithOccurrences = {
   task: OccurrenceWithTask['task'];
@@ -10,7 +10,7 @@ export type TaskWithOccurrences = {
 export function useTaskManagerComputed(
   allOccurrences: OccurrenceWithTask[] | undefined,
   occurrences: OccurrenceWithTask[],
-  filters: TaskManagerFilter
+  filters: UnifiedFilters
 ) {
   // Group occurrences by task (filter out inactive tasks)
   const groupedOccurrences = useMemo(() => {
@@ -80,8 +80,18 @@ export function useTaskManagerComputed(
           return (b.task.importance ?? 0) - (a.task.importance ?? 0);
         }
         
-        case "name": {
+        case "name-asc": {
           return a.task.name.localeCompare(b.task.name);
+        }
+        
+        case "name-desc": {
+          return b.task.name.localeCompare(a.task.name);
+        }
+        
+        case "type": {
+          const aType = 'taskType' in a.task ? (a.task.taskType ?? '') : '';
+          const bType = 'taskType' in b.task ? (b.task.taskType ?? '') : '';
+          return aType.localeCompare(bType);
         }
         
         case "time-allocated": {

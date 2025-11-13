@@ -1,11 +1,12 @@
 import { useMemo, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
-import type { TaskManagerFilter } from "../task-manager-filter-bar";
+import type { UnifiedFilters } from "~/types/filters";
+import { calculateQuadrant } from "~/lib/eisenhower-utils";
 
 export function useTaskManagerQueries(
   selectedTaskId: number | null,
-  filters: TaskManagerFilter
+  filters: UnifiedFilters
 ) {
   // Fetch all occurrences with task details (no filters - get all data)
   const { 
@@ -26,14 +27,29 @@ export function useTaskManagerQueries(
         if (!matchesName) return false;
       }
       
-      // Status filter
-      if (filters.statusFilter !== "all" && occ.status !== filters.statusFilter) {
-        return false;
+      // Status filter - multi-select support
+      if (filters.taskOccurrenceStatusesFilter.length > 0) {
+        if (!filters.taskOccurrenceStatusesFilter.includes(occ.status)) return false;
+      } else if (filters.taskOccurrenceStatusFilter !== "all") {
+        // Fallback to single select
+        if (occ.status !== filters.taskOccurrenceStatusFilter) return false;
       }
       
-      // Task type filter
-      if (filters.taskTypeFilter !== "all" && 'taskType' in occ.task && occ.task.taskType !== filters.taskTypeFilter) {
-        return false;
+      // Task type filter - multi-select support
+      if (filters.taskTypesFilter.length > 0) {
+        const taskType = 'taskType' in occ.task ? occ.task.taskType : null;
+        if (!taskType || !filters.taskTypesFilter.includes(taskType)) return false;
+      } else if (filters.taskTypeFilter !== "all") {
+        // Fallback to single select
+        const taskType = 'taskType' in occ.task ? occ.task.taskType : null;
+        if (!taskType || taskType !== filters.taskTypeFilter) return false;
+      }
+      
+      // Priority filter - multi-select support (using Eisenhower matrix)
+      if (filters.prioritiesFilter.length > 0) {
+        const quadrant = calculateQuadrant(occ).quadrant
+        const matchesPriority = filters.prioritiesFilter.includes(quadrant)
+        if (!matchesPriority) return false
       }
       
       return true;

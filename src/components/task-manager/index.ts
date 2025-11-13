@@ -25,7 +25,3 @@ export { useTaskManagerState } from "./hooks/use-task-manager-state"
 export { useTaskManagerQueries } from "./hooks/use-task-manager-queries"
 export { useTaskManagerMutations } from "./hooks/use-task-manager-mutations"
 export { useTaskManagerComputed } from "./hooks/use-task-manager-computed"
-
-// Filters
-export { TaskManagerFilterBar } from "./task-manager-filter-bar"
-export type { TaskManagerFilter } from "./task-manager-filter-bar"

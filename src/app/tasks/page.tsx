@@ -12,7 +12,8 @@ import {
 } from "~/components/tasks"
 import { TaskDetailsModal } from "~/components/events/task-details-modal"
 import { LoadingPage } from "~/components/ui/loading-spinner"
-import { type TaskFilter } from "~/components/tasks/task-filter-bar"
+import type { UnifiedFilters } from "~/types/filters"
+import { defaultFilters } from "~/types/filters"
 import { toast } from "sonner"
 
 type TaskFromList = TaskGetMyTasksOutput[number]
@@ -23,12 +24,7 @@ export default function TasksPage() {
   const [viewingTask, setViewingTask] = useState<TaskFromList | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState<number | null>(null)
-  const [filters, setFilters] = useState<TaskFilter>({
-    searchQuery: "",
-    statusFilter: "all",
-    taskTypeFilter: "all",
-    fixedFilter: "all",
-  })
+  const [filters, setFilters] = useState<UnifiedFilters>(defaultFilters)
 
   const { data: tasks = [], isLoading, error: tasksError } = api.task.getMyTasks.useQuery()
   const utils = api.useUtils()

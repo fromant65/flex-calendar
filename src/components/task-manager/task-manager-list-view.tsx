@@ -2,13 +2,14 @@ import { motion } from "framer-motion";
 import type { TaskType } from "~/server/api/services/types";
 import type { OccurrenceWithTask } from "~/types";
 import { TaskCard } from "./task-card";
-import { TaskManagerFilterBar, type TaskManagerFilter } from "./task-manager-filter-bar";
+import { UnifiedFilterBar } from "~/components/common/unified-filter-bar";
+import type { UnifiedFilters } from "~/types/filters";
 import { TaskManagerEmptyState } from "./task-manager-empty-state";
 import type { TaskWithOccurrences } from "./use-task-manager-data";
 
 interface TaskManagerListViewProps {
-  filters: TaskManagerFilter;
-  onFiltersChange: (filters: TaskManagerFilter) => void;
+  filters: UnifiedFilters;
+  onFiltersChange: (filters: UnifiedFilters) => void;
   totalTasksCount: number;
   groupedOccurrences: Map<number, OccurrenceWithTask[]>;
   sortedTasks: TaskWithOccurrences[];
@@ -59,12 +60,24 @@ export function TaskManagerListView({
 
   return (
     <div className="container mx-auto px-4 lg:px-6 py-6 flex-1 pb-8">
-      {/* Filter Bar - Always visible */}
+      {/* Filter Bar */}
       <div className="mb-6">
-        <TaskManagerFilterBar
+        <UnifiedFilterBar
           filters={filters}
           onFiltersChange={onFiltersChange}
-          totalTasks={totalTasksCount}
+          config={{
+            enableSearch: true,
+            enableTaskType: true,
+            enableMultiTaskType: true,
+            enablePriority: true,
+            enableMultiPriority: true,
+            enableTaskOccurrenceStatus: true,
+            enableMultiTaskOccurrenceStatus: true,
+            enableSort: true,
+            collapsible: true,
+            defaultExpanded: false,
+          }}
+          totalCount={totalTasksCount}
           filteredCount={groupedOccurrences.size}
         />
       </div>

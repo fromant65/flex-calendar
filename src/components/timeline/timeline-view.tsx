@@ -7,7 +7,8 @@ import { api } from "~/trpc/react"
 import { toast } from "sonner"
 import { TimelinePageHeader } from "./timeline-page-header"
 import type { NavigationInterval } from "./timeline-controls"
-import type { TimelineFilters as TimelineFiltersType } from "./timeline-filters"
+import type { UnifiedFilters } from "~/types/filters"
+import { defaultFilters } from "~/types/filters"
 import { TimelineHeader } from "./timeline-header"
 import { TimelineTaskRow } from "./timeline-task-row"
 import { TimelineModals, type DayCellDetails } from "./timeline-modals"
@@ -37,12 +38,7 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
   const [navigationInterval, setNavigationInterval] = useState<NavigationInterval>("day")
   const [selectedDayCell, setSelectedDayCell] = useState<DayCellDetails | null>(null)
   const [direction, setDirection] = useState<"forward" | "backward">("forward")
-  const [filters, setFilters] = useState<TimelineFiltersType>({
-    searchQuery: "",
-    taskTypeFilter: "all",
-    priorityFilter: "all",
-    statusFilter: "all",
-  })
+  const [filters, setFilters] = useState<UnifiedFilters>(defaultFilters)
 
   // Custom hooks
   const isMobile = useIsMobile()
@@ -157,13 +153,46 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
       )
     }
 
-    // Filter by task type
-    if (filters.taskTypeFilter !== "all") {
+    // Filter by task type - multi-select support
+    if (filters.taskTypesFilter.length > 0) {
+      filtered = filtered.filter((task) => task.taskType && filters.taskTypesFilter.includes(task.taskType))
+    } else if (filters.taskTypeFilter !== "all") {
+      // Fallback to single select
       filtered = filtered.filter((task) => task.taskType === filters.taskTypeFilter)
     }
 
-    // Filter by priority (Eisenhower matrix)
-    if (filters.priorityFilter !== "all") {
+    // Filter by priority (Eisenhower matrix) - multi-select support
+    if (filters.prioritiesFilter.length > 0) {
+      filtered = filtered.filter((task) => {
+        const taskOccurrences = currentData.occurrences.filter(
+          (occ) => occ.associatedTaskId === task.id
+        )
+        
+        // Calculate if task has occurrences in any of the selected quadrants
+        return taskOccurrences.some((occ) => {
+          const importance = task.importance || 0
+          const urgency = occ.urgency || 0
+          const isImportant = importance >= 6
+          const isUrgent = urgency >= 6
+          
+          return filters.prioritiesFilter.some((priority) => {
+            switch (priority) {
+              case "urgent-important":
+                return isUrgent && isImportant
+              case "not-urgent-important":
+                return !isUrgent && isImportant
+              case "urgent-not-important":
+                return isUrgent && !isImportant
+              case "not-urgent-not-important":
+                return !isUrgent && !isImportant
+              default:
+                return false
+            }
+          })
+        })
+      })
+    } else if (filters.priorityFilter !== "all") {
+      // Fallback to single select
       filtered = filtered.filter((task) => {
         const taskOccurrences = currentData.occurrences.filter(
           (occ) => occ.associatedTaskId === task.id
@@ -192,30 +221,82 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
       })
     }
 
-    // Filter by occurrence status
-    if (filters.statusFilter !== "all") {
+    // Filter by task occurrence status - multi-select support
+    if (filters.taskOccurrenceStatusesFilter.length > 0) {
       filtered = filtered.filter((task) => {
         const taskOccurrences = currentData.occurrences.filter(
           (occ) => occ.associatedTaskId === task.id
         )
-
-        switch (filters.statusFilter) {
-          case "has-pending":
-            return taskOccurrences.some((occ) => occ.status === "Pending")
-          case "has-completed":
-            return taskOccurrences.some((occ) => occ.status === "Completed")
-          case "has-skipped":
-            return taskOccurrences.some((occ) => occ.status === "Skipped")
-          case "all-completed":
-            return taskOccurrences.length > 0 && taskOccurrences.every((occ) => occ.status === "Completed")
-          default:
-            return true
-        }
+        return taskOccurrences.some((occ) => 
+          filters.taskOccurrenceStatusesFilter.includes(occ.status)
+        )
+      })
+    } else if (filters.taskOccurrenceStatusFilter !== "all") {
+      // Fallback to single select
+      filtered = filtered.filter((task) => {
+        const taskOccurrences = currentData.occurrences.filter(
+          (occ) => occ.associatedTaskId === task.id
+        )
+        return taskOccurrences.some((occ) => occ.status === filters.taskOccurrenceStatusFilter)
       })
     }
 
     return filtered
   }, [activeTasks, filters, currentData.occurrences])
+
+  // Apply sorting to filtered tasks
+  const sortedFilteredTasks = useMemo(() => {
+    const sorted = [...filteredTasks]
+    const taskOccurrences = new Map(
+      currentData.occurrences
+        .reduce((acc, occ) => {
+          if (!acc.has(occ.associatedTaskId)) {
+            acc.set(occ.associatedTaskId, [])
+          }
+          acc.get(occ.associatedTaskId)!.push(occ)
+          return acc
+        }, new Map<number, typeof currentData.occurrences>())
+    )
+
+    switch (filters.sortBy) {
+      case "name-asc":
+        return sorted.sort((a, b) => a.name.localeCompare(b.name))
+      case "name-desc":
+        return sorted.sort((a, b) => b.name.localeCompare(a.name))
+      case "type":
+        return sorted.sort((a, b) => {
+          const aType = a.taskType ?? ''
+          const bType = b.taskType ?? ''
+          return aType.localeCompare(bType)
+        })
+      case "closest-target":
+        return sorted.sort((a, b) => {
+          const aOccs = taskOccurrences.get(a.id) ?? []
+          const bOccs = taskOccurrences.get(b.id) ?? []
+          const aDate = aOccs.find(o => o.targetDate)?.targetDate ?? aOccs.find(o => o.limitDate)?.limitDate
+          const bDate = bOccs.find(o => o.targetDate)?.targetDate ?? bOccs.find(o => o.limitDate)?.limitDate
+          if (!aDate && !bDate) return 0
+          if (!aDate) return 1
+          if (!bDate) return -1
+          return new Date(aDate).getTime() - new Date(bDate).getTime()
+        })
+      case "closest-limit":
+        return sorted.sort((a, b) => {
+          const aOccs = taskOccurrences.get(a.id) ?? []
+          const bOccs = taskOccurrences.get(b.id) ?? []
+          const aDate = aOccs.find(o => o.limitDate)?.limitDate
+          const bDate = bOccs.find(o => o.limitDate)?.limitDate
+          if (!aDate && !bDate) return 0
+          if (!aDate) return 1
+          if (!bDate) return -1
+          return new Date(aDate).getTime() - new Date(bDate).getTime()
+        })
+      case "importance":
+        return sorted.sort((a, b) => (b.importance ?? 0) - (a.importance ?? 0))
+      default:
+        return sorted
+    }
+  }, [filteredTasks, filters.sortBy, currentData.occurrences])
 
   // Navigate timeline based on selected interval
   const goToPrevious = () => {
@@ -332,7 +413,7 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
         filters={filters}
         onFiltersChange={setFilters}
         totalTasks={activeTasks.length}
-        filteredCount={filteredTasks.length}
+        filteredCount={sortedFilteredTasks.length}
       />
 
       {/* Timeline Container */}
@@ -359,14 +440,14 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
               <div className="flex h-32 items-center justify-center text-muted-foreground">
                 Cargando datos de la línea de tiempo...
               </div>
-            ) : filteredTasks.length === 0 ? (
+            ) : sortedFilteredTasks.length === 0 ? (
               <div className="flex h-32 items-center justify-center text-muted-foreground">
                 {activeTasks.length === 0 
                   ? "No hay tareas con actividad en este rango de fechas"
                   : "No hay tareas que coincidan con los filtros aplicados"}
               </div>
             ) : (
-              filteredTasks.map((task) => {
+              sortedFilteredTasks.map((task) => {
                 // Build cell data for this task
                 const cellDataBySegment = buildCellDataForTask(
                   task,

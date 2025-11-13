@@ -1,15 +1,11 @@
 import { useState } from "react";
-import type { TaskManagerFilter } from "../task-manager-filter-bar";
+import type { UnifiedFilters } from "~/types/filters";
+import { defaultFilters } from "~/types/filters";
 
 export function useTaskManagerState() {
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "timeline">("list");
-  const [filters, setFilters] = useState<TaskManagerFilter>({
-    searchQuery: "",
-    statusFilter: "all",
-    taskTypeFilter: "all",
-    sortBy: "closest-target",
-  });
+  const [filters, setFilters] = useState<UnifiedFilters>(defaultFilters);
   const [confirmAction, setConfirmAction] = useState<{
     type: "complete" | "skip";
     occurrenceId: number;
