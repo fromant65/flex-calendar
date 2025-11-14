@@ -57,5 +57,5 @@ export default auth((req) => {
 
 export const config = {
     // Match all paths except static files and API routes
-    matcher: ["/((?!api|_next/static|_next/image|favicon.ico|sw.js|manifest.json).*)"],
+    matcher: ["/((?!api|_next/static|_next/image|favicon.ico|sw.js|manifest.json|flex-calendar-icon.ico|flex-calendar-icon.svg|icon-192x192-maskable.png|icon-192x192.png|icon-256x256-maskable.png|icon-256x256.png|icon-384x384-maskable.png|icon-384x384.png|icon-512x512-maskable.png|icon-512x512.png).*)"],
 };
