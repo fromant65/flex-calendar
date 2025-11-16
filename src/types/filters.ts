@@ -34,6 +34,9 @@ export type StatusFilter =
 // Fixed/Flexible filter
 export type FixedFilter = "fixed" | "flexible"
 
+// Active/Inactive filter
+export type ActiveStatusFilter = "active" | "inactive"
+
 /**
  * Unified Filter Configuration
  * Defines which filters are enabled for each page
@@ -49,6 +52,7 @@ export interface UnifiedFilterConfig {
   enableTaskOccurrenceStatus?: boolean
   enableMultiTaskOccurrenceStatus?: boolean
   enableFixed?: boolean
+  enableActiveStatus?: boolean
   enableSort?: boolean
   enableDateRange?: boolean
   collapsible?: boolean
@@ -82,6 +86,9 @@ export interface UnifiedFilters {
   // Fixed/Flexible
   fixedFilter: FixedFilter | "all"
   
+  // Active/Inactive
+  activeStatusFilter: ActiveStatusFilter | "all"
+  
   // Sort
   sortBy: SortOption
   
@@ -104,6 +111,7 @@ export const defaultFilters: UnifiedFilters = {
   taskOccurrenceStatusFilter: "all",
   taskOccurrenceStatusesFilter: [],
   fixedFilter: "all",
+  activeStatusFilter: "all",
   sortBy: "closest-target",
   dateRangeStart: null,
   dateRangeEnd: null,
@@ -150,6 +158,12 @@ export const fixedLabels: Record<FixedFilter | "all", string> = {
   all: "Todas",
   fixed: "Fijas",
   flexible: "Flexibles",
+}
+
+export const activeStatusLabels: Record<ActiveStatusFilter | "all", string> = {
+  all: "Todas",
+  active: "Activas",
+  inactive: "Inactivas",
 }
 
 export const sortLabels: Record<SortOption, string> = {
@@ -218,6 +232,8 @@ export const taskOccurrenceStatusOptions: TaskOccurrenceStatus[] = [
 ]
 
 export const fixedOptions: FixedFilter[] = ["fixed", "flexible"]
+
+export const activeStatusOptions: ActiveStatusFilter[] = ["active", "inactive"]
 
 export const sortOptions: SortOption[] = [
   "closest-target",

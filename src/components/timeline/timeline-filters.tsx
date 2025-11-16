@@ -20,6 +20,7 @@ export type TimelineFilters = {
   taskTypeFilter: TaskType | "all"
   priorityFilter: "all" | "urgent-important" | "not-urgent-important" | "urgent-not-important" | "not-urgent-not-important"
   statusFilter: "all" | "has-pending" | "has-completed" | "has-skipped" | "all-completed"
+  activeStatusFilter: "all" | "active" | "inactive"
 }
 
 interface TimelineFiltersProps {
@@ -71,6 +72,18 @@ const statusLabels: Record<TimelineFilters["statusFilter"], string> = {
   "all-completed": "Todo completado",
 }
 
+const activeStatusOptions: TimelineFilters["activeStatusFilter"][] = [
+  "all",
+  "active",
+  "inactive",
+]
+
+const activeStatusLabels: Record<TimelineFilters["activeStatusFilter"], string> = {
+  all: "Todas",
+  active: "Activas",
+  inactive: "Inactivas",
+}
+
 export function TimelineFilters({
   filters,
   onFiltersChange,
@@ -83,13 +96,15 @@ export function TimelineFilters({
     filters.searchQuery !== "" || 
     filters.taskTypeFilter !== "all" || 
     filters.priorityFilter !== "all" ||
-    filters.statusFilter !== "all"
+    filters.statusFilter !== "all" ||
+    filters.activeStatusFilter !== "all"
 
   const activeFilterCount = [
     filters.searchQuery !== "",
     filters.taskTypeFilter !== "all",
     filters.priorityFilter !== "all",
     filters.statusFilter !== "all",
+    filters.activeStatusFilter !== "all",
   ].filter(Boolean).length
 
   const handleClearFilters = () => {
@@ -98,6 +113,7 @@ export function TimelineFilters({
       taskTypeFilter: "all",
       priorityFilter: "all",
       statusFilter: "all",
+      activeStatusFilter: "all",
     })
   }
 
@@ -166,7 +182,7 @@ export function TimelineFilters({
               </div>
 
               {/* Filter Selects - Compact Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                 {/* Task Type Filter */}
                 <Select
                   value={filters.taskTypeFilter}
@@ -228,6 +244,28 @@ export function TimelineFilters({
                     {statusOptions.map((status) => (
                       <SelectItem key={status} value={status}>
                         {statusLabels[status]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Active Status Filter */}
+                <Select
+                  value={filters.activeStatusFilter}
+                  onValueChange={(value) =>
+                    onFiltersChange({
+                      ...filters,
+                      activeStatusFilter: value as TimelineFilters["activeStatusFilter"],
+                    })
+                  }
+                >
+                  <SelectTrigger className="h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeStatusOptions.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {activeStatusLabels[status]}
                       </SelectItem>
                     ))}
                   </SelectContent>

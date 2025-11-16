@@ -241,6 +241,13 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
       })
     }
 
+    // Filter by active status
+    if (filters.activeStatusFilter === "active") {
+      filtered = filtered.filter((task) => task.isActive === true)
+    } else if (filters.activeStatusFilter === "inactive") {
+      filtered = filtered.filter((task) => task.isActive === false)
+    }
+
     return filtered
   }, [activeTasks, filters, currentData.occurrences])
 

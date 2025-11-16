@@ -19,6 +19,7 @@ import type {
   PriorityFilter,
   StatusFilter,
   FixedFilter,
+  ActiveStatusFilter,
 } from "~/types/filters"
 import {
   fixedLabels,
@@ -26,11 +27,13 @@ import {
   priorityLabels,
   statusLabels,
   taskOccurrenceStatusLabels,
+  activeStatusLabels,
   taskTypes,
   priorityOptions,
   statusOptions,
   taskOccurrenceStatusOptions,
   fixedOptions,
+  activeStatusOptions,
 } from "~/types/filters"
 import type { TaskType, TaskOccurrenceStatus } from "~/types"
 import {
@@ -70,6 +73,7 @@ export function UnifiedFilterBar({
     if (config.enableStatus && filters.statusesFilter.length > 0) count++
     if (config.enableTaskOccurrenceStatus && filters.taskOccurrenceStatusesFilter.length > 0) count++
     if (config.enableFixed && filters.fixedFilter !== "all") count++
+    if (config.enableActiveStatus && filters.activeStatusFilter !== "all") count++
     if (config.enableDateRange && (filters.dateRangeStart || filters.dateRangeEnd)) count++
     return count
   }, [filters, config])
@@ -89,6 +93,7 @@ export function UnifiedFilterBar({
       taskOccurrenceStatusFilter: "all",
       taskOccurrenceStatusesFilter: [],
       fixedFilter: "all",
+      activeStatusFilter: "all",
       dateRangeStart: null,
       dateRangeEnd: null,
     })
@@ -298,6 +303,31 @@ export function UnifiedFilterBar({
               {fixedOptions.map((option) => (
                 <SelectItem key={option} value={option}>
                   {fixedLabels[option]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        {/* Active/Inactive Status Filter */}
+        {config.enableActiveStatus && (
+          <Select
+            value={filters.activeStatusFilter}
+            onValueChange={(value) =>
+              onFiltersChange({
+                ...filters,
+                activeStatusFilter: value as ActiveStatusFilter | "all",
+              })
+            }
+          >
+            <SelectTrigger className="h-9 text-xs w-full sm:w-[150px]">
+              <SelectValue placeholder="Estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              {activeStatusOptions.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {activeStatusLabels[option]}
                 </SelectItem>
               ))}
             </SelectContent>

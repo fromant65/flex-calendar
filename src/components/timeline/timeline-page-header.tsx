@@ -133,6 +133,9 @@ export function TimelinePageHeader({
             <p>
               • <strong>Estado</strong>: Muestra tareas con pendientes, completadas, etc.
             </p>
+            <p>
+              • <strong>Activo/Inactivo</strong>: Filtra por tareas activas o inactivas
+            </p>
             
             <p className="font-semibold mt-3">Interacción:</p>
             <p>
@@ -162,6 +165,7 @@ export function TimelinePageHeader({
           enableMultiPriority: true,
           enableTaskOccurrenceStatus: true,
           enableMultiTaskOccurrenceStatus: true,
+          enableActiveStatus: true,
           enableSort: true,
           collapsible: true,
           defaultExpanded: false,
