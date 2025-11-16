@@ -20,6 +20,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:coverage:services": "jest --coverage --collectCoverageFrom=\"src/server/api/services/**/*.{ts,tsx}\" src/server/api/services",
     "typecheck": "tsc --noEmit",
     "auth:secret": "npx auth secret"
   },
