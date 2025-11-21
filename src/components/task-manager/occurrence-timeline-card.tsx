@@ -28,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu"
 import { getTaskTypeColors } from "~/lib/task-type-colors"
-import { formatDateShort as formatDate } from "~/lib/date-display-utils"
+import { formatDateShort as formatDate, formatCompletedDateTime } from "~/lib/date-display-utils"
 
 interface OccurrenceTimelineCardProps {
   occurrence: OccurrenceWithTask
@@ -294,6 +294,17 @@ export function OccurrenceTimelineCard({
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Clock className="h-3.5 w-3.5" />
               <span>Tiempo: {occurrence.timeConsumed} min</span>
+            </div>
+          )}
+
+          {/* Completion Date */}
+          {occurrence.status === "Completed" && occurrence.completedAt && (
+            <div className="flex items-center gap-1.5 text-xs">
+              <CheckCircle2 className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+              <span className="text-muted-foreground">Completada:</span>
+              <span className="font-medium text-green-600 dark:text-green-400">
+                {formatCompletedDateTime(occurrence.completedAt)}
+              </span>
             </div>
           )}
         </div>

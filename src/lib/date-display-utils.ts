@@ -135,3 +135,27 @@ export function getLimitDateDisplay(limitDate: Date | null) {
     };
   }
 }
+
+/**
+ * Format a date and time for completion display
+ * Format: "dd MMM yyyy · HH:mm"
+ * Example: "03 nov 2024 · 14:30"
+ * 
+ * Displays the local date and time when something was completed.
+ */
+export function formatCompletedDateTime(date: Date | null | undefined): string {
+  if (!date) return "N/A";
+  
+  // Use native Date formatting for timestamp with time
+  const locale = getUserLocale();
+  
+  const dateOptions: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  };
+  
+  return new Intl.DateTimeFormat(locale, dateOptions).format(date);
+}

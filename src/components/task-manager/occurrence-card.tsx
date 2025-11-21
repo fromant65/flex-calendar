@@ -3,7 +3,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { CheckCircle2, Edit, AlertCircle, SkipForward } from "lucide-react";
 import HelpTip from "~/components/ui/help-tip"
-import { formatDateLong, getLimitDateDisplay as getLimit } from "~/lib/date-display-utils";
+import { formatDateLong, getLimitDateDisplay as getLimit, formatCompletedDateTime } from "~/lib/date-display-utils";
 import type { TaskOccurrence } from "~/types";
 
 interface OccurrenceCardProps {
@@ -123,6 +123,16 @@ export function OccurrenceCard({
                 </span>
               )}
             </div>
+
+            {/* Row 4: Completion date (if completed) */}
+            {occurrence.status === "Completed" && occurrence.completedAt && (
+              <div className="md:col-span-2">
+                <span className="font-medium text-muted-foreground">Completada el: </span>
+                <span className="font-semibold text-green-600 dark:text-green-400">
+                  {formatCompletedDateTime(occurrence.completedAt)}
+                </span>
+              </div>
+            )}
 
           </div>
         </div>
