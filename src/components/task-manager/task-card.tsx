@@ -63,6 +63,7 @@ export function TaskCard({
   isSkippingBacklog = false,
 }: TaskCardProps) {
   const [showCompletedSkipped, setShowCompletedSkipped] = useState(false);
+  const [showAllCompleted, setShowAllCompleted] = useState(false);
   
   // Detect backlog when expanded
   const { data: backlogInfo } = api.occurrence.detectBacklog.useQuery(
@@ -74,7 +75,21 @@ export function TaskCard({
   );
   const completedOccurrences = occurrences.filter((o) => o.status === "Completed");
   const skippedOccurrences = occurrences.filter((o) => o.status === "Skipped");
-  const completedSkippedOccurrences = [...completedOccurrences, ...skippedOccurrences];
+  
+  // Sort completed/skipped by completedAt date (newest first)
+  const sortedCompletedSkipped = [...completedOccurrences, ...skippedOccurrences].sort((a, b) => {
+    const dateA = a.completedAt ? new Date(a.completedAt).getTime() : 0;
+    const dateB = b.completedAt ? new Date(b.completedAt).getTime() : 0;
+    return dateB - dateA; // Descending order (newest first)
+  });
+  
+  // Limit to 5 initially, show all if requested
+  const INITIAL_DISPLAY_COUNT = 5;
+  const displayedCompletedSkipped = showAllCompleted 
+    ? sortedCompletedSkipped 
+    : sortedCompletedSkipped.slice(0, INITIAL_DISPLAY_COUNT);
+  const hasMoreCompleted = sortedCompletedSkipped.length > INITIAL_DISPLAY_COUNT;
+  
   const totalTimeConsumed = occurrences.reduce(
     (sum, o) => sum + (o.timeConsumed ?? 0),
     0
@@ -209,7 +224,7 @@ export function TaskCard({
             <div className="space-y-2.5">
               <h3 className="font-semibold text-sm text-foreground">
                 Ocurrencias Activas ({visibleOccurrences.length})
-                {completedSkippedOccurrences.length > 0 && (
+                {sortedCompletedSkipped.length > 0 && (
                   <span className="ml-2 text-xs font-normal text-muted-foreground">
                     • {completedOccurrences.length} completada{completedOccurrences.length !== 1 ? "s" : ""}
                     {skippedOccurrences.length > 0 && `, ${skippedOccurrences.length} saltada${skippedOccurrences.length !== 1 ? "s" : ""}`}
@@ -240,15 +255,20 @@ export function TaskCard({
               )}
 
               {/* Toggle for completed/skipped occurrences */}
-              {completedSkippedOccurrences.length > 0 && (
+              {sortedCompletedSkipped.length > 0 && (
                 <div className="pt-2">
                   <motion.button
-                    onClick={() => setShowCompletedSkipped(!showCompletedSkipped)}
+                    onClick={() => {
+                      setShowCompletedSkipped(!showCompletedSkipped);
+                      if (showCompletedSkipped) {
+                        setShowAllCompleted(false); // Reset when hiding
+                      }
+                    }}
                     className="text-xs text-primary hover:underline focus:outline-none w-full text-left cursor-pointer"
                     whileHover={{ x: 2 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    {showCompletedSkipped ? "Ocultar" : "Mostrar"} ocurrencias completadas/saltadas ({completedSkippedOccurrences.length})
+                    {showCompletedSkipped ? "Ocultar" : "Mostrar"} ocurrencias completadas/saltadas ({sortedCompletedSkipped.length})
                   </motion.button>
                   
                   <AnimatePresence>
@@ -261,7 +281,7 @@ export function TaskCard({
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.25, ease: "easeInOut" }}
                       >
-                      {completedSkippedOccurrences.map((occurrence) => (
+                      {displayedCompletedSkipped.map((occurrence) => (
                         <OccurrenceCard
                           key={occurrence.id}
                           occurrence={occurrence}
@@ -274,6 +294,30 @@ export function TaskCard({
                           isSkipping={isSkipping}
                         />
                       ))}
+                      
+                      {/* Show "Ver más" button if there are more than 5 */}
+                      {hasMoreCompleted && !showAllCompleted && (
+                        <motion.button
+                          onClick={() => setShowAllCompleted(true)}
+                          className="w-full rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 text-xs text-primary hover:bg-primary/10 hover:border-primary/50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.99 }}
+                        >
+                          Ver más ({sortedCompletedSkipped.length - INITIAL_DISPLAY_COUNT} restantes)
+                        </motion.button>
+                      )}
+                      
+                      {/* Show "Ver menos" button when showing all */}
+                      {hasMoreCompleted && showAllCompleted && (
+                        <motion.button
+                          onClick={() => setShowAllCompleted(false)}
+                          className="w-full rounded-lg border border-dashed border-muted-foreground/30 bg-muted/20 p-3 text-xs text-muted-foreground hover:bg-muted/40 hover:border-muted-foreground/50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-muted-foreground/50"
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.99 }}
+                        >
+                          Ver menos
+                        </motion.button>
+                      )}
                     </motion.div>
                   )}
                   </AnimatePresence>
