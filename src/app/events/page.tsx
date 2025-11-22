@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { ScheduleDialog } from "~/components/events/schedule-dialog"
 import { TaskDetailsModal } from "~/components/events/task-details-modal"
 import { ConfirmScheduleDialog } from "~/components/events/confirm-schedule-dialog"
@@ -9,6 +9,7 @@ import { EventsPageHeader } from "~/components/events/events-page-header"
 import { DesktopLayout } from "~/components/events/desktop-layout"
 import { MobileLayout } from "~/components/events/mobile-layout"
 import { LoadingPage } from "~/components/ui/loading-spinner"
+import { TaskFormModal } from "~/components/tasks"
 import { api } from "~/trpc/react"
 import { toast } from "sonner"
 import type { EventWithDetails, OccurrenceWithTask } from "~/types"
@@ -49,6 +50,9 @@ function EventsPageContent() {
     filterStartDate,
     filterEndDate,
   } = useEventsContext()
+
+  // State for task creation modal
+  const [isTaskFormOpen, setIsTaskFormOpen] = useState(false)
 
   // Get utils for query invalidation
   const utils = api.useUtils()
@@ -229,7 +233,7 @@ function EventsPageContent() {
 
   return (
     <div className="flex flex-col h-full bg-background">
-      <EventsPageHeader />
+      <EventsPageHeader onCreateTaskClick={() => setIsTaskFormOpen(true)} />
 
       {/* Main Content */}
       <div className="flex-1 flex min-h-0 relative">
@@ -285,6 +289,18 @@ function EventsPageContent() {
         onEventCompleted={async () => {
           await utils.calendarEvent.getMyEventsWithDetails.invalidate()
           await utils.occurrence.invalidate()
+        }}
+      />
+
+      {/* Task Form Modal */}
+      <TaskFormModal
+        open={isTaskFormOpen}
+        onOpenChange={setIsTaskFormOpen}
+        onSuccess={async () => {
+          setIsTaskFormOpen(false)
+          // Invalidate occurrences to refresh the matrix with the new task
+          await utils.occurrence.invalidate()
+          toast.success("Tarea creada", { description: "La tarea se creó correctamente y aparecerá en la matriz" })
         }}
       />
     </div>

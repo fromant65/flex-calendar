@@ -70,6 +70,9 @@ export function useTaskForm({ open, editingTask, duplicatingTask, onSuccess }: U
         description: `"${formData.name}" ha sido agregada a tu lista de tareas`,
       })
       await utils.task.getMyTasks.invalidate()
+      // Invalidate events and occurrences for fixed tasks (they create events automatically)
+      await utils.calendarEvent.getMyEventsWithDetails.invalidate()
+      await utils.occurrence.invalidate() // Invalidates all occurrence queries including getByDateRange
       onSuccess()
     },
     onError: (error) => {

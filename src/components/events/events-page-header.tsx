@@ -2,13 +2,17 @@
 
 import { Button } from "~/components/ui/button"
 import { HelpTip } from "~/components/ui/help-tip"
-import { Grid3x3, Calendar } from "lucide-react"
+import { Grid3x3, Calendar, Plus } from "lucide-react"
 import { useEventsContext } from "./events-context"
 
 // Modular component - EventsPageHeader
-// Handles the page header with title and mobile view toggle
+// Handles the page header with title, mobile view toggle, and create task button
 
-export function EventsPageHeader() {
+interface EventsPageHeaderProps {
+  onCreateTaskClick: () => void
+}
+
+export function EventsPageHeader({ onCreateTaskClick }: EventsPageHeaderProps) {
   const { mobileView, setMobileView } = useEventsContext()
 
   return (
@@ -16,39 +20,66 @@ export function EventsPageHeader() {
       <div className="px-4 lg:px-6 py-4">
         {/* Layout: 2 rows on <sm, 2 columns on >=sm */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <div>
-              <h1 className="text-xl lg:text-2xl font-bold text-foreground">Planificador de Tareas</h1>
-              <p className="hidden sm:block text-xs lg:text-sm text-muted-foreground">
-                Organiza y programa tus tareas de manera eficiente
-              </p>
+          <div className="flex items-center gap-2 sm:flex-1 sm:justify-between">
+            <div className="flex items-center gap-2">
+              <div>
+                <h1 className="text-xl lg:text-2xl font-bold text-foreground">Planificador de Tareas</h1>
+                <p className="hidden sm:block text-xs lg:text-sm text-muted-foreground">
+                  Organiza y programa tus tareas de manera eficiente
+                </p>
+              </div>
+              
+              {/* HelpTip - only visible on desktop, next to title */}
+              <div className="hidden lg:block">
+                <HelpTip title="Cómo usar Eventos" side="right">
+                  <p className="mb-1">Matriz: clasifica tareas por urgencia e importancia. <br /> Calendario: Permite programar tareas en eventos. Haz click para ver o editar detalles de los eventos.</p>
+                  <p className="text-xs text-muted-foreground">Para completar un evento haz click sobre él y usa la acción en la tarjeta.</p>
+                </HelpTip>
+              </div>
             </div>
-            <HelpTip title="Cómo usar Eventos" side="right">
-              <p className="mb-1">Matriz: clasifica tareas por urgencia e importancia. <br /> Calendario: Permite programar tareas en eventos. Haz click para ver o editar detalles de los eventos.</p>
-              <p className="text-xs text-muted-foreground">Para completar un evento haz click sobre él y usa la acción en la tarjeta.</p>
-            </HelpTip>
+            
+            {/* Create Task button - next to title on mobile, pushed right on desktop */}
+            <Button
+              onClick={onCreateTaskClick}
+              size="sm"
+              className="cursor-pointer whitespace-nowrap"
+            >
+              <Plus className="w-4 h-4 sm:mr-1" />
+              <span className="hidden sm:inline">Nueva Tarea</span>
+            </Button>
           </div>
 
-          {/* Mobile view toggle - only visible on screens < lg */}
-          <div className="flex lg:hidden items-center gap-2">
-            <Button
-              variant={mobileView === "matrix" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setMobileView("matrix")}
-              className="cursor-pointer flex-1 sm:flex-none"
-            >
-              <Grid3x3 className="w-4 h-4 mr-1" />
-              Matriz
-            </Button>
-            <Button
-              variant={mobileView === "calendar" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setMobileView("calendar")}
-              className="cursor-pointer flex-1 sm:flex-none"
-            >
-              <Calendar className="w-4 h-4 mr-1" />
-              Calendario
-            </Button>
+          {/* Right side controls - Mobile view toggle and HelpTip */}
+          <div className="flex items-center gap-2">
+            {/* Mobile view toggle - only visible on screens < lg */}
+            <div className="flex lg:hidden items-center gap-2">
+              <Button
+                variant={mobileView === "matrix" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setMobileView("matrix")}
+                className="cursor-pointer flex-1 sm:flex-none"
+              >
+                <Grid3x3 className="w-4 h-4 mr-1" />
+                Matriz
+              </Button>
+              <Button
+                variant={mobileView === "calendar" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setMobileView("calendar")}
+                className="cursor-pointer flex-1 sm:flex-none"
+              >
+                <Calendar className="w-4 h-4 mr-1" />
+                Calendario
+              </Button>
+            </div>
+
+            {/* HelpTip - only visible on mobile/tablet */}
+            <div className="lg:hidden">
+              <HelpTip title="Cómo usar Eventos" side="left">
+                <p className="mb-1">Matriz: clasifica tareas por urgencia e importancia. <br /> Calendario: Permite programar tareas en eventos. Haz click para ver o editar detalles de los eventos.</p>
+                <p className="text-xs text-muted-foreground">Para completar un evento haz click sobre él y usa la acción en la tarjeta.</p>
+              </HelpTip>
+            </div>
           </div>
         </div>
       </div>
