@@ -1,7 +1,7 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, X, GanttChart, Home, CheckSquare, BookmarkCheck, Calendar, BarChart3, Download, HelpCircle } from "lucide-react"
+import { Menu, X, GanttChart, Home, CheckSquare, BookmarkCheck, Calendar, BarChart3, Download, HelpCircle, Shield } from "lucide-react"
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { Button } from "~/components/ui/button"
@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation"
 import { LogoutButton } from "./logout-button"
 import { featureFlags } from "~/lib/feature-flags"
 import { useIsPWA } from "~/lib/pwa-utils"
+import { useSession } from "next-auth/react"
 
 const menuItems = [
   { href: "/dashboard", label: "Inicio", icon: Home },
@@ -26,6 +27,8 @@ export function SideMenu() {
   const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
   const isPWA = useIsPWA()
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === "admin"
 
   useEffect(() => {
     setMounted(true)
@@ -95,6 +98,20 @@ export function SideMenu() {
                       </Link>
                     )
                   })}
+
+                  {/* Admin Link - Only for admin users */}
+                  {isAdmin && (
+                    <Link href="/admin" onClick={() => setIsOpen(false)}>
+                      <Button
+                        variant={pathname === "/admin" ? "default" : "ghost"}
+                        className="w-full justify-start gap-2 cursor-pointer"
+                        size="default"
+                      >
+                        <Shield className="h-4 w-4" />
+                        <span>Admin</span>
+                      </Button>
+                    </Link>
+                  )}
 
                   {/* Install PWA Link - Only visible on web */}
                   {!isPWA && (

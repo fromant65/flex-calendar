@@ -8,6 +8,20 @@
       "when": 1761705158715,
       "tag": "0000_orange_next_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1763832443700,
+      "tag": "0001_blushing_champions",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1763833629274,
+      "tag": "0002_broken_squadron_supreme",
+      "breakpoints": true
     }
   ]
 }

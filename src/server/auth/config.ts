@@ -22,15 +22,15 @@ declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
+      role?: string | null;
       // ...other properties
       // role: UserRole;
     } & DefaultSession["user"];
   }
 
-  // interface User {
-  //   // ...other properties
-  //   // role: UserRole;
-  // }
+  interface User {
+    role?: string | null;
+  }
 }
 
 /**
@@ -76,6 +76,7 @@ export const authConfig = {
           email: user.email,
           name: user.name,
           image: user.image,
+          role: user.role,
         };
       },
     }),
@@ -99,6 +100,7 @@ export const authConfig = {
     jwt: ({ token, user }) => {
       if (user) {
         token.id = user.id;
+        token.role = user.role;
       }
       return token;
     },
@@ -107,6 +109,7 @@ export const authConfig = {
       user: {
         ...session.user,
         id: token.id as string,
+        role: token.role as string | null | undefined,
       },
     }),
   },

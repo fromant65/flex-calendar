@@ -1,0 +1,1 @@
+ALTER TABLE "flex-calendar_user" DROP COLUMN "lastActivityAt";

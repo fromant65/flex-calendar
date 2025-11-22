@@ -2,8 +2,9 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, CheckSquare, Calendar, GanttChart, BookmarkCheck } from "lucide-react"
+import { Home, CheckSquare, Calendar, GanttChart, BookmarkCheck, Shield } from "lucide-react"
 import { Button } from "~/components/ui/button"
+import { useSession } from "next-auth/react"
 
 const navItems = [
   { href: "/dashboard", label: "Inicio", icon: Home },
@@ -15,6 +16,8 @@ const navItems = [
 
 export function DesktopNav() {
   const pathname = usePathname()
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === "admin"
 
   return (
     <div className="flex items-center gap-1">
@@ -35,6 +38,19 @@ export function DesktopNav() {
           </Link>
         )
       })}
+      
+      {isAdmin && (
+        <Link href="/admin">
+          <Button
+            variant={pathname === "/admin" ? "default" : "ghost"}
+            className="gap-2 transition-all cursor-pointer"
+            size="default"
+          >
+            <Shield className="h-4 w-4" />
+            <span>Admin</span>
+          </Button>
+        </Link>
+      )}
     </div>
   )
 }

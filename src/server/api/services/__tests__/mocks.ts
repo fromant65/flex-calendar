@@ -55,6 +55,14 @@ jest.mock('../../adapter', () => ({
     incrementCompletedOccurrences: jest.fn(),
     resetCompletedOccurrences: jest.fn(),
   })),
+  AdminAdapter: jest.fn().mockImplementation(() => ({
+    getGlobalStats: jest.fn(),
+    getUsersWithActivity: jest.fn(),
+    getUserStats: jest.fn(),
+    getAllUsers: jest.fn(),
+    getUserCounts: jest.fn(),
+    getAllUsersWithStats: jest.fn(),
+  })),
 }));
 
 // Mock repositories

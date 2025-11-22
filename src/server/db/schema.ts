@@ -47,6 +47,7 @@ export const users = createTable("user", (d) => ({
     .default(sql`CURRENT_TIMESTAMP`),
   image: d.varchar({ length: 255 }),
   password: d.varchar({ length: 255 }), // Hashed password for credentials auth
+  role: d.varchar({ length: 50 }), // User role: 'admin' | null
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
