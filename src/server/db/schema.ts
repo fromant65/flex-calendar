@@ -259,3 +259,64 @@ export const calendarEventsRelations = relations(calendarEvents, ({ one }) => ({
 export const taskRecurrencesRelations = relations(taskRecurrences, ({ many }) => ({
   tasks: many(tasks),
 }));
+
+// Notifications Schema
+
+export const notifications = createTable(
+  "notification",
+  (d) => ({
+    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+    title: d.varchar({ length: 256 }).notNull(),
+    description: d.text().notNull(),
+    isActive: d.boolean().notNull().default(true),
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
+  }),
+  (t) => [
+    index("notification_active_idx").on(t.isActive),
+    index("notification_created_idx").on(t.createdAt),
+  ],
+);
+
+export const notificationsUsers = createTable(
+  "notification_user",
+  (d) => ({
+    notificationId: d
+      .integer()
+      .notNull()
+      .references(() => notifications.id, { onDelete: "cascade" }),
+    userId: d
+      .varchar({ length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    readAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  }),
+  (t) => [
+    primaryKey({ columns: [t.notificationId, t.userId] }),
+    index("notification_user_notification_idx").on(t.notificationId),
+    index("notification_user_user_idx").on(t.userId),
+  ],
+);
+
+// Notification Relations
+
+export const notificationsRelations = relations(notifications, ({ many }) => ({
+  notificationsUsers: many(notificationsUsers),
+}));
+
+export const notificationsUsersRelations = relations(notificationsUsers, ({ one }) => ({
+  notification: one(notifications, {
+    fields: [notificationsUsers.notificationId],
+    references: [notifications.id],
+  }),
+  user: one(users, {
+    fields: [notificationsUsers.userId],
+    references: [users.id],
+  }),
+}));

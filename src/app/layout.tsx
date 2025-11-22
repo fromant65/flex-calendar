@@ -5,6 +5,7 @@ import { Geist } from "next/font/google";
 
 import { TRPCReactProvider } from "~/trpc/react";
 import { Navbar } from "~/components/navbar/navbar";
+import { BottomNav } from "~/components/navbar/bottom-nav";
 import { Providers } from "~/components/providers";
 import { PWABanner } from "~/components/pwa";
 
@@ -62,9 +63,10 @@ export default function RootLayout({
                 <Navbar />
                 <PWABanner />
               </div>
-              <main className="flex-1 overflow-scroll min-h-0">
+              <main className="flex-1 overflow-scroll min-h-0 pb-16 sm:pb-0">
                 {children}
               </main>
+              <BottomNav />
             </div>
           </TRPCReactProvider>
         </Providers>

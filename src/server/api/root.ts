@@ -5,6 +5,7 @@ import { authRouter } from "~/server/api/routers/auth.router";
 import { timelineRouter } from "~/server/api/routers/timeline.router";
 import { statsRouter } from "~/server/api/routers/stats.router";
 import { adminRouter } from "~/server/api/routers/admin.router";
+import { notificationsRouter } from "~/server/api/routers/notifications.router";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -20,6 +21,7 @@ export const appRouter = createTRPCRouter({
   timeline: timelineRouter,
   stats: statsRouter,
   admin: adminRouter,
+  notifications: notificationsRouter,
 });
 
 // export type definition of API

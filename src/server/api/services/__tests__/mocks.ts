@@ -63,6 +63,20 @@ jest.mock('../../adapter', () => ({
     getUserCounts: jest.fn(),
     getAllUsersWithStats: jest.fn(),
   })),
+  NotificationsAdapter: jest.fn().mockImplementation(() => ({
+    createNotification: jest.fn(),
+    updateNotification: jest.fn(),
+    deleteNotification: jest.fn(),
+    getAllNotifications: jest.fn(),
+    getActiveNotifications: jest.fn(),
+    toggleNotificationStatus: jest.fn(),
+    getNotificationsForUser: jest.fn(),
+    getUnreadNotifications: jest.fn(),
+    markAsRead: jest.fn(),
+    markAsUnread: jest.fn(),
+    getNotificationById: jest.fn(),
+    getUnreadCount: jest.fn(),
+  })),
 }));
 
 // Mock repositories

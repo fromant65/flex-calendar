@@ -6,17 +6,18 @@ import { Moon, Sun } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { Button } from "~/components/ui/button"
-import { MobileNav } from "./mobile-nav"
 import { SideMenu } from "./side-menu"
 import { AdaptiveDesktopNav } from "./adaptive-desktop-nav"
-import { LogoutButton } from "./logout-button"
 import { FlexCalendarIcon } from "~/components/ui/flex-calendar-icon"
+import { NotificationBell } from "~/components/notifications/notification-bell"
+import { NotificationMenu } from "~/components/notifications/notification-menu"
 
 export function Navbar() {
   const pathname = usePathname()
   const { data: session, status } = useSession()
   const [theme, setTheme] = useState<"light" | "dark">("light")
   const [mounted, setMounted] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
 
   // Load theme from localStorage on mount
   useEffect(() => {
@@ -45,12 +46,12 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo - Hidden on mobile */}
-          <Link href="/dashboard" className="hidden sm:flex items-center gap-2 transition-opacity hover:opacity-80">
+          {/* Logo */}
+          <Link href="/dashboard" className="flex items-center gap-2 transition-opacity hover:opacity-80">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-md">
               <FlexCalendarIcon className="h-5 w-5" />
             </div>
-            <span className="text-lg font-semibold text-foreground">Flex Calendar</span>
+            <span className="hidden sm:inline text-lg font-semibold text-foreground">Flex Calendar</span>
           </Link>
 
           {/* Desktop Navigation (≥sm) - Only when logged in */}
@@ -60,21 +61,19 @@ export function Navbar() {
             </div>
           )}
 
-          {/* Mobile Navigation (<sm) - Only when logged in */}
-          {status === "authenticated" && (
-            <div className="flex sm:hidden items-center gap-1">
-              <MobileNav />
-            </div>
-          )}
-
           {/* Right side controls */}
           <div className="flex items-center gap-2">
-            {/* Theme Toggle - sm to lg: before menu, lg+: before menu */}
+            {/* Notifications Bell - Only when logged in */}
+            {status === "authenticated" && (
+              <NotificationBell onClick={() => setNotificationsOpen(true)} />
+            )}
+
+            {/* Theme Toggle */}
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              className="h-9 w-9 transition-all hover:rotate-12 cursor-pointer sm:order-1 lg:order-1"
+              className="h-9 w-9 transition-all hover:rotate-12 cursor-pointer"
               aria-label="Toggle theme"
               disabled={!mounted}
             >
@@ -85,22 +84,21 @@ export function Navbar() {
               )}
             </Button>
 
-            {/* Side Menu - sm and up when logged in */}
+            {/* Side Menu - Only when logged in */}
             {status === "authenticated" && (
-              <div className="hidden sm:block sm:order-2 lg:order-2">
-                <SideMenu />
-              </div>
-            )}
-
-            {/* Side Menu - Mobile (<sm) - when logged in */}
-            {status === "authenticated" && (
-              <div className="sm:hidden">
-                <SideMenu />
-              </div>
+              <SideMenu />
             )}
           </div>
         </div>
       </div>
+
+      {/* Notification Menu */}
+      {status === "authenticated" && (
+        <NotificationMenu
+          open={notificationsOpen}
+          onOpenChange={setNotificationsOpen}
+        />
+      )}
     </nav>
   )
 }

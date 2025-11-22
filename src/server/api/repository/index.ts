@@ -9,3 +9,4 @@ export { TaskOccurrenceRepository } from "./task-occurrence.repository";
 export { CalendarEventRepository } from "./calendar-event.repository";
 export { StatisticsRepository } from "./statistics.repository";
 export { AdminRepository } from "./admin.repository";
+export { NotificationsRepository } from "./notifications.repository";

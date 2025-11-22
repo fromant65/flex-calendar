@@ -185,3 +185,36 @@ export interface UrgencyCalculationResult {
   daysUntilTarget?: number;
   daysUntilLimit?: number;
 }
+
+// Notification Types
+
+export interface Notification {
+  id: number;
+  title: string;
+  description: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface NotificationWithReadStatus {
+  id: number;
+  title: string;
+  description: string;
+  isActive: boolean;
+  createdAt: string;
+  isRead: boolean;
+  readAt: string | null;
+}
+
+export interface CreateNotificationDTO {
+  title: string;
+  description: string;
+  isActive?: boolean;
+}
+
+export interface UpdateNotificationDTO {
+  title?: string;
+  description?: string;
+  isActive?: boolean;
+}

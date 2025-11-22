@@ -8,3 +8,4 @@ export { CalendarEventAdapter } from "./calendar-event.adapter";
 export { StatisticsAdapter } from "./statistics.adapter";
 export { RecurrenceAdapter } from "./recurrence.adapter";
 export { AdminAdapter } from "./admin.adapter";
+export { NotificationsAdapter } from "./notifications.adapter";
