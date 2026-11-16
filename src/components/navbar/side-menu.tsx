@@ -1,7 +1,7 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, X, GanttChart, Home, CheckSquare, BookmarkCheck, Calendar, BarChart3, Download, HelpCircle, Shield } from "lucide-react"
+import { Menu, X, GanttChart, Home, CheckSquare, BookmarkCheck, Calendar, BarChart3, Download, HelpCircle, Shield, Repeat2 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { Button } from "~/components/ui/button"
@@ -16,6 +16,7 @@ const menuItems = [
   { href: "/dashboard", label: "Inicio", icon: Home },
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/task-manager", label: "Gestor de Tareas", icon: BookmarkCheck },
+  { href: "/routines", label: "Rutinas", icon: Repeat2 },
   { href: "/events", label: "Calendario", icon: Calendar },
   { href: "/timeline", label: "Línea de Tiempo", icon: GanttChart, featureFlag: "timeline" as const },
   { href: "/stats", label: "Estadísticas", icon: BarChart3, featureFlag: "stats" as const },

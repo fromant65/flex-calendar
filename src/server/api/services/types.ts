@@ -2,8 +2,14 @@
  * Common types and DTOs used across services
  */
 
-// Task Occurrence Status
-export type TaskOccurrenceStatus = 'Pending' | 'In Progress' | 'Completed' | 'Skipped';
+// Task/Occurrence Status (V2)
+export type TaskStatus = 'active' | 'paused' | 'completed';
+export type TaskOccurrenceStatus =
+  | 'unassigned'
+  | 'pending'
+  | 'in_progress'
+  | 'completed'
+  | 'skipped';
 
 // Task Type (based on recurrence pattern)
 export enum TaskType {
@@ -27,15 +33,21 @@ export interface Task {
   ownerId: string;
   name: string;
   description: string | null;
-  recurrenceId: number | null;
   importance: number;
-  isActive: boolean;
+  difficulty: number;
+  isDivisible: boolean;
+  urgencyThresholdAt: Date | null;
+  durationMinutes: number | null;
   isFixed: boolean;
   fixedStartTime: string | null;
   fixedEndTime: string | null;
+  status: TaskStatus;
   completedAt: Date | null;
   createdAt: Date;
   updatedAt: Date | null;
+  // Legacy compatibility during V1->V2 migration
+  recurrenceId?: number | null;
+  isActive?: boolean;
 }
 
 export interface TaskRecurrence {
@@ -52,14 +64,14 @@ export interface TaskRecurrence {
 
 export interface TaskOccurrence {
   id: number;
-  associatedTaskId: number;
-  startDate: Date;
-  limitDate: Date | null;
-  targetDate: Date | null;
-  targetTimeConsumption: number | null;
-  timeConsumed: number | null;
+  taskId: number;
+  slotStartAt: Date | null;
+  slotEndAt: Date | null;
+  dueAt: Date | null;
+  tentativeAt: Date | null;
+  targetTimeMinutes: number | null;
+  timeSpentMinutes: number;
   status: TaskOccurrenceStatus;
-  urgency: number | null;
   completedAt: Date | null;
   createdAt: Date;
   updatedAt: Date | null;
@@ -85,12 +97,19 @@ export interface CalendarEvent {
 export interface CreateTaskDTO {
   name: string;
   description?: string;
-  importance?: number; // 1-10
-  targetDate?: Date; // For fixed tasks: start datetime. For others: target date
-  limitDate?: Date; // For fixed tasks: end datetime. For others: limit date
+  importance?: number;
+  difficulty?: number;
+  isDivisible?: boolean;
+  urgencyThresholdAt?: Date;
+  durationMinutes?: number;
+  isFixed?: boolean;
+  fixedStartTime?: string;
+  fixedEndTime?: string;
+  // Legacy compatibility during V1->V2 migration
+  targetDate?: Date;
+  limitDate?: Date;
   targetTimeConsumption?: number;
   recurrence?: CreateRecurrenceDTO;
-  isFixed?: boolean;
 }
 
 export interface CreateRecurrenceDTO {
@@ -106,23 +125,32 @@ export interface UpdateTaskDTO {
   name?: string;
   description?: string;
   importance?: number;
-  isActive?: boolean;
+  difficulty?: number;
+  isDivisible?: boolean;
+  urgencyThresholdAt?: Date | null;
+  durationMinutes?: number | null;
+  isFixed?: boolean;
+  fixedStartTime?: string | null;
+  fixedEndTime?: string | null;
+  status?: TaskStatus;
 }
 
 export interface CreateOccurrenceDTO {
-  associatedTaskId: number;
-  startDate: Date;
-  limitDate?: Date;
-  targetDate?: Date;
-  targetTimeConsumption?: number;
+  taskId: number;
+  slotStartAt?: Date | null;
+  slotEndAt?: Date | null;
+  dueAt?: Date;
+  tentativeAt?: Date;
+  targetTimeMinutes?: number;
 }
 
 export interface UpdateOccurrenceDTO {
-  startDate?: Date;
-  limitDate?: Date;
-  targetDate?: Date;
-  targetTimeConsumption?: number;
-  timeConsumed?: number;
+  slotStartAt?: Date | null;
+  slotEndAt?: Date | null;
+  dueAt?: Date | null;
+  tentativeAt?: Date | null;
+  targetTimeMinutes?: number | null;
+  timeSpentMinutes?: number;
   status?: TaskOccurrenceStatus;
 }
 
@@ -149,7 +177,6 @@ export interface UpdateCalendarEventDTO {
 export interface TaskWithDetails extends Task {
   recurrence?: TaskRecurrence | null;
   nextOccurrence?: TaskOccurrence;
-  taskType: TaskType;
 }
 
 export interface OccurrenceWithTask extends TaskOccurrence {

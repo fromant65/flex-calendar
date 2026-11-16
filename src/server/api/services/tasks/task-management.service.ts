@@ -161,7 +161,7 @@ export class TaskManagementService {
       }
       
       // Skip occurrence if it's not already completed or skipped
-      if (occurrence.status === "Pending" || occurrence.status === "In Progress") {
+      if (occurrence.status === "pending" || occurrence.status === "in_progress") {
         await this.occurrenceAdapter.skipOccurrence(occurrence.id);
       }
     }

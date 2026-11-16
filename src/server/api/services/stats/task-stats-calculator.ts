@@ -13,7 +13,7 @@ export class TaskStatsCalculator {
    */
   calculate(dataset: StatsDataset): TaskStatsData {
     try {
-      const { tasks: userTasks = [], occurrences = [], recurrenceMap } = dataset;
+      const { tasks: userTasks = [], occurrences = [] } = dataset;
 
       // Validate data
       if (!Array.isArray(userTasks) || !Array.isArray(occurrences)) {
@@ -32,7 +32,7 @@ export class TaskStatsCalculator {
         averageCompletionTime: this.calculateAverageCompletionTime(userTasks),
         importanceDistribution: this.calculateImportanceDistribution(userTasks, occurrences),
         fixedVsFlexible: this.calculateFixedVsFlexible(userTasks),
-        recurringVsUnique: StatsUtils.calculateRecurringVsUnique(userTasks, recurrenceMap),
+        recurringVsUnique: StatsUtils.calculateRecurringVsUnique(userTasks, occurrences),
       };
 
       // Generate insights
@@ -118,7 +118,7 @@ export class TaskStatsCalculator {
 
     // Filter valid occurrences
     const validOccurrences = occurrences.filter(
-      (occ) => occ?.associatedTaskId && occ?.status
+      (occ) => occ?.taskId && occ?.status
     );
 
     if (validOccurrences.length === 0) {
@@ -127,10 +127,10 @@ export class TaskStatsCalculator {
     }
 
     for (const occ of validOccurrences) {
-      const task = userTasks.find((t) => t?.id === occ.associatedTaskId);
+      const task = userTasks.find((t) => t?.id === occ.taskId);
       if (!task) {
         console.warn(
-          `[TaskStats] Task not found for occurrence ${occ.id} with taskId ${occ.associatedTaskId}`
+          `[TaskStats] Task not found for occurrence ${occ.id} with taskId ${occ.taskId}`
         );
         continue;
       }
@@ -149,7 +149,7 @@ export class TaskStatsCalculator {
       }
       const group = importanceGroups.get(importance)!;
       group.total++;
-      if (occ.status === "Completed") {
+      if (occ.status === "completed") {
         group.completed++;
       }
     }

@@ -1,6 +1,7 @@
 "use client"
 
-import type { CalendarView, EventWithDetails } from "~/types"
+import type { CalendarView } from "~/types"
+import type { CalendarEventLike } from "~/types/v2-ui"
 import { getCurrentTimePosition, getWeekDays } from "~/lib/calendar-utils"
 import { useEffect, useState } from "react"
 import { DayView } from "./day-view"
@@ -9,13 +10,13 @@ import { MonthView } from "./month-view"
 import { CalendarHeader } from "./calendar-header"
 
 interface CalendarViewProps {
-  events: EventWithDetails[]
+  events: CalendarEventLike[]
   view: CalendarView
   onViewChange: (view: CalendarView) => void
   onTimeSlotClick: (date: Date, hour?: number) => void
-  onEventClick: (event: EventWithDetails) => void
+  onEventClick: (event: CalendarEventLike) => void
   onDrop: (date: Date, hour?: number) => void
-  onEventDragStart: (event: EventWithDetails) => void
+  onEventDragStart: (event: CalendarEventLike) => void
 }
 
 export function CalendarViewComponent({

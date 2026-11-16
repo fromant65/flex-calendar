@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react"
 import { motion, AnimatePresence } from "motion/react"
-import type { OccurrenceWithTask } from "~/types"
 import { TimelineNavigationControls } from "./timeline-navigation-controls"
 import { OccurrenceTimelineCard } from "./occurrence-timeline-card"
 import { TimelineDateGrid } from "./timeline-date-grid"
@@ -29,12 +28,48 @@ import {
 export type TimelineViewMode = "day" | "week" | "month"
 export type TimelineGrouping = "none" | "task" | "status"
 
+export interface TaskManagerOccurrence {
+  id: number
+  status: string
+  task: {
+    id: number
+    name: string
+    description: string | null
+    importance: number
+    taskType?: string
+    isActive?: boolean
+  }
+  startDate?: Date
+  targetDate?: Date | null
+  limitDate?: Date | null
+  slotStartAt?: Date | null
+  tentativeAt?: Date | null
+  dueAt?: Date | null
+  completedAt?: Date | null
+  timeConsumed?: number | null
+  timeSpentMinutes?: number | null
+  targetTimeConsumption?: number | null
+  targetTimeMinutes?: number | null
+}
+
+const normalizeOccurrenceStatus = (status: string): string =>
+  status.toLowerCase().replace(/\s+/g, "_")
+
+const getOccurrenceStartDate = (occurrence: TaskManagerOccurrence): Date | null =>
+  occurrence.slotStartAt ?? occurrence.startDate ?? null
+
+const getOccurrenceTargetDate = (occurrence: TaskManagerOccurrence): Date | null =>
+  occurrence.tentativeAt ?? occurrence.targetDate ?? null
+
+const getOccurrenceLimitDate = (occurrence: TaskManagerOccurrence): Date | null =>
+  occurrence.dueAt ?? occurrence.limitDate ?? null
+
 interface TaskManagerTimelineProps {
-  occurrences: OccurrenceWithTask[]
-  onOccurrenceClick?: (occurrence: OccurrenceWithTask) => void
+  occurrences: TaskManagerOccurrence[]
+  onOccurrenceClick?: (occurrence: TaskManagerOccurrence) => void
   onCompleteOccurrence?: (occurrenceId: number) => void
   onSkipOccurrence?: (occurrenceId: number) => void
-  onEditOccurrence?: (occurrence: OccurrenceWithTask) => void
+  onEditOccurrence?: (occurrence: TaskManagerOccurrence) => void
 }
 
 export function TaskManagerTimeline({
@@ -48,10 +83,10 @@ export function TaskManagerTimeline({
   const [viewMode, setViewMode] = useState<TimelineViewMode>("week")
   const [grouping, setGrouping] = useState<TimelineGrouping>("none")
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([
-    "Pending",
-    "In Progress",
-    "Completed",
-    "Skipped"
+    "pending",
+    "in_progress",
+    "completed",
+    "skipped"
   ])
 
   // Calculate date range based on view mode
@@ -83,22 +118,27 @@ export function TaskManagerTimeline({
   const filteredOccurrences = useMemo(() => {
     return occurrences.filter((occurrence) => {
       // Filter by status
-      if (!selectedStatuses.includes(occurrence.status)) {
+      const normalizedStatus = normalizeOccurrenceStatus(occurrence.status)
+      if (!selectedStatuses.includes(normalizedStatus)) {
         return false
       }
 
       // Filter by date range - check if either targetDate or limitDate falls within range
-      const targetInRange = occurrence.targetDate && isWithinInterval(occurrence.targetDate, {
+      const targetDate = getOccurrenceTargetDate(occurrence)
+      const limitDate = getOccurrenceLimitDate(occurrence)
+      const startDateValue = getOccurrenceStartDate(occurrence)
+
+      const targetInRange = targetDate && isWithinInterval(targetDate, {
         start: startDate,
         end: endDate,
       })
       
-      const limitInRange = occurrence.limitDate && isWithinInterval(occurrence.limitDate, {
+      const limitInRange = limitDate && isWithinInterval(limitDate, {
         start: startDate,
         end: endDate,
       })
 
-      const startInRange = isWithinInterval(occurrence.startDate, {
+      const startInRange = startDateValue && isWithinInterval(startDateValue, {
         start: startDate,
         end: endDate,
       })
@@ -109,7 +149,7 @@ export function TaskManagerTimeline({
 
   // Group occurrences by date and optionally by task or status
   const groupedOccurrences = useMemo(() => {
-    const groups = new Map<string, OccurrenceWithTask[]>()
+    const groups = new Map<string, TaskManagerOccurrence[]>()
 
     filteredOccurrences.forEach((occurrence) => {
       let groupKey = ""
@@ -117,7 +157,7 @@ export function TaskManagerTimeline({
       if (grouping === "task") {
         groupKey = `task-${occurrence.task.id}`
       } else if (grouping === "status") {
-        groupKey = `status-${occurrence.status}`
+        groupKey = `status-${normalizeOccurrenceStatus(occurrence.status)}`
       } else {
         groupKey = "all"
       }

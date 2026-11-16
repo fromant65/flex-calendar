@@ -1,5 +1,12 @@
 import { relations, sql } from "drizzle-orm";
-import { index, pgTableCreator, primaryKey } from "drizzle-orm/pg-core";
+import {
+  check,
+  index,
+  pgEnum,
+  pgTableCreator,
+  primaryKey,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
 import { type AdapterAccount } from "next-auth/adapters";
 
 /**
@@ -9,27 +16,6 @@ import { type AdapterAccount } from "next-auth/adapters";
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
 export const createTable = pgTableCreator((name) => `flex-calendar_${name}`);
-
-export const posts = createTable(
-  "post",
-  (d) => ({
-    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
-    name: d.varchar({ length: 256 }),
-    createdById: d
-      .varchar({ length: 255 })
-      .notNull()
-      .references(() => users.id),
-    createdAt: d
-      .timestamp({ withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
-  }),
-  (t) => [
-    index("created_by_idx").on(t.createdById),
-    index("name_idx").on(t.name),
-  ],
-);
 
 export const users = createTable("user", (d) => ({
   id: d
@@ -109,25 +95,32 @@ export const verificationTokens = createTable(
   (t) => [primaryKey({ columns: [t.identifier, t.token] })],
 );
 
-// Task Management Schema
+// V2 Domain Schema
 
-export const taskRecurrences = createTable(
-  "task_recurrence",
-  (d) => ({
-    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
-    creationDate: d
-      .timestamp({ withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    interval: d.integer(), // Number of units between recurrences (e.g., every 2 days)
-    daysOfWeek: d.text().array(), // Array of day names: ['Mon', 'Tue', etc.]
-    daysOfMonth: d.integer().array(), // Array of day numbers: [1, 15, etc.]
-    maxOccurrences: d.integer(), // Maximum number of occurrences per period (for Habit+) or total (for finite recurrence)
-    completedOccurrences: d.integer().default(0), // Number of completed occurrences in current period
-    lastPeriodStart: d.timestamp({ withTimezone: true }), // Start date of the current period
-    endDate: d.timestamp({ withTimezone: true }), // Absolute end date for recurrence
-  }),
-);
+export const taskStatusEnum = pgEnum("flex_calendar_task_status", [
+  "active",
+  "paused",
+  "completed",
+]);
+
+export const occurrenceStatusEnum = pgEnum("flex_calendar_occurrence_status", [
+  "unassigned",
+  "pending",
+  "in_progress",
+  "completed",
+  "skipped",
+]);
+
+export const routineEdgeTypeEnum = pgEnum("flex_calendar_routine_edge_type", [
+  "ORDER",
+  "DEPENDENCY",
+]);
+
+export const routineRecurrenceTypeEnum = pgEnum("flex_calendar_routine_recurrence_type", [
+  "none",
+  "finite",
+  "infinite",
+]);
 
 export const tasks = createTable(
   "task",
@@ -139,15 +132,16 @@ export const tasks = createTable(
       .references(() => users.id),
     name: d.varchar({ length: 512 }).notNull(),
     description: d.text(),
-    recurrenceId: d
-      .integer()
-      .references(() => taskRecurrences.id),
-    importance: d.integer().notNull().default(5), // 1-10 scale
-    isActive: d.boolean().notNull().default(true),
-    isFixed: d.boolean().notNull().default(false), // Whether this task has fixed calendar times
-    fixedStartTime: d.time(), // Fixed start time (e.g., "09:00:00")
-    fixedEndTime: d.time(), // Fixed end time (e.g., "17:00:00")
-    completedAt: d.timestamp({ withTimezone: true }), // When the task was completed
+    importance: d.integer().notNull().default(5),
+    difficulty: d.integer().notNull().default(3),
+    isDivisible: d.boolean().notNull().default(false),
+    urgencyThresholdAt: d.timestamp({ withTimezone: true }),
+    durationMinutes: d.integer(),
+    isFixed: d.boolean().notNull().default(false),
+    fixedStartTime: d.time(),
+    fixedEndTime: d.time(),
+    status: taskStatusEnum().notNull().default("active"),
+    completedAt: d.timestamp({ withTimezone: true }),
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
@@ -156,7 +150,9 @@ export const tasks = createTable(
   }),
   (t) => [
     index("task_owner_idx").on(t.ownerId),
-    index("task_recurrence_idx").on(t.recurrenceId),
+    index("task_status_idx").on(t.status),
+    check("task_difficulty_range_chk", sql`${t.difficulty} >= 1 AND ${t.difficulty} <= 5`),
+    check("task_duration_non_negative_chk", sql`${t.durationMinutes} IS NULL OR ${t.durationMinutes} >= 0`),
   ],
 );
 
@@ -164,21 +160,18 @@ export const taskOccurrences = createTable(
   "task_occurrence",
   (d) => ({
     id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
-    associatedTaskId: d
+    taskId: d
       .integer()
       .notNull()
-      .references(() => tasks.id),
-    startDate: d.timestamp({ withTimezone: true }).notNull(),
-    limitDate: d.timestamp({ withTimezone: true }),
-    targetDate: d.timestamp({ withTimezone: true }),
-    targetTimeConsumption: d.real(), // Hours
-    timeConsumed: d.real().default(0), // Hours
-    status: d
-      .varchar({ length: 50 })
-      .notNull()
-      .default("Pending"), // 'Pending' | 'In Progress' | 'Completed' | 'Skipped'
-    urgency: d.real().default(0), // Calculated urgency value
-    completedAt: d.timestamp({ withTimezone: true }), // When the occurrence was completed
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    slotStartAt: d.timestamp({ withTimezone: true }),
+    slotEndAt: d.timestamp({ withTimezone: true }),
+    dueAt: d.timestamp({ withTimezone: true }),
+    tentativeAt: d.timestamp({ withTimezone: true }),
+    targetTimeMinutes: d.integer(),
+    timeSpentMinutes: d.integer().notNull().default(0),
+    status: occurrenceStatusEnum().notNull().default("unassigned"),
+    completedAt: d.timestamp({ withTimezone: true }),
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
@@ -186,30 +179,43 @@ export const taskOccurrences = createTable(
     updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
   }),
   (t) => [
-    index("occurrence_task_idx").on(t.associatedTaskId),
+    index("occurrence_task_idx").on(t.taskId),
     index("occurrence_status_idx").on(t.status),
-    index("occurrence_start_date_idx").on(t.startDate),
+    index("occurrence_slot_start_idx").on(t.slotStartAt),
+    index("occurrence_due_idx").on(t.dueAt),
+    check(
+      "occurrence_slot_coherence_chk",
+      sql`(${t.slotStartAt} IS NULL AND ${t.slotEndAt} IS NULL) OR (${t.slotStartAt} IS NOT NULL AND ${t.slotEndAt} IS NOT NULL)`,
+    ),
+    check(
+      "occurrence_time_spent_non_negative_chk",
+      sql`${t.timeSpentMinutes} >= 0`,
+    ),
+    check(
+      "occurrence_target_time_non_negative_chk",
+      sql`${t.targetTimeMinutes} IS NULL OR ${t.targetTimeMinutes} >= 0`,
+    ),
   ],
 );
 
-export const calendarEvents = createTable(
-  "calendar_event",
+export const routines = createTable(
+  "routine",
   (d) => ({
     id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
-    context: d.text(),
     ownerId: d
       .varchar({ length: 255 })
       .notNull()
-      .references(() => users.id),
-    associatedOccurrenceId: d
-      .integer()
-      .references(() => taskOccurrences.id),
-    isFixed: d.boolean().notNull().default(false),
-    start: d.timestamp({ withTimezone: true }).notNull(),
-    finish: d.timestamp({ withTimezone: true }).notNull(),
-    isCompleted: d.boolean().notNull().default(false),
-    dedicatedTime: d.real().default(0), // Hours
-    completedAt: d.timestamp({ withTimezone: true }), // When the event was completed
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: d.varchar({ length: 512 }).notNull(),
+    description: d.text(),
+    recurrenceType: routineRecurrenceTypeEnum().notNull().default("none"),
+    recurrenceInterval: d.integer(),
+    recurrenceDaysOfWeek: d.text().array(),
+    recurrenceDaysOfMonth: d.integer().array(),
+    recurrenceMaxOccurrences: d.integer(),
+    recurrenceLastPeriodStart: d.timestamp({ withTimezone: true }),
+    recurrenceEndDate: d.timestamp({ withTimezone: true }),
+    isActive: d.boolean().notNull().default(true),
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
@@ -217,9 +223,69 @@ export const calendarEvents = createTable(
     updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
   }),
   (t) => [
-    index("event_owner_idx").on(t.ownerId),
-    index("event_occurrence_idx").on(t.associatedOccurrenceId),
-    index("event_start_idx").on(t.start),
+    index("routine_owner_idx").on(t.ownerId),
+    index("routine_active_idx").on(t.isActive),
+  ],
+);
+
+export const routineTasks = createTable(
+  "routine_task",
+  (d) => ({
+    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+    routineId: d
+      .integer()
+      .notNull()
+      .references(() => routines.id, { onDelete: "cascade" }),
+    taskId: d
+      .integer()
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    order: d.integer().notNull(),
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  }),
+  (t) => [
+    index("routine_task_routine_idx").on(t.routineId),
+    index("routine_task_order_idx").on(t.routineId, t.order),
+    uniqueIndex("routine_task_unique_idx").on(t.routineId, t.taskId),
+  ],
+);
+
+export const routineEdges = createTable(
+  "routine_edge",
+  (d) => ({
+    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+    routineId: d
+      .integer()
+      .notNull()
+      .references(() => routines.id, { onDelete: "cascade" }),
+    fromTaskId: d
+      .integer()
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    toTaskId: d
+      .integer()
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    edgeType: routineEdgeTypeEnum().notNull(),
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  }),
+  (t) => [
+    index("routine_edge_routine_idx").on(t.routineId),
+    index("routine_edge_from_task_idx").on(t.fromTaskId),
+    index("routine_edge_to_task_idx").on(t.toTaskId),
+    uniqueIndex("routine_edge_unique_idx").on(
+      t.routineId,
+      t.fromTaskId,
+      t.toTaskId,
+      t.edgeType,
+    ),
+    check("routine_edge_no_self_loop_chk", sql`${t.fromTaskId} <> ${t.toTaskId}`),
   ],
 );
 
@@ -230,34 +296,54 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
     fields: [tasks.ownerId],
     references: [users.id],
   }),
-  recurrence: one(taskRecurrences, {
-    fields: [tasks.recurrenceId],
-    references: [taskRecurrences.id],
-  }),
   occurrences: many(taskOccurrences),
+  routineLinks: many(routineTasks),
+  outgoingEdges: many(routineEdges, { relationName: "routine_edge_from_task" }),
+  incomingEdges: many(routineEdges, { relationName: "routine_edge_to_task" }),
 }));
 
-export const taskOccurrencesRelations = relations(taskOccurrences, ({ one, many }) => ({
+export const taskOccurrencesRelations = relations(taskOccurrences, ({ one }) => ({
   task: one(tasks, {
-    fields: [taskOccurrences.associatedTaskId],
+    fields: [taskOccurrences.taskId],
     references: [tasks.id],
   }),
-  events: many(calendarEvents),
 }));
 
-export const calendarEventsRelations = relations(calendarEvents, ({ one }) => ({
+export const routinesRelations = relations(routines, ({ one, many }) => ({
   owner: one(users, {
-    fields: [calendarEvents.ownerId],
+    fields: [routines.ownerId],
     references: [users.id],
   }),
-  occurrence: one(taskOccurrences, {
-    fields: [calendarEvents.associatedOccurrenceId],
-    references: [taskOccurrences.id],
+  tasks: many(routineTasks),
+  edges: many(routineEdges),
+}));
+
+export const routineTasksRelations = relations(routineTasks, ({ one }) => ({
+  routine: one(routines, {
+    fields: [routineTasks.routineId],
+    references: [routines.id],
+  }),
+  task: one(tasks, {
+    fields: [routineTasks.taskId],
+    references: [tasks.id],
   }),
 }));
 
-export const taskRecurrencesRelations = relations(taskRecurrences, ({ many }) => ({
-  tasks: many(tasks),
+export const routineEdgesRelations = relations(routineEdges, ({ one }) => ({
+  routine: one(routines, {
+    fields: [routineEdges.routineId],
+    references: [routines.id],
+  }),
+  fromTask: one(tasks, {
+    relationName: "routine_edge_from_task",
+    fields: [routineEdges.fromTaskId],
+    references: [tasks.id],
+  }),
+  toTask: one(tasks, {
+    relationName: "routine_edge_to_task",
+    fields: [routineEdges.toTaskId],
+    references: [tasks.id],
+  }),
 }));
 
 // Notifications Schema

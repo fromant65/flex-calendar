@@ -181,10 +181,10 @@ export class FixedTaskService {
     
     // Create occurrence
     const occurrence = await this.occurrenceAdapter.createOccurrence({
-      associatedTaskId: taskId,
-      startDate: normalizedDate,
-      targetDate: normalizedDate,
-      limitDate: normalizedDate,
+      taskId,
+      slotStartAt: normalizedDate,
+      dueAt: normalizedDate,
+      tentativeAt: normalizedDate,
     });
 
     // Extract time from the datetime objects (which have correct timezone from client)

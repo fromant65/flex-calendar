@@ -1,6 +1,6 @@
 "use client"
 
-import type { OccurrenceWithTask } from "~/types"
+import type { CalendarOccurrenceLike } from "~/types/v2-ui"
 import { Button } from "../ui/button"
 import {
   Dialog,
@@ -15,7 +15,7 @@ import { Clock, Flag } from "lucide-react"
 interface ConfirmScheduleDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  occurrence: OccurrenceWithTask | null
+  occurrence: CalendarOccurrenceLike | null
   onConfirm: () => void
   onCancel: () => void
 }
@@ -49,12 +49,12 @@ export function ConfirmScheduleDialog({
             </div>
 
             <div className="flex items-center gap-4 text-sm">
-              {occurrence.targetTimeConsumption && (
+              {occurrence.targetTimeMinutes && (
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <Clock className="w-4 h-4" />
                   <span>
-                    {occurrence.targetTimeConsumption}{" "}
-                    {occurrence.targetTimeConsumption === 1 ? "hora" : "horas"}
+                    {Math.round((occurrence.targetTimeMinutes * 60) / 60)}{" "}
+                    {Math.round((occurrence.targetTimeMinutes * 60) / 60) === 1 ? "hora" : "horas"}
                   </span>
                 </div>
               )}

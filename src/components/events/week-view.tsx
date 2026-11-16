@@ -2,20 +2,19 @@
 
 import type React from "react"
 
-import type { EventWithDetails } from "~/types"
+import type { CalendarEventLike } from "~/types/v2-ui"
 import { formatTime, getHoursArray, getWeekDays, isSameDay, isToday, ensureLocalDate, groupOverlappingEvents } from "~/lib/calendar-utils"
-import { getTaskTypeClassName } from "~/lib/task-type-colors"
 import { Clock } from "lucide-react"
 import { OverlappingEventsIndicator } from "./overlapping-events-indicator"
 
 interface WeekViewProps {
   date: Date
-  events: EventWithDetails[]
+  events: CalendarEventLike[]
   currentTime: number
   onTimeSlotClick: (date: Date, hour: number) => void
-  onEventClick: (event: EventWithDetails) => void
+  onEventClick: (event: CalendarEventLike) => void
   onDrop: (date: Date, hour: number) => void
-  onEventDragStart: (event: EventWithDetails) => void
+  onEventDragStart: (event: CalendarEventLike) => void
 }
 
 export function WeekView({
@@ -117,17 +116,14 @@ export function WeekView({
                 const finish = ensureLocalDate(event.finish)
                 const startHour = start.getHours() + start.getMinutes() / 60
                 const duration = (finish.getTime() - start.getTime()) / (1000 * 60 * 60)
-                const taskTypeClassName = getTaskTypeClassName(event.occurrence?.task?.taskType, {
-                  includeHover: true,
-                  includeRing: false,
-                })
+                const eventColorClassName = event.isCompleted ? "bg-muted/40 border-l-muted-foreground" : "bg-primary/10 hover:bg-primary/15 border-l-primary"
 
                 return (
                   <div
                     key={event.id}
-                    draggable={!event.isFixed && !event.isCompleted && event.occurrence?.status !== "Skipped"}
+                    draggable={!event.isFixed && !event.isCompleted && event.occurrence?.status !== "skipped"}
                     onDragStart={() => onEventDragStart(event)}
-                    className={`absolute left-0.5 lg:left-1 right-0.5 lg:right-1 rounded p-0.5 lg:p-1 transition-colors overflow-hidden ${taskTypeClassName} ${
+                    className={`absolute left-0.5 lg:left-1 right-0.5 lg:right-1 rounded p-0.5 lg:p-1 transition-colors overflow-hidden border-l-2 ${eventColorClassName} ${
                           (event.isCompleted || event.isFixed) ? "cursor-pointer" : "cursor-move"
                         } ${event.isCompleted ? "event--completed" : ""}`}
                     style={{

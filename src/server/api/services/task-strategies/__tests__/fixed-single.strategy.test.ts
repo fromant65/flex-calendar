@@ -35,7 +35,20 @@ describe('FixedSingleStrategy', () => {
   describe('onOccurrenceCompleted', () => {
     it('should deactivate task when occurrence is completed', async () => {
       const context: OccurrenceContext = {
-        occurrence: { id: 1, startDate: new Date(), status: 'Completed' } as TaskOccurrence,
+        occurrence: {
+          id: 1,
+          taskId: 1,
+          slotStartAt: new Date(),
+          slotEndAt: null,
+          dueAt: null,
+          tentativeAt: null,
+          targetTimeMinutes: null,
+          timeSpentMinutes: 0,
+          status: 'completed',
+          completedAt: null,
+          createdAt: new Date(),
+          updatedAt: null,
+        } as TaskOccurrence,
         task: { id: 1, isFixed: true } as Task,
         recurrence: { id: 1, maxOccurrences: 1 } as TaskRecurrence,
       };
@@ -44,14 +57,27 @@ describe('FixedSingleStrategy', () => {
 
       expect(mockScheduler.incrementCompletedOccurrences).toHaveBeenCalledWith(
         1,
-        context.occurrence.startDate
+        context.occurrence.slotStartAt
       );
       expect(action).toEqual({ type: 'DEACTIVATE_TASK' });
     });
 
     it('should deactivate task even without recurrence', async () => {
       const context: OccurrenceContext = {
-        occurrence: { id: 1, startDate: new Date() } as TaskOccurrence,
+        occurrence: {
+          id: 1,
+          taskId: 1,
+          slotStartAt: new Date(),
+          slotEndAt: null,
+          dueAt: null,
+          tentativeAt: null,
+          targetTimeMinutes: null,
+          timeSpentMinutes: 0,
+          status: 'pending',
+          completedAt: null,
+          createdAt: new Date(),
+          updatedAt: null,
+        } as TaskOccurrence,
         task: { id: 1, isFixed: true } as Task,
         recurrence: null,
       };
@@ -65,7 +91,20 @@ describe('FixedSingleStrategy', () => {
   describe('onOccurrenceSkipped', () => {
     it('should deactivate task when occurrence is skipped', async () => {
       const context: OccurrenceContext = {
-        occurrence: { id: 1, startDate: new Date(), status: 'Skipped' } as TaskOccurrence,
+        occurrence: {
+          id: 1,
+          taskId: 1,
+          slotStartAt: new Date(),
+          slotEndAt: null,
+          dueAt: null,
+          tentativeAt: null,
+          targetTimeMinutes: null,
+          timeSpentMinutes: 0,
+          status: 'skipped',
+          completedAt: null,
+          createdAt: new Date(),
+          updatedAt: null,
+        } as TaskOccurrence,
         task: { id: 1, isFixed: true } as Task,
         recurrence: { id: 1, maxOccurrences: 1 } as TaskRecurrence,
       };
@@ -81,7 +120,20 @@ describe('FixedSingleStrategy', () => {
     it('should return NO_ACTION (service handles occurrence completion)', async () => {
       const context: EventContext = {
         event: { id: 1, associatedOccurrenceId: 1 } as CalendarEvent,
-        occurrence: { id: 1 } as TaskOccurrence,
+        occurrence: {
+          id: 1,
+          taskId: 1,
+          slotStartAt: new Date(),
+          slotEndAt: null,
+          dueAt: null,
+          tentativeAt: null,
+          targetTimeMinutes: null,
+          timeSpentMinutes: 0,
+          status: 'pending',
+          completedAt: null,
+          createdAt: new Date(),
+          updatedAt: null,
+        } as TaskOccurrence,
         task: { id: 1, isFixed: true } as Task,
         recurrence: { id: 1 } as TaskRecurrence,
       };
@@ -96,7 +148,20 @@ describe('FixedSingleStrategy', () => {
     it('should return NO_ACTION (service handles occurrence skipping)', async () => {
       const context: EventContext = {
         event: { id: 1, associatedOccurrenceId: 1 } as CalendarEvent,
-        occurrence: { id: 1 } as TaskOccurrence,
+        occurrence: {
+          id: 1,
+          taskId: 1,
+          slotStartAt: new Date(),
+          slotEndAt: null,
+          dueAt: null,
+          tentativeAt: null,
+          targetTimeMinutes: null,
+          timeSpentMinutes: 0,
+          status: 'pending',
+          completedAt: null,
+          createdAt: new Date(),
+          updatedAt: null,
+        } as TaskOccurrence,
         task: { id: 1, isFixed: true } as Task,
         recurrence: { id: 1 } as TaskRecurrence,
       };

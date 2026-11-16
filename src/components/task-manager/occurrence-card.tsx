@@ -4,10 +4,20 @@ import { Button } from "~/components/ui/button";
 import { CheckCircle2, Edit, AlertCircle, SkipForward } from "lucide-react";
 import HelpTip from "~/components/ui/help-tip"
 import { formatDateLong, getLimitDateDisplay as getLimit, formatCompletedDateTime } from "~/lib/date-display-utils";
-import type { TaskOccurrence } from "~/types";
+
+type TaskManagerOccurrenceLike = {
+  id: number
+  status: string
+  completedAt?: Date | null
+  slotStartAt?: Date | null
+  dueAt?: Date | null
+  tentativeAt?: Date | null
+  targetTimeMinutes?: number | null
+  timeSpentMinutes?: number | null
+}
 
 interface OccurrenceCardProps {
-  occurrence: TaskOccurrence;
+  occurrence: TaskManagerOccurrenceLike;
   taskName: string;
   taskImportance: number;
   onEdit: (id: number, timeConsumed: number | null, targetTimeConsumption: number | null, targetDate: Date | null, limitDate: Date | null) => void;
@@ -19,13 +29,15 @@ interface OccurrenceCardProps {
 
 // Helper to get status badge
 const getStatusBadge = (status: string) => {
+  const normalized = status.toLowerCase().replace(/\s+/g, "_")
+
   const variants: Record<string, { color: string; icon: React.ReactNode }> = {
-    Pending: { color: "bg-yellow-500 dark:bg-yellow-600", icon: <CheckCircle2 className="h-3 w-3" /> },
-    "In Progress": { color: "bg-blue-500 dark:bg-blue-600", icon: <CheckCircle2 className="h-3 w-3" /> },
-    Completed: { color: "bg-green-500 dark:bg-green-600", icon: <CheckCircle2 className="h-3 w-3" /> },
-    Skipped: { color: "bg-gray-500 dark:bg-gray-600", icon: <CheckCircle2 className="h-3 w-3" /> },
+    pending: { color: "bg-yellow-500 dark:bg-yellow-600", icon: <CheckCircle2 className="h-3 w-3" /> },
+    in_progress: { color: "bg-blue-500 dark:bg-blue-600", icon: <CheckCircle2 className="h-3 w-3" /> },
+    completed: { color: "bg-green-500 dark:bg-green-600", icon: <CheckCircle2 className="h-3 w-3" /> },
+    skipped: { color: "bg-gray-500 dark:bg-gray-600", icon: <CheckCircle2 className="h-3 w-3" /> },
   };
-  const variant = variants[status];
+  const variant = variants[normalized];
 
   if (!variant) {
     return (
@@ -53,8 +65,14 @@ export function OccurrenceCard({
   isCompleting = false,
   isSkipping = false,
 }: OccurrenceCardProps) {
-  const limitDateDisplay = getLimit(occurrence.limitDate);
-  const isActive = occurrence.status !== "Completed" && occurrence.status !== "Skipped";
+  const normalizedStatus = occurrence.status.toLowerCase().replace(/\s+/g, "_")
+  const limitDate = occurrence.dueAt ?? null
+  const startDate = occurrence.slotStartAt ?? null
+  const targetDate = occurrence.tentativeAt ?? null
+  const targetTime = occurrence.targetTimeMinutes ?? null
+  const timeSpent = occurrence.timeSpentMinutes ?? null
+  const limitDateDisplay = getLimit(limitDate as Date | null);
+  const isActive = normalizedStatus !== "completed" && normalizedStatus !== "skipped";
 
   // Create badge component from the badge text
   const limitBadge = limitDateDisplay.badgeText ? (
@@ -92,20 +110,20 @@ export function OccurrenceCard({
             {/* Row 1: Dates */}
             <div>
               <span className="font-medium text-muted-foreground">Inicio: </span>
-            <span className="text-foreground">{occurrence.startDate ? formatDateLong(occurrence.startDate) : "N/A"}</span>
+            <span className="text-foreground">{startDate ? formatDateLong(startDate) : "N/A"}</span>
             </div>
-            {occurrence.targetDate && (
+            {targetDate && (
               <div>
                 <span className="font-medium text-muted-foreground">Fecha meta: </span>
-                <span className="text-foreground">{formatDateLong(occurrence.targetDate)}</span>
+                <span className="text-foreground">{formatDateLong(targetDate)}</span>
               </div>
             )}
               
             {/* Row 2: Limit date and importance */}
-            {occurrence.limitDate && (
+            {limitDate && (
               <div>
                 <span className="font-medium text-muted-foreground">Fecha límite: </span>
-                <span className="font-semibold text-foreground">{formatDateLong(occurrence.limitDate)}</span>
+                <span className="font-semibold text-foreground">{formatDateLong(limitDate)}</span>
               </div>
             )}
             <div>
@@ -116,16 +134,16 @@ export function OccurrenceCard({
             {/* Row 3: Time metrics */}
             <div>
               <span className="font-medium text-muted-foreground">Tiempo dedicado: </span>
-                <span className="font-semibold text-foreground">{occurrence.timeConsumed != null ? occurrence.timeConsumed.toFixed(1) + ' hs' : '—'}</span>
-              {occurrence.targetTimeConsumption && (
+                <span className="font-semibold text-foreground">{timeSpent != null ? timeSpent.toFixed(1) + ' hs' : '—'}</span>
+              {targetTime && (
                 <span className="text-muted-foreground">
-                  {" / "}{occurrence.targetTimeConsumption}h
+                  {" / "}{targetTime} min
                 </span>
               )}
             </div>
 
             {/* Row 4: Completion date (if completed) */}
-            {occurrence.status === "Completed" && occurrence.completedAt && (
+            {normalizedStatus === "completed" && occurrence.completedAt && (
               <div className="md:col-span-2">
                 <span className="font-medium text-muted-foreground">Completada el: </span>
                 <span className="font-semibold text-green-600 dark:text-green-400">
@@ -144,7 +162,7 @@ export function OccurrenceCard({
               size="sm"
               variant="outline"
               className="cursor-pointer flex-1 sm:flex-none"
-              onClick={() => onEdit(occurrence.id, occurrence.timeConsumed, occurrence.targetTimeConsumption, occurrence.targetDate, occurrence.limitDate)}
+              onClick={() => onEdit(occurrence.id, timeSpent, targetTime, targetDate, limitDate)}
             >
               <Edit className="mr-1 h-3.5 w-3.5" />
               Editar

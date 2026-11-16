@@ -32,32 +32,26 @@ export class TaskRepository extends BaseRepository<typeof tasks> {
     return await db
       .select()
       .from(tasks)
-      .where(and(eq(tasks.ownerId, ownerId), eq(tasks.isActive, true)))
+      .where(and(eq(tasks.ownerId, ownerId), eq(tasks.status, "active")))
       .orderBy(desc(tasks.importance), desc(tasks.createdAt));
   }
 
   /**
-   * Find task with its recurrence
+   * Find task details (v2 does not include recurrence in task)
    */
   async findWithRecurrence(taskId: number) {
     const result = await db.query.tasks.findFirst({
       where: eq(tasks.id, taskId),
-      with: {
-        recurrence: true,
-      },
     });
     return result;
   }
 
   /**
-   * Find tasks with their recurrences for a specific owner
+   * Find tasks for owner (v2 does not include recurrence in task)
    */
   async findByOwnerIdWithRecurrence(ownerId: string) {
     return await db.query.tasks.findMany({
       where: eq(tasks.ownerId, ownerId),
-      with: {
-        recurrence: true,
-      },
       orderBy: [desc(tasks.createdAt)],
     });
   }

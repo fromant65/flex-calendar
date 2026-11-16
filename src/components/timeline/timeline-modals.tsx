@@ -4,11 +4,14 @@
 
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "~/components/ui/dialog"
-import type { OccurrenceWithTask, EventWithDetails } from "~/types"
+import type { TimelineGetTimelineDataOutput } from "~/server/api/routers/derived-endpoint-types"
 import { StatusBadge } from "./status-badge"
 import { TaskInfo } from "./task-info"
 import { TotalTimeDisplay } from "./total-time-display"
 import { OccurrenceAccordion } from "./occurrence-accordion"
+
+type TimelineOccurrence = TimelineGetTimelineDataOutput["occurrences"][number]
+type TimelineEvent = TimelineGetTimelineDataOutput["events"][number]
 
 export interface DayCellDetails {
   date: Date
@@ -18,8 +21,8 @@ export interface DayCellDetails {
     description: string | null
     importance: number
   }
-  occurrences: OccurrenceWithTask[] // Support multiple occurrences
-  events: EventWithDetails[]
+  occurrences: TimelineOccurrence[] // Support multiple occurrences
+  events: TimelineEvent[]
   totalTimeSpent: number
   status: "completed" | "skipped" | "not-completed"
 }

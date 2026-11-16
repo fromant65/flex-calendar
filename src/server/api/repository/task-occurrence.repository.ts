@@ -21,8 +21,8 @@ export class TaskOccurrenceRepository extends BaseRepository<typeof taskOccurren
     return await db
       .select()
       .from(taskOccurrences)
-      .where(eq(taskOccurrences.associatedTaskId, taskId))
-      .orderBy(desc(taskOccurrences.startDate));
+      .where(eq(taskOccurrences.taskId, taskId))
+      .orderBy(desc(taskOccurrences.slotStartAt));
   }
 
   /**
@@ -34,11 +34,11 @@ export class TaskOccurrenceRepository extends BaseRepository<typeof taskOccurren
       .from(taskOccurrences)
       .where(
         and(
-          eq(taskOccurrences.associatedTaskId, taskId),
-          eq(taskOccurrences.status, status),
+          eq(taskOccurrences.taskId, taskId),
+          eq(taskOccurrences.status, status as OccurrenceSelect["status"]),
         ),
       )
-      .orderBy(desc(taskOccurrences.startDate));
+      .orderBy(desc(taskOccurrences.slotStartAt));
   }
 
   /**
@@ -47,8 +47,8 @@ export class TaskOccurrenceRepository extends BaseRepository<typeof taskOccurren
   async findByDateRange(startDate: Date, endDate: Date, userId?: string): Promise<(OccurrenceSelect & { task?: any | null })[]> {
     const results = await db.query.taskOccurrences.findMany({
       where: and(
-        gte(taskOccurrences.startDate, startDate),
-        lte(taskOccurrences.startDate, endDate),
+        gte(taskOccurrences.slotStartAt, startDate),
+        lte(taskOccurrences.slotStartAt, endDate),
       ),
       with: {
         task: true,
@@ -62,8 +62,8 @@ export class TaskOccurrenceRepository extends BaseRepository<typeof taskOccurren
 
     // Ensure consistent ordering by startDate
     return filtered.sort((a, b) => {
-      const aTime = a.startDate instanceof Date ? a.startDate.getTime() : new Date(a.startDate).getTime();
-      const bTime = b.startDate instanceof Date ? b.startDate.getTime() : new Date(b.startDate).getTime();
+      const aTime = a.slotStartAt instanceof Date ? a.slotStartAt.getTime() : new Date(a.slotStartAt ?? 0).getTime();
+      const bTime = b.slotStartAt instanceof Date ? b.slotStartAt.getTime() : new Date(b.slotStartAt ?? 0).getTime();
       return aTime - bTime;
     });
   }
@@ -84,16 +84,14 @@ export class TaskOccurrenceRepository extends BaseRepository<typeof taskOccurren
    * Find all occurrences with task details for a specific user
    */
   async findByOwnerIdWithTask(ownerId: string) {
-    const { tasks } = await import("~/server/db/schema");
-    
     return await db.query.taskOccurrences.findMany({
       with: {
         task: true,
       },
-      where: (occurrences, { inArray, eq }) => {
+      where: (occurrences, { eq }) => {
         // We need to get task IDs for this owner first
         // This is a workaround since we can't directly join in findMany
-        return eq(occurrences.associatedTaskId, occurrences.associatedTaskId); // This will be filtered below
+        return eq(occurrences.taskId, occurrences.taskId); // This will be filtered below
       },
     }).then(async (allOccurrences) => {
       // Filter occurrences by owner through the task relation
@@ -110,11 +108,11 @@ export class TaskOccurrenceRepository extends BaseRepository<typeof taskOccurren
       .from(taskOccurrences)
       .where(
         and(
-          eq(taskOccurrences.associatedTaskId, taskId),
-          inArray(taskOccurrences.status, ["Pending", "In Progress"]),
+          eq(taskOccurrences.taskId, taskId),
+          inArray(taskOccurrences.status, ["pending", "in_progress"]),
         ),
       )
-      .orderBy(taskOccurrences.startDate);
+      .orderBy(taskOccurrences.slotStartAt);
   }
 
   /**
@@ -124,8 +122,8 @@ export class TaskOccurrenceRepository extends BaseRepository<typeof taskOccurren
     const [result] = await db
       .select()
       .from(taskOccurrences)
-      .where(eq(taskOccurrences.associatedTaskId, taskId))
-      .orderBy(desc(taskOccurrences.startDate))
+      .where(eq(taskOccurrences.taskId, taskId))
+      .orderBy(desc(taskOccurrences.slotStartAt))
       .limit(1);
     return result;
   }
@@ -136,15 +134,13 @@ export class TaskOccurrenceRepository extends BaseRepository<typeof taskOccurren
   async findCompletedByOwnerIdInDateRange(ownerId: string, startDate: Date, endDate: Date) {
     return await db.query.taskOccurrences.findMany({
       where: and(
-        eq(taskOccurrences.status, "Completed"),
-        gte(taskOccurrences.startDate, startDate),
+        eq(taskOccurrences.status, "completed"),
+        gte(taskOccurrences.slotStartAt, startDate),
         lte(taskOccurrences.completedAt, endDate),
       ),
       with: {
         task: {
-          with: {
-            recurrence: true,
-          },
+          with: {},
         },
       },
     }).then(results => 

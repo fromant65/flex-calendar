@@ -3,7 +3,12 @@
  */
 
 import { TaskAdapter, OccurrenceAdapter, CalendarEventAdapter } from "../adapter";
-import type { TaskWithRecurrence, OccurrenceWithTask, EventWithDetails, TaskOccurrenceStatus } from "~/types";
+import type {
+  TaskWithDetails as TaskWithRecurrence,
+  OccurrenceWithTask,
+  EventWithDetails,
+  TaskOccurrenceStatus,
+} from "./types";
 
 export interface TimelineData {
   tasks: TaskWithRecurrence[];
@@ -55,7 +60,7 @@ export class TimelineService {
       task: occ.task as TaskWithRecurrence,
     }));
 
-    const events: EventWithDetails[] = eventsWithDetails.map((event) => ({
+    const events: EventWithDetails[] = eventsWithDetails.map((event: EventWithDetails) => ({
       ...event,
       dedicatedTime: event.dedicatedTime ?? 0,
       occurrence: occurrences.find((occ) => occ.id === event.associatedOccurrenceId)!,

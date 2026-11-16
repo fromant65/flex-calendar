@@ -25,7 +25,7 @@ export class OccurrenceStatsCalculator {
       console.log(`[OccurrenceStats] Processing ${occurrences.length} occurrences`);
 
       // Filter valid occurrences
-      const validOccurrences = occurrences.filter((occ) => occ?.startDate);
+      const validOccurrences = occurrences.filter((occ) => (occ?.slotStartAt ?? occ?.createdAt));
 
       console.log(`[OccurrenceStats] Found ${validOccurrences.length} valid occurrences`);
 
@@ -61,7 +61,7 @@ export class OccurrenceStatsCalculator {
 
     for (const occ of validOccurrences) {
       try {
-        const date = new Date(occ.startDate);
+        const date = new Date(occ.slotStartAt ?? occ.createdAt);
         if (isNaN(date.getTime())) continue;
 
         const weekKey = StatsUtils.getWeekKey(date);
@@ -81,10 +81,10 @@ export class OccurrenceStatsCalculator {
    */
   private calculateStatusDistribution(validOccurrences: StatsOccurrence[]) {
     return {
-      pending: validOccurrences.filter((o) => o?.status === "Pending").length,
-      inProgress: validOccurrences.filter((o) => o?.status === "In Progress").length,
-      completed: validOccurrences.filter((o) => o?.status === "Completed").length,
-      skipped: validOccurrences.filter((o) => o?.status === "Skipped").length,
+      pending: validOccurrences.filter((o) => o?.status === "pending" || o?.status === "unassigned").length,
+      inProgress: validOccurrences.filter((o) => o?.status === "in_progress").length,
+      completed: validOccurrences.filter((o) => o?.status === "completed").length,
+      skipped: validOccurrences.filter((o) => o?.status === "skipped").length,
     };
   }
 
@@ -97,29 +97,28 @@ export class OccurrenceStatsCalculator {
     for (const occ of validOccurrences) {
       // Check if both values exist and are valid numbers
       if (
-        occ?.timeConsumed == null ||
-        occ?.targetTimeConsumption == null ||
-        typeof occ.timeConsumed !== "number" ||
-        typeof occ.targetTimeConsumption !== "number"
+        occ?.targetTimeMinutes == null ||
+        typeof occ.timeSpentMinutes !== "number" ||
+        typeof occ.targetTimeMinutes !== "number"
       ) {
         continue;
       }
 
       // Skip invalid values (negative or extremely large)
       if (
-        occ.timeConsumed < 0 ||
-        occ.targetTimeConsumption < 0 ||
-        occ.timeConsumed > 10000 || // More than ~166 hours seems unrealistic
-        occ.targetTimeConsumption > 10000
+        occ.timeSpentMinutes < 0 ||
+        occ.targetTimeMinutes < 0 ||
+        occ.timeSpentMinutes > 10000 || // More than ~166 hours seems unrealistic
+        occ.targetTimeMinutes > 10000
       ) {
         console.warn(
           `[OccurrenceStats] Invalid time values for occurrence ${occ.id}:`,
-          { timeConsumed: occ.timeConsumed, target: occ.targetTimeConsumption }
+          { timeSpentMinutes: occ.timeSpentMinutes, target: occ.targetTimeMinutes }
         );
         continue;
       }
 
-      const deviationMinutes = occ.timeConsumed - occ.targetTimeConsumption;
+      const deviationMinutes = occ.timeSpentMinutes - occ.targetTimeMinutes;
       const deviationHours = deviationMinutes / 60; // Convert to hours
       deviations.push(deviationHours);
     }
@@ -149,8 +148,8 @@ export class OccurrenceStatsCalculator {
         const result = UrgencyCalculator.calculateUrgency({
           currentDate,
           creationDate: occ.createdAt,
-          targetDate: occ.targetDate ?? undefined,
-          limitDate: occ.limitDate ?? undefined,
+          targetDate: occ.tentativeAt ?? undefined,
+          limitDate: occ.dueAt ?? undefined,
         });
 
         // For completed occurrences, use the completion date instead of current date
@@ -158,8 +157,8 @@ export class OccurrenceStatsCalculator {
           const completedResult = UrgencyCalculator.calculateUrgency({
             currentDate: occ.completedAt,
             creationDate: occ.createdAt,
-            targetDate: occ.targetDate ?? undefined,
-            limitDate: occ.limitDate ?? undefined,
+            targetDate: occ.tentativeAt ?? undefined,
+            limitDate: occ.dueAt ?? undefined,
           });
           urgencies.push(completedResult.urgency);
         } else {
@@ -190,16 +189,16 @@ export class OccurrenceStatsCalculator {
     const resolutionTimes: number[] = [];
 
     for (const occ of validOccurrences) {
-      if (!occ?.completedAt || !occ?.startDate) continue;
+      if (!occ?.completedAt) continue;
 
       try {
-        const start = new Date(occ.startDate);
+        const start = new Date(occ.slotStartAt ?? occ.createdAt);
         const end = new Date(occ.completedAt);
 
         if (isNaN(start.getTime()) || isNaN(end.getTime())) {
           console.warn(
             `[OccurrenceStats] Invalid dates for occurrence ${occ.id}:`,
-            { startDate: occ.startDate, completedAt: occ.completedAt }
+            { slotStartAt: occ.slotStartAt, completedAt: occ.completedAt }
           );
           continue;
         }

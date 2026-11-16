@@ -8,10 +8,10 @@ import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
 import { Checkbox } from "~/components/ui/checkbox"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
-import type { EventWithDetails } from "~/types"
+import type { CalendarEventLike } from "~/types/v2-ui"
 
 interface CompleteFooterProps {
-  event: EventWithDetails | null;
+  event: CalendarEventLike | null;
   eventHasStarted: boolean;
   completeEventMutation: {
     isPending?: boolean;

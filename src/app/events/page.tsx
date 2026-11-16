@@ -12,7 +12,11 @@ import { LoadingPage } from "~/components/ui/loading-spinner"
 import { TaskFormModal } from "~/components/tasks"
 import { api } from "~/trpc/react"
 import { toast } from "sonner"
-import type { EventWithDetails, OccurrenceWithTask } from "~/types"
+import type { CalendarEventLike, CalendarOccurrenceLike } from "~/types/v2-ui"
+
+const normalizeOccurrenceStatus = (status: string | null | undefined): string => {
+  return (status ?? "").toLowerCase().replace(/\s+/g, "_")
+}
 
 // Modularized events page
 // Main responsibilities:
@@ -77,9 +81,8 @@ function EventsPageContent() {
     }
   }, [eventsError, occurrencesError])
   
-  // Cast to expected types (API returns data with relations)
-  const events = eventsData as EventWithDetails[]
-  const occurrences = occurrencesData as OccurrenceWithTask[]
+  const events = eventsData
+  const occurrences = occurrencesData
 
   const createEventMutation = api.calendarEvent.create.useMutation({
     onSuccess: async () => {
@@ -119,17 +122,21 @@ function EventsPageContent() {
 
   // Only occurrences that are active (Pending or In Progress) and without an active event
   const availableOccurrences = occurrences.filter((occurrence) => {
-    const isActiveStatus = occurrence.status === "Pending" || occurrence.status === "In Progress"
+    const normalizedStatus = normalizeOccurrenceStatus(occurrence.status)
+    const isActiveStatus =
+      normalizedStatus === "unassigned" ||
+      normalizedStatus === "pending" ||
+      normalizedStatus === "in_progress"
     const hasActiveEvent = events.some((event) => event.associatedOccurrenceId === occurrence.id && !event.isCompleted)
     return isActiveStatus && !hasActiveEvent
   })
 
   // Event handlers
-  const handleTaskSelect = (occurrence: OccurrenceWithTask) => {
+  const handleTaskSelect = (occurrence: CalendarOccurrenceLike) => {
     setSelectedTask(occurrence)
   }
 
-  const handleTaskSelectMobile = (occurrence: OccurrenceWithTask) => {
+  const handleTaskSelectMobile = (occurrence: CalendarOccurrenceLike) => {
     // On mobile, show confirmation dialog
     setPendingScheduleTask(occurrence)
     setConfirmScheduleDialogOpen(true)
@@ -149,15 +156,15 @@ function EventsPageContent() {
     setConfirmScheduleDialogOpen(false)
   }
 
-  const handleTaskDragStart = (occurrence: OccurrenceWithTask) => {
+  const handleTaskDragStart = (occurrence: CalendarOccurrenceLike) => {
     setDraggedTask(occurrence)
   }
 
-  const handleEventDragStart = (event: EventWithDetails) => {
+  const handleEventDragStart = (event: CalendarEventLike) => {
     // Don't allow dragging of fixed events, completed events, or events tied to skipped occurrences
     if (event.isFixed) return
     if (event.isCompleted) return
-    if (event.occurrence?.status === "Skipped") return
+    if (normalizeOccurrenceStatus(event.occurrence?.status) === "skipped") return
 
     setDraggedEvent(event)
   }
@@ -189,13 +196,13 @@ function EventsPageContent() {
     }
   }
 
-  const handleEventClick = (event: EventWithDetails) => {
+  const handleEventClick = (event: CalendarEventLike) => {
     setDetailsEvent(event)
     setDetailsOccurrence(null)
     setDetailsModalOpen(true)
   }
 
-  const handleOccurrenceClick = (occurrence: OccurrenceWithTask) => {
+  const handleOccurrenceClick = (occurrence: CalendarOccurrenceLike) => {
     setDetailsOccurrence(occurrence)
     setDetailsEvent(null)
     setDetailsModalOpen(true)

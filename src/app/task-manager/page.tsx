@@ -10,6 +10,7 @@ import {
   EditOccurrenceDialog,
   useTaskManagerData,
 } from "~/components/task-manager";
+import type { TaskManagerOccurrence } from "~/components/task-manager/task-manager-timeline";
 
 export default function TaskManagerPage() {
   const {
@@ -59,6 +60,8 @@ export default function TaskManagerPage() {
     return <TaskManagerEmptyState type="no-occurrences" />;
   }
 
+  const timelineOccurrences: TaskManagerOccurrence[] = occurrences ?? []
+
   return (
     <div className="flex flex-col min-h-full bg-background">
       {/* Header */}
@@ -71,7 +74,7 @@ export default function TaskManagerPage() {
       {viewMode === "timeline" ? (
         <div className="flex-1 min-h-0">
           <TaskManagerTimeline
-            occurrences={occurrences ?? []}
+            occurrences={timelineOccurrences}
             onOccurrenceClick={handleTimelineOccurrenceClick}
             onCompleteOccurrence={handleTimelineComplete}
             onSkipOccurrence={handleTimelineSkip}

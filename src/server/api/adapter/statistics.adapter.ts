@@ -3,7 +3,12 @@
  */
 
 import { StatisticsRepository, TaskRepository } from "../repository";
-import type { StatsDataset } from "../services/stats/stats-types";
+import type {
+  StatsDataset,
+  StatsOccurrence,
+  StatsTask,
+} from "../services/stats/stats-types";
+import type { TaskOccurrenceStatus } from "../services/types";
 
 export class StatisticsAdapter {
   private statsRepo: StatisticsRepository;
@@ -18,23 +23,42 @@ export class StatisticsAdapter {
    * Fetch all necessary data for statistics calculation
    */
   async fetchUserDataset(userId: string): Promise<StatsDataset> {
-    const [userTasks, joinedOccurrences, userEvents, recurrences] = await Promise.all([
+    const [userTasks, joinedOccurrences, userEvents] = await Promise.all([
       this.statsRepo.findUserTasks(userId),
       this.statsRepo.findUserTasksWithOccurrences(userId),
       this.statsRepo.findUserCalendarEvents(userId),
-      this.statsRepo.findUserRecurrences(userId),
     ]);
 
     // Transform joined data - innerJoin returns { task_occurrence: {...}, tasks: {...} }
-    const userOccurrences = joinedOccurrences.map((row) => row.task_occurrence);
+    const userOccurrences: StatsOccurrence[] = joinedOccurrences.map((row) => ({
+      id: row.task_occurrence.id,
+      taskId: row.task_occurrence.taskId,
+      status: row.task_occurrence.status,
+      slotStartAt: row.task_occurrence.slotStartAt,
+      slotEndAt: row.task_occurrence.slotEndAt,
+      dueAt: row.task_occurrence.dueAt,
+      tentativeAt: row.task_occurrence.tentativeAt,
+      completedAt: row.task_occurrence.completedAt,
+      createdAt: row.task_occurrence.createdAt,
+      timeSpentMinutes: row.task_occurrence.timeSpentMinutes,
+      targetTimeMinutes: row.task_occurrence.targetTimeMinutes,
+    }));
 
-    const recurrenceMap = new Map(recurrences.map((r) => [r.id, r]));
+    const normalizedTasks: StatsTask[] = userTasks.map((task) => ({
+      id: task.id,
+      name: task.name,
+      ownerId: task.ownerId,
+      importance: task.importance,
+      isFixed: task.isFixed,
+      status: task.status,
+      createdAt: task.createdAt,
+      completedAt: task.completedAt,
+    }));
 
     return {
-      tasks: userTasks,
+      tasks: normalizedTasks,
       occurrences: userOccurrences,
       events: userEvents,
-      recurrenceMap,
     };
   }
 
@@ -69,7 +93,7 @@ export class StatisticsAdapter {
   /**
    * Get occurrences by status
    */
-  async getOccurrencesByStatus(userId: string, status: string) {
+  async getOccurrencesByStatus(userId: string, status: TaskOccurrenceStatus) {
     return await this.statsRepo.findOccurrencesByStatus(userId, status);
   }
 }

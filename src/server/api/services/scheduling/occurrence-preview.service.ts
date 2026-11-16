@@ -88,7 +88,7 @@ export class OccurrencePreviewService {
 
     // Calculate next occurrence date based on pattern
     return this.dateCalculator.calculateNextOccurrenceDate(
-      latestOccurrence.startDate,
+      latestOccurrence.slotStartAt ?? latestOccurrence.createdAt,
       recurrence
     );
   }

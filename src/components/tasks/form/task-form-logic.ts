@@ -2,13 +2,15 @@
  * Task Form Logic - Helper functions for task form
  */
 
-import type { TaskWithRecurrence } from "~/types"
+import type { TaskGetMyTasksOutput } from "~/server/api/routers/derived-endpoint-types"
 import type { FormTaskType } from "./task-type-selector"
+
+type TaskFromList = TaskGetMyTasksOutput[number]
 
 /**
  * Determines the form task type from a task object
  */
-export function getTaskTypeFromTask(task: TaskWithRecurrence): FormTaskType {
+export function getTaskTypeFromTask(task: TaskFromList): FormTaskType {
   // Check for fixed tasks first
   if (task.isFixed) {
     if (task.recurrence?.maxOccurrences === 1) {
@@ -40,7 +42,7 @@ export function getTaskTypeFromTask(task: TaskWithRecurrence): FormTaskType {
 /**
  * Extract dates from a task for populating the form
  */
-export function extractDatesFromTask(task: TaskWithRecurrence & { nextOccurrence?: any }) {
+export function extractDatesFromTask(task: TaskFromList) {
   let extractedTargetDate: string | undefined = undefined;
   let extractedLimitDate: string | undefined = undefined;
   let extractedFixedDate: string | undefined = undefined;
@@ -51,16 +53,16 @@ export function extractDatesFromTask(task: TaskWithRecurrence & { nextOccurrence
     
     if (task.isFixed) {
       // For fixed tasks, extract the date from targetDate (start datetime)
-      if (occurrence.targetDate) {
-        extractedFixedDate = new Date(occurrence.targetDate).toISOString().split("T")[0];
+      if (occurrence.tentativeAt) {
+        extractedFixedDate = new Date(occurrence.tentativeAt).toISOString().split("T")[0];
       }
     } else {
       // For non-fixed tasks, extract target and limit dates
-      if (occurrence.targetDate) {
-        extractedTargetDate = new Date(occurrence.targetDate).toISOString().split("T")[0];
+      if (occurrence.tentativeAt) {
+        extractedTargetDate = new Date(occurrence.tentativeAt).toISOString().split("T")[0];
       }
-      if (occurrence.limitDate) {
-        extractedLimitDate = new Date(occurrence.limitDate).toISOString().split("T")[0];
+      if (occurrence.dueAt) {
+        extractedLimitDate = new Date(occurrence.dueAt).toISOString().split("T")[0];
       }
     }
   } else {
@@ -133,7 +135,7 @@ export function buildRecurrence(
     maxOccurrences?: number;
     endDate?: string;
   }
-): Record<string, any> | undefined {
+): Record<string, unknown> | undefined {
   if (taskType === "unique") {
     return {
       maxOccurrences: 1,
@@ -141,7 +143,7 @@ export function buildRecurrence(
   }
   
   if (taskType === "finite") {
-    const recurrence: Record<string, any> = {
+    const recurrence: Record<string, unknown> = {
       maxOccurrences: formData.maxOccurrences,
       endDate: formData.endDate ? new Date(formData.endDate + "T23:59:59") : undefined,
     };
@@ -164,7 +166,7 @@ export function buildRecurrence(
   }
   
   if (taskType === "habit-plus") {
-    const recurrence: Record<string, any> = {
+    const recurrence: Record<string, unknown> = {
       interval: formData.interval,
       maxOccurrences: formData.maxOccurrences,
       endDate: formData.endDate ? new Date(formData.endDate + "T23:59:59") : undefined,
@@ -187,7 +189,7 @@ export function buildRecurrence(
   }
   
   if (taskType === "fixed-repetitive") {
-    const recurrence: Record<string, any> = {
+    const recurrence: Record<string, unknown> = {
       endDate: new Date(formData.endDate! + "T23:59:59"),
     };
     

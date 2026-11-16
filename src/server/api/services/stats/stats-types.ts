@@ -11,25 +11,33 @@ export interface StatsTask {
   ownerId: string;
   importance: number | null;
   isFixed: boolean;
-  recurrenceId: number | null;
+  status: "active" | "paused" | "completed";
   createdAt: Date;
   completedAt: Date | null;
 }
+
+export type StatsOccurrenceStatus =
+  | "unassigned"
+  | "pending"
+  | "in_progress"
+  | "completed"
+  | "skipped";
 
 /**
  * Task Occurrence entity for statistics
  */
 export interface StatsOccurrence {
   id: number;
-  associatedTaskId: number;
-  status: string; // Accept any status string from DB
-  startDate: Date;
-  limitDate: Date | null;
-  targetDate: Date | null;
+  taskId: number;
+  status: StatsOccurrenceStatus;
+  slotStartAt: Date | null;
+  slotEndAt: Date | null;
+  dueAt: Date | null;
+  tentativeAt: Date | null;
   completedAt: Date | null;
   createdAt: Date;
-  timeConsumed: number | null; // in minutes
-  targetTimeConsumption: number | null; // in minutes
+  timeSpentMinutes: number;
+  targetTimeMinutes: number | null;
 }
 
 /**
@@ -46,23 +54,10 @@ export interface StatsEvent {
 }
 
 /**
- * Recurrence entity for statistics
- */
-export interface StatsRecurrence {
-  id: number;
-  interval: number | null;
-  daysOfWeek: string[] | null;
-  daysOfMonth: number[] | null;
-  endDate: Date | null;
-  maxOccurrences: number | null;
-}
-
-/**
  * Dataset passed to statistics calculators
  */
 export interface StatsDataset {
   tasks: StatsTask[];
   occurrences: StatsOccurrence[];
   events: StatsEvent[];
-  recurrenceMap: Map<number, StatsRecurrence>;
 }

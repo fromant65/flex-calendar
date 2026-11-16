@@ -43,7 +43,7 @@ export default function TasksPage() {
   const deleteMutation = api.task.delete.useMutation({
     onSuccess: async () => {
       toast.success("Tarea eliminada", {
-        description: "La tarea y todos sus eventos asociados han sido eliminados",
+        description: "La tarea y sus ocurrencias asociadas fueron eliminadas de la agenda",
       })
       await utils.task.getMyTasks.invalidate()
       setDeleteDialogOpen(false)

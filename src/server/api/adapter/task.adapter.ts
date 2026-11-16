@@ -4,7 +4,6 @@
 
 import {
   TaskRepository,
-  TaskRecurrenceRepository,
   TaskOccurrenceRepository,
 } from "../repository";
 import type {
@@ -12,20 +11,15 @@ import type {
   UpdateTaskDTO,
   Task,
   TaskWithDetails,
-  CreateRecurrenceDTO,
-  TaskRecurrence,
-  TaskType,
 } from "../services/types";
-import { calculateTaskType, normalizeDates, normalizeDatesArray } from "../helpers";
+import { normalizeDates, normalizeDatesArray } from "../helpers";
 
 export class TaskAdapter {
   private taskRepo: TaskRepository;
-  private recurrenceRepo: TaskRecurrenceRepository;
   private occurrenceRepo: TaskOccurrenceRepository;
 
   constructor() {
     this.taskRepo = new TaskRepository();
-    this.recurrenceRepo = new TaskRecurrenceRepository();
     this.occurrenceRepo = new TaskOccurrenceRepository();
   }
 
@@ -33,56 +27,32 @@ export class TaskAdapter {
    * Create a new task with optional recurrence
    */
   async createTask(ownerId: string, data: CreateTaskDTO): Promise<Task> {
-    let recurrenceId: number | null = null;
+    let fixedStartTime = data.fixedStartTime ?? null;
+    let fixedEndTime = data.fixedEndTime ?? null;
 
-    // Create recurrence if provided
-    if (data.recurrence) {
-      const recurrence = await this.createRecurrence(data.recurrence);
-      recurrenceId = recurrence.id;
-    }
-
-    // Extract fixed times from targetDate and limitDate for fixed tasks
-    let fixedStartTime: string | null = null;
-    let fixedEndTime: string | null = null;
-    
-    if (data.isFixed && data.targetDate && data.limitDate) {
+    // Backward-compatible bridge for legacy input using targetDate/limitDate in fixed tasks.
+    if (data.isFixed && !fixedStartTime && !fixedEndTime && data.targetDate && data.limitDate) {
       const startDate = new Date(data.targetDate);
       const endDate = new Date(data.limitDate);
-      
-      // Format times as HH:MM:SS
-      fixedStartTime = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}:${String(startDate.getSeconds()).padStart(2, '0')}`;
-      fixedEndTime = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}:${String(endDate.getSeconds()).padStart(2, '0')}`;
+      fixedStartTime = `${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")}:${String(startDate.getSeconds()).padStart(2, "0")}`;
+      fixedEndTime = `${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}:${String(endDate.getSeconds()).padStart(2, "0")}`;
     }
 
-    // Create the task
     const task = await this.taskRepo.create({
       ownerId,
       name: data.name,
       description: data.description ?? null,
-      importance: data.importance ?? 5,
-      recurrenceId,
-      isActive: true,
-      isFixed: data.isFixed ?? false,
+      importance: data.importance,
+      difficulty: data.difficulty,
+      isDivisible: data.isDivisible,
+      urgencyThresholdAt: data.urgencyThresholdAt ?? null,
+      durationMinutes: data.durationMinutes ?? null,
+      isFixed: data.isFixed,
       fixedStartTime,
       fixedEndTime,
     });
 
     return task;
-  }
-
-  /**
-   * Create a recurrence pattern
-   */
-  async createRecurrence(data: CreateRecurrenceDTO) {
-    return await this.recurrenceRepo.create({
-      interval: data.interval ?? null,
-      daysOfWeek: data.daysOfWeek ?? null,
-      daysOfMonth: data.daysOfMonth ?? null,
-      maxOccurrences: data.maxOccurrences ?? null,
-      completedOccurrences: 0,
-      lastPeriodStart: data.lastPeriodStart ?? null,
-      endDate: data.endDate ?? null,
-    });
   }
 
   /**
@@ -103,11 +73,8 @@ export class TaskAdapter {
     const task = await this.taskRepo.findWithRecurrence(taskId);
     
     if (!task) return undefined;
-    
-    return {
-      ...task,
-      taskType: calculateTaskType(task.recurrence, task),
-    };
+
+    return task;
   }
 
   /**
@@ -133,12 +100,8 @@ export class TaskAdapter {
    */
   async getTasksWithRecurrenceByOwnerId(ownerId: string): Promise<TaskWithDetails[]> {
     const tasksWithRecurrence = await this.taskRepo.findByOwnerIdWithRecurrence(ownerId);
-    
-    // Add calculated taskType to each task
-    return tasksWithRecurrence.map((task) => ({
-      ...task,
-      taskType: calculateTaskType(task.recurrence, task),
-    }));
+
+    return tasksWithRecurrence;
   }
 
   /**
@@ -153,7 +116,7 @@ export class TaskAdapter {
    */
   async completeTask(taskId: number): Promise<Task | undefined> {
     return await this.taskRepo.updateById(taskId, { 
-      isActive: false,
+      status: "completed",
       completedAt: new Date(),
     });
   }
@@ -162,7 +125,7 @@ export class TaskAdapter {
    * Delete a task (soft delete by setting isActive to false)
    */
   async deleteTask(taskId: number): Promise<Task | undefined> {
-    return await this.taskRepo.updateById(taskId, { isActive: false });
+    return await this.taskRepo.updateById(taskId, { status: "paused" });
   }
 
   /**

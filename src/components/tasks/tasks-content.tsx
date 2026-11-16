@@ -22,6 +22,29 @@ interface TasksContentProps {
   onView: (task: TaskFromList) => void
 }
 
+function isTaskActive(task: TaskFromList): boolean {
+  if ("status" in task && typeof task.status === "string") {
+    return task.status === "active"
+  }
+  return Boolean(task.isActive)
+}
+
+function deriveTaskTypeLabel(task: TaskFromList): string {
+  if ("taskType" in task && typeof task.taskType === "string" && task.taskType.length > 0) {
+    return task.taskType
+  }
+
+  const recurrence = task.recurrence as { maxOccurrences?: number | null } | null | undefined
+  const hasRecurrence = !!recurrence
+  const maxOccurrences = recurrence?.maxOccurrences ?? null
+
+  if (task.isFixed && hasRecurrence) return "Fija Repetitiva"
+  if (task.isFixed) return "Fija Única"
+  if (typeof maxOccurrences === "number" && maxOccurrences > 1) return "Recurrente Finita"
+  if (hasRecurrence) return "Hábito"
+  return "Única"
+}
+
 export function TasksContent({
   tasks,
   filters,
@@ -45,29 +68,30 @@ export function TasksContent({
       // Status filter - multi-select support
       if (filters.statusesFilter.length > 0) {
         const matchesStatus = filters.statusesFilter.some(status => {
-          if (status === "active") return task.isActive
-          if (status === "inactive") return !task.isActive
+          if (status === "active") return isTaskActive(task)
+          if (status === "inactive") return !isTaskActive(task)
           return false
         })
         if (!matchesStatus) return false
       } else if (filters.statusFilter !== "all") {
         // Fallback to single select
-        if (filters.statusFilter === "active" && !task.isActive) return false
-        if (filters.statusFilter === "inactive" && task.isActive) return false
+        if (filters.statusFilter === "active" && !isTaskActive(task)) return false
+        if (filters.statusFilter === "inactive" && isTaskActive(task)) return false
       }
 
       // Task type filter - multi-select support
+      const derivedTaskType = deriveTaskTypeLabel(task) as (typeof filters.taskTypesFilter)[number]
       if (filters.taskTypesFilter.length > 0) {
-        if (!filters.taskTypesFilter.includes(task.taskType)) return false
+        if (!filters.taskTypesFilter.includes(derivedTaskType)) return false
       } else if (filters.taskTypeFilter !== "all") {
         // Fallback to single select
-        if (task.taskType !== filters.taskTypeFilter) return false
+        if (derivedTaskType !== filters.taskTypeFilter) return false
       }
 
       // Priority filter - multi-select support (using Eisenhower matrix)
       if (filters.prioritiesFilter.length > 0) {
         // Calculate the priority quadrant for this task
-        const quadrant = calculateQuadrant({ task } as any).quadrant
+        const quadrant = calculateQuadrant({ task }).quadrant
         const matchesPriority = filters.prioritiesFilter.includes(quadrant)
         if (!matchesPriority) return false
       }
@@ -86,12 +110,14 @@ export function TasksContent({
       case "name-desc":
         return sorted.sort((a, b) => b.name.localeCompare(a.name))
       case "type":
-        return sorted.sort((a, b) => a.taskType.localeCompare(b.taskType))
+        return sorted.sort((a, b) => deriveTaskTypeLabel(a).localeCompare(deriveTaskTypeLabel(b)))
       case "closest-target":
         return sorted.sort((a, b) => {
           // Use nextOccurrence dates if available
-          const aDate = a.nextOccurrence?.targetDate ?? a.nextOccurrence?.limitDate
-          const bDate = b.nextOccurrence?.targetDate ?? b.nextOccurrence?.limitDate
+          const aOccurrence = a.nextOccurrence
+          const bOccurrence = b.nextOccurrence
+          const aDate = aOccurrence?.tentativeAt ?? aOccurrence?.dueAt ?? null
+          const bDate = bOccurrence?.tentativeAt ?? bOccurrence?.dueAt ?? null
           if (!aDate && !bDate) return 0
           if (!aDate) return 1
           if (!bDate) return -1
@@ -99,8 +125,8 @@ export function TasksContent({
         })
       case "closest-limit":
         return sorted.sort((a, b) => {
-          const aDate = a.nextOccurrence?.limitDate
-          const bDate = b.nextOccurrence?.limitDate
+          const aDate = a.nextOccurrence?.dueAt ?? null
+          const bDate = b.nextOccurrence?.dueAt ?? null
           if (!aDate && !bDate) return 0
           if (!aDate) return 1
           if (!bDate) return -1
@@ -114,8 +140,8 @@ export function TasksContent({
   }, [filteredTasks, filters.sortBy])
 
   // Separate active and inactive tasks
-  const activeTasksList = sortedTasks.filter((t) => t.isActive)
-  const inactiveTasksList = sortedTasks.filter((t) => !t.isActive)
+  const activeTasksList = sortedTasks.filter((t) => isTaskActive(t))
+  const inactiveTasksList = sortedTasks.filter((t) => !isTaskActive(t))
 
   const handleClearFilters = () => {
     onFiltersChange(defaultFilters)

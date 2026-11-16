@@ -3,15 +3,17 @@
  * Displays a single occurrence with its events in an accordion format
  */
 
-import { useState } from "react"
 import { Clock, Calendar, AlertCircle, CheckCircle2, ChevronDown } from "lucide-react"
-import type { OccurrenceWithTask, EventWithDetails } from "~/types"
+import type { TimelineGetTimelineDataOutput } from "~/server/api/routers/derived-endpoint-types"
 import { getLimitDateDisplay, formatDateShort } from "~/lib/date-display-utils"
 
+type TimelineOccurrence = TimelineGetTimelineDataOutput["occurrences"][number]
+type TimelineEvent = TimelineGetTimelineDataOutput["events"][number]
+
 interface OccurrenceAccordionProps {
-  occurrence: OccurrenceWithTask
+  occurrence: TimelineOccurrence
   index: number
-  events: EventWithDetails[]
+  events: TimelineEvent[]
   formatTime: (minutes: number) => string
   formatDateTime: (date: Date | string) => string
   isOpen: boolean
@@ -27,7 +29,11 @@ export function OccurrenceAccordion({
   isOpen,
   onToggle,
 }: OccurrenceAccordionProps) {
-  const limitDisplay = getLimitDateDisplay(occurrence.limitDate);
+  const startAt = occurrence.slotStartAt
+  const limitAt = occurrence.dueAt ?? null
+  const targetTime = occurrence.targetTimeMinutes ?? null
+  const timeSpent = occurrence.timeSpentMinutes ?? null
+  const limitDisplay = getLimitDateDisplay(limitAt)
   
   return (
     <div className="rounded-lg border border-border bg-muted/10 overflow-hidden">
@@ -59,7 +65,7 @@ export function OccurrenceAccordion({
               <div>
                 <p className="text-xs text-muted-foreground">Fecha de Inicio</p>
                 <p className="text-sm font-semibold text-foreground">
-                  {formatDateTime(occurrence.startDate)}
+                  {startAt ? formatDateTime(startAt) : "Sin fecha"}
                 </p>
               </div>
             </div>
@@ -78,7 +84,7 @@ export function OccurrenceAccordion({
               </div>
             )}
 
-            {occurrence.limitDate && (
+            {limitAt && (
               <div className="flex items-center gap-2.5 rounded-lg bg-muted/20 p-2.5">
                 <div className="flex h-8 w-8 items-center justify-center rounded-md bg-orange-500/10">
                   <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
@@ -86,7 +92,7 @@ export function OccurrenceAccordion({
                 <div>
                   <p className="text-xs text-muted-foreground">Fecha Límite</p>
                   <p className={`text-sm font-semibold ${limitDisplay.color}`}>
-                    {formatDateShort(occurrence.limitDate)}
+                    {formatDateShort(limitAt)}
                   </p>
                 </div>
               </div>
@@ -102,7 +108,7 @@ export function OccurrenceAccordion({
               </div>
             </div>
 
-            {occurrence.targetTimeConsumption && (
+            {targetTime && (
               <div className="flex items-center gap-2.5 rounded-lg bg-muted/20 p-2.5">
                 <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
                   <Clock className="h-4 w-4 text-primary" />
@@ -110,13 +116,13 @@ export function OccurrenceAccordion({
                 <div>
                   <p className="text-xs text-muted-foreground">Tiempo Objetivo</p>
                   <p className="text-sm font-semibold text-foreground">
-                    {formatTime(occurrence.targetTimeConsumption)}
+                    {formatTime(targetTime)}
                   </p>
                 </div>
               </div>
             )}
 
-            {occurrence.timeConsumed ? (
+            {timeSpent ? (
               <div className="flex items-center gap-2.5 rounded-lg bg-muted/20 p-2.5">
                 <div className="flex h-8 w-8 items-center justify-center rounded-md bg-green-500/10">
                   <Clock className="h-4 w-4 text-green-600 dark:text-green-400" />
@@ -124,7 +130,7 @@ export function OccurrenceAccordion({
                 <div>
                   <p className="text-xs text-muted-foreground">Tiempo Consumido</p>
                   <p className="text-sm font-semibold text-foreground">
-                    {formatTime(occurrence.timeConsumed)}
+                    {formatTime(timeSpent)}
                   </p>
                 </div>
               </div>

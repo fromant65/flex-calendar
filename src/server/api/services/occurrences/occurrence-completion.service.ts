@@ -13,7 +13,6 @@ import { OccurrenceAdapter, CalendarEventAdapter, TaskAdapter } from "../../adap
 import { TaskSchedulerService } from "../scheduling/task-scheduler.service";
 import type { TaskSchedulerServiceInterface } from "../scheduling";
 import { TaskStrategyFactory } from "../task-strategies/task-strategy.factory";
-import { calculateTaskType } from "../task-strategies/utils/calculate-task-type";
 import type { OccurrenceContext } from "../task-strategies/base/strategy-types";
 import type { OccurrenceWithTask, TaskOccurrence } from "../types";
 
@@ -52,7 +51,7 @@ export class OccurrenceCompletionService {
 
     // Update time consumed if provided
     if (timeConsumed !== undefined) {
-      await this.occurrenceAdapter.updateOccurrence(occurrenceId, { timeConsumed });
+      await this.occurrenceAdapter.updateOccurrence(occurrenceId, { timeSpentMinutes: timeConsumed });
     }
 
     // Mark all events associated with this occurrence as completed
@@ -70,8 +69,6 @@ export class OccurrenceCompletionService {
     if (task.recurrence) {
       const recurrence = task.recurrence;
 
-      // Get the appropriate strategy for this task type
-      const taskType = calculateTaskType(recurrence, task);
       const strategy = this.strategyFactory.getStrategy(task, recurrence);
 
       // Build context for the strategy
@@ -90,7 +87,7 @@ export class OccurrenceCompletionService {
       switch (action.type) {
         case 'CREATE_NEXT_OCCURRENCE':
           await this.schedulerService.createNextOccurrence(task.id, {
-            targetTimeConsumption: occurrence.targetTimeConsumption ?? undefined,
+            targetTimeConsumption: occurrence.targetTimeMinutes ?? undefined,
           });
           break;
         
@@ -135,8 +132,6 @@ export class OccurrenceCompletionService {
     if (task?.recurrence) {
       const recurrence = task.recurrence;
 
-      // Get the appropriate strategy for this task type
-      const taskType = calculateTaskType(recurrence, task);
       const strategy = this.strategyFactory.getStrategy(task, recurrence);
 
       // Build context for the strategy

@@ -2,13 +2,14 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, CheckSquare, Calendar, BookmarkCheck } from "lucide-react"
+import { Home, CheckSquare, Calendar, BookmarkCheck, Repeat2 } from "lucide-react"
 import { Button } from "~/components/ui/button"
 
 const navItems = [
   { href: "/dashboard", label: "Inicio", icon: Home },
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/task-manager", label: "Gestor", icon: BookmarkCheck },
+  { href: "/routines", label: "Rutinas", icon: Repeat2 },
   { href: "/events", label: "Calendario", icon: Calendar },
 ]
 
@@ -22,7 +23,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 sm:hidden border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="grid grid-cols-4 h-16">
+      <div className="grid grid-cols-5 h-16">
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href

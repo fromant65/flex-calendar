@@ -32,6 +32,9 @@ export class OccurrenceCreationService {
     initialDates?: {
       targetDate?: Date;
       limitDate?: Date;
+      tentativeAt?: Date;
+      dueAt?: Date;
+      targetTimeMinutes?: number;
       targetTimeConsumption?: number;
     }
   ): Promise<void> {
@@ -70,11 +73,15 @@ export class OccurrenceCreationService {
 
     // Create the occurrence
     const occurrenceData: CreateOccurrenceDTO = {
-      associatedTaskId: taskId,
-      startDate: nextDate,
-      targetDate,
-      limitDate,
-      targetTimeConsumption: initialDates?.targetTimeConsumption ?? latestOccurrence?.targetTimeConsumption ?? undefined,
+      taskId,
+      slotStartAt: nextDate,
+      tentativeAt: initialDates?.tentativeAt ?? targetDate,
+      dueAt: initialDates?.dueAt ?? limitDate,
+      targetTimeMinutes:
+        initialDates?.targetTimeMinutes ??
+        initialDates?.targetTimeConsumption ??
+        latestOccurrence?.targetTimeMinutes ??
+        undefined,
     };
 
     await this.occurrenceAdapter.createOccurrence(occurrenceData);
@@ -88,6 +95,9 @@ export class OccurrenceCreationService {
     initialDates?: {
       targetDate?: Date;
       limitDate?: Date;
+      tentativeAt?: Date;
+      dueAt?: Date;
+      targetTimeMinutes?: number;
       targetTimeConsumption?: number;
     }
   ): Promise<void> {
@@ -98,11 +108,11 @@ export class OccurrenceCreationService {
     const limitDate = initialDates?.limitDate ?? this.dateService.addDays(today, 7).toDate();
 
     const occurrenceData: CreateOccurrenceDTO = {
-      associatedTaskId: taskId,
-      startDate,
-      targetDate,
-      limitDate,
-      targetTimeConsumption: initialDates?.targetTimeConsumption,
+      taskId,
+      slotStartAt: startDate,
+      tentativeAt: initialDates?.tentativeAt ?? targetDate,
+      dueAt: initialDates?.dueAt ?? limitDate,
+      targetTimeMinutes: initialDates?.targetTimeMinutes ?? initialDates?.targetTimeConsumption,
     };
 
     await this.occurrenceAdapter.createOccurrence(occurrenceData);
@@ -125,7 +135,7 @@ export class OccurrenceCreationService {
     
     // Subsequent occurrences: calculate based on previous occurrence's start date
     return this.dateCalculator.calculateNextOccurrenceDate(
-      latestOccurrence.startDate,
+      latestOccurrence.slotStartAt ?? latestOccurrence.createdAt,
       recurrence,
       false
     );

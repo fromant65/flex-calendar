@@ -3,21 +3,21 @@
 import { CalendarViewComponent } from "./calendar-view"
 import { EisenhowerMatrix } from "./eisenhower-matrix"
 import { useEventsContext } from "./events-context"
-import type { EventWithDetails, OccurrenceWithTask } from "~/types"
+import type { CalendarEventLike, CalendarOccurrenceLike } from "~/types/v2-ui"
 
 // Modular component - MobileLayout
 // Renders the mobile view with toggled matrix/calendar views
 
 interface MobileLayoutProps {
-  availableOccurrences: OccurrenceWithTask[]
-  events: EventWithDetails[]
-  onTaskSelectMobile: (occurrence: OccurrenceWithTask) => void
-  onTaskDragStart: (occurrence: OccurrenceWithTask) => void
-  onOccurrenceClick: (occurrence: OccurrenceWithTask) => void
+  availableOccurrences: CalendarOccurrenceLike[]
+  events: CalendarEventLike[]
+  onTaskSelectMobile: (occurrence: CalendarOccurrenceLike) => void
+  onTaskDragStart: (occurrence: CalendarOccurrenceLike) => void
+  onOccurrenceClick: (occurrence: CalendarOccurrenceLike) => void
   onTimeSlotClick: (date: Date, hour?: number) => void
-  onEventClick: (event: EventWithDetails) => void
+  onEventClick: (event: CalendarEventLike) => void
   onCalendarDrop: (date: Date, hour?: number) => void
-  onEventDragStart: (event: EventWithDetails) => void
+  onEventDragStart: (event: CalendarEventLike) => void
 }
 
 export function MobileLayout({

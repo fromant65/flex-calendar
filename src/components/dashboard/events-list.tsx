@@ -1,15 +1,15 @@
 "use client"
 
 import { motion } from "framer-motion"
-import type { EventWithDetails } from "~/types"
+import type { CalendarEventLike } from "~/types/v2-ui"
 import { Calendar, Clock, CheckCircle2, AlertCircle } from "lucide-react"
 import { cn } from "~/lib/utils"
 
 interface EventsListProps {
-  events: EventWithDetails[]
+  events: CalendarEventLike[]
   title: string
   emptyMessage?: string
-  onEventClick?: (event: EventWithDetails) => void
+  onEventClick?: (event: CalendarEventLike) => void
 }
 
 const containerVariants = {
@@ -142,9 +142,9 @@ export function EventsList({ events, title, emptyMessage = "No hay eventos", onE
 }
 
 interface DayWeekEventsProps {
-  todayEvents: EventWithDetails[]
-  weekEvents: EventWithDetails[]
-  onEventClick?: (event: EventWithDetails) => void
+  todayEvents: CalendarEventLike[]
+  weekEvents: CalendarEventLike[]
+  onEventClick?: (event: CalendarEventLike) => void
 }
 
 export function DayWeekEvents({ todayEvents, weekEvents, onEventClick }: DayWeekEventsProps) {

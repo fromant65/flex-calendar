@@ -8,7 +8,16 @@
 // ENUMS & LITERAL TYPES
 // ============================================================================
 
-export type TaskOccurrenceStatus = "Pending" | "In Progress" | "Completed" | "Skipped"
+export type TaskOccurrenceStatus =
+  | "Pending"
+  | "In Progress"
+  | "Completed"
+  | "Skipped"
+  | "unassigned"
+  | "pending"
+  | "in_progress"
+  | "completed"
+  | "skipped"
 
 export type TaskType = "Única" | "Recurrente Finita" | "Hábito" | "Hábito +" | "Fija Única" | "Fija Repetitiva"
 
@@ -25,9 +34,10 @@ export interface Task {
   ownerId: string
   name: string
   description: string | null
-  recurrenceId: number | null
+  recurrenceId?: number | null
   importance: number
-  isActive: boolean
+  isActive?: boolean
+  status?: "active" | "inactive" | "paused" | string
   isFixed: boolean
   fixedStartTime: string | null
   fixedEndTime: string | null
@@ -50,12 +60,23 @@ export interface TaskRecurrence {
 
 export interface TaskOccurrence {
   id: number
-  associatedTaskId: number
-  startDate: Date
-  limitDate: Date | null
-  targetDate: Date | null
-  targetTimeConsumption: number | null
-  timeConsumed: number | null
+  // Legacy fields (kept optional during V2 migration)
+  associatedTaskId?: number
+  startDate?: Date
+  limitDate?: Date | null
+  targetDate?: Date | null
+  targetTimeConsumption?: number | null
+  timeConsumed?: number | null
+
+  // V2 fields
+  taskId?: number
+  slotStartAt?: Date
+  slotEndAt?: Date
+  dueAt?: Date | null
+  tentativeAt?: Date | null
+  targetTimeMinutes?: number | null
+  timeSpentMinutes?: number | null
+
   status: TaskOccurrenceStatus
   urgency: number | null
   completedAt: Date | null
@@ -67,12 +88,12 @@ export interface CalendarEvent {
   id: number
   context: string | null
   ownerId: string
-  associatedOccurrenceId: number | null
+  associatedOccurrenceId?: number | null
   isFixed: boolean
   start: Date
   finish: Date
   isCompleted: boolean
-  dedicatedTime: number
+  dedicatedTime: number | null
   completedAt: Date | null
   createdAt: Date
   updatedAt: Date | null

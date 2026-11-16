@@ -1,5 +1,7 @@
 /**
- * Calendar Stats Calculator - Handles calendar event statistics
+ * Calendar Stats Calculator - Handles agenda entry statistics
+ *
+ * In V2, entries are derived from occurrence slots.
  */
 
 import type { CalendarStatsData, HourlyDistribution } from "~/types";
@@ -8,7 +10,7 @@ import { CalendarStatsInsightsGenerator } from "./insights-generators";
 
 export class CalendarStatsCalculator {
   /**
-   * Calculate all calendar statistics
+   * Calculate all agenda statistics
    */
   calculate(dataset: StatsDataset): CalendarStatsData {
     try {
@@ -47,7 +49,7 @@ export class CalendarStatsCalculator {
   }
 
   /**
-   * Calculate hourly distribution of events
+   * Calculate hourly distribution of agenda entries
    */
   private calculateHourlyDistribution(userEvents: StatsEvent[]): HourlyDistribution[] {
     const hourlyData = new Map<number, { count: number; completed: number }>();

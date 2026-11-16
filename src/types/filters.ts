@@ -152,6 +152,11 @@ export const taskOccurrenceStatusLabels: Record<TaskOccurrenceStatus | "all", st
   "In Progress": "En Progreso",
   Completed: "Completada",
   Skipped: "Saltada",
+  pending: "Pendiente",
+  in_progress: "En progreso",
+  completed: "Completada",
+  unassigned: "No asignada",
+  skipped: "Saltada"
 }
 
 export const fixedLabels: Record<FixedFilter | "all", string> = {

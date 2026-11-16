@@ -1,6 +1,6 @@
 "use client"
 
-import type { EventWithDetails, OccurrenceWithTask, TaskWithRecurrence } from "~/types"
+import type { CalendarEventLike, CalendarOccurrenceLike } from "~/types/v2-ui"
 import { Dialog, DialogContent} from "../ui/dialog"
 import { useState } from "react"
 import { api } from "~/trpc/react"
@@ -16,13 +16,14 @@ import { ensureLocalDate } from "~/lib/calendar-utils"
 import CompletedPanel from "./task-details/CompletedPanel"
 import CompleteFooter from "./task-details/CompleteFooter"
 import TaskInfo from "./task-details/TaskInfo"
+import type { TaskInfoTask } from "./task-details/TaskInfo"
 
 interface TaskDetailsModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  task?: Partial<TaskWithRecurrence> | null
-  occurrence?: OccurrenceWithTask | null
-  event?: EventWithDetails | null
+  task?: TaskInfoTask | null
+  occurrence?: CalendarOccurrenceLike | null
+  event?: CalendarEventLike | null
   onEventCompleted?: () => void
 }
 

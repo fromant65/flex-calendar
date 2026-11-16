@@ -4,18 +4,41 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "~/components/ui/badge";
 import { CheckCircle2, Circle, Clock, TrendingUp, Calendar, ChevronDown, ChevronRight } from "lucide-react";
-import type { TaskType } from "~/server/api/services/types";
-import type { TaskOccurrence } from "~/types";
 import { OccurrenceCard } from "./occurrence-card";
 import { BacklogAlert } from "./backlog-alert";
 import { CompletionStreakBadge } from "./completion-streak-badge";
 import { api } from "~/trpc/react";
 import { formatDateShort } from "~/lib/date-display-utils";
 
+type TaskManagerOccurrenceLike = {
+  id: number
+  status: string
+  completedAt?: Date | null
+  slotStartAt?: Date | null
+  tentativeAt?: Date | null
+  dueAt?: Date | null
+  targetTimeMinutes?: number | null
+  timeSpentMinutes?: number | null
+  task: {
+    id: number
+    name: string
+    importance?: number
+    taskType?: string
+  }
+}
+
+type TaskCardTaskLike = {
+  id: number
+  name: string
+  description?: string
+  importance?: number
+  taskType?: string
+}
+
 interface TaskCardProps {
-  task: any;
-  taskType: TaskType;
-  occurrences: TaskOccurrence[];
+  task: TaskCardTaskLike;
+  taskType?: string;
+  occurrences: TaskManagerOccurrenceLike[];
   isExpanded: boolean;
   nextOccurrenceDate: Date | null | undefined;
   onToggle: () => void;
@@ -35,17 +58,19 @@ const formatDate = (date: Date | null | undefined) => {
 };
 
 // Helper to get task type color
-const getTaskTypeColor = (taskType: TaskType) => {
-  const colors: Record<TaskType, string> = {
-    Única: "bg-gray-500 dark:bg-gray-600",
+const getTaskTypeColor = (taskType?: string) => {
+  const colors: Record<string, string> = {
+    "Única": "bg-gray-500 dark:bg-gray-600",
     "Recurrente Finita": "bg-blue-500 dark:bg-blue-600",
-    Hábito: "bg-green-500 dark:bg-green-600",
+    "Hábito": "bg-green-500 dark:bg-green-600",
     "Hábito +": "bg-purple-500 dark:bg-purple-600",
     "Fija Única": "bg-orange-500 dark:bg-orange-600",
     "Fija Repetitiva": "bg-red-500 dark:bg-red-600",
   };
-  return colors[taskType] ?? "bg-gray-500 dark:bg-gray-600";
+  return taskType ? (colors[taskType] ?? "bg-gray-500 dark:bg-gray-600") : "bg-gray-500 dark:bg-gray-600";
 };
+
+const normalizeStatus = (status: string): string => status.toLowerCase().replace(/\s+/g, "_")
 
 export function TaskCard({
   task,
@@ -71,10 +96,13 @@ export function TaskCard({
     { enabled: isExpanded }
   );
   const activeOccurrences = occurrences.filter(
-    (o) => o.status === "Pending" || o.status === "In Progress"
+    (o) => {
+      const status = normalizeStatus(o.status)
+      return status === "pending" || status === "in_progress"
+    }
   );
-  const completedOccurrences = occurrences.filter((o) => o.status === "Completed");
-  const skippedOccurrences = occurrences.filter((o) => o.status === "Skipped");
+  const completedOccurrences = occurrences.filter((o) => normalizeStatus(o.status) === "completed");
+  const skippedOccurrences = occurrences.filter((o) => normalizeStatus(o.status) === "skipped");
   
   // Sort completed/skipped by completedAt date (newest first)
   const sortedCompletedSkipped = [...completedOccurrences, ...skippedOccurrences].sort((a, b) => {
@@ -91,13 +119,16 @@ export function TaskCard({
   const hasMoreCompleted = sortedCompletedSkipped.length > INITIAL_DISPLAY_COUNT;
   
   const totalTimeConsumed = occurrences.reduce(
-    (sum, o) => sum + (o.timeConsumed ?? 0),
+    (sum, o) => sum + (o.timeSpentMinutes ?? 0),
     0
   );
 
   // Filter occurrences to show: only active, not completed or skipped
   const visibleOccurrences = occurrences.filter(
-    (o) => o.status !== "Completed" && o.status !== "Skipped"
+    (o) => {
+      const status = normalizeStatus(o.status)
+      return status !== "completed" && status !== "skipped"
+    }
   );
 
   return (
@@ -126,7 +157,7 @@ export function TaskCard({
               
               <h3 className="flex-1 text-lg font-semibold text-foreground">{task.name}</h3>
               <Badge className={`${getTaskTypeColor(taskType)} text-white flex-shrink-0`}>
-                {taskType}
+                {taskType ?? "General"}
               </Badge>
             </div>
             {task.description && (
@@ -237,7 +268,7 @@ export function TaskCard({
                     key={occurrence.id}
                     occurrence={occurrence}
                     taskName={task.name}
-                    taskImportance={task.importance}
+                    taskImportance={task.importance ?? 0}
                     onEdit={onEditOccurrence}
                     onComplete={onCompleteOccurrence}
                     onSkip={onSkipOccurrence}
@@ -286,7 +317,7 @@ export function TaskCard({
                           key={occurrence.id}
                           occurrence={occurrence}
                           taskName={task.name}
-                          taskImportance={task.importance}
+                          taskImportance={task.importance ?? 0}
                           onEdit={onEditOccurrence}
                           onComplete={onCompleteOccurrence}
                           onSkip={onSkipOccurrence}

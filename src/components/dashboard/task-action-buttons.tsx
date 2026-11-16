@@ -2,17 +2,19 @@
 
 import { CheckCircle2, SkipForward } from "lucide-react"
 import { Button } from "~/components/ui/button"
-import type { OccurrenceWithTask } from "~/types"
+import type { CalendarOccurrenceLike } from "~/types/v2-ui"
 
 interface TaskActionButtonsProps {
-  occurrence: OccurrenceWithTask
-  onComplete?: (occurrence: OccurrenceWithTask) => void
-  onSkip?: (occurrence: OccurrenceWithTask) => void
+  occurrence: CalendarOccurrenceLike
+  onComplete?: (occurrence: CalendarOccurrenceLike) => void
+  onSkip?: (occurrence: CalendarOccurrenceLike) => void
 }
 
 export function TaskActionButtons({ occurrence, onComplete, onSkip }: TaskActionButtonsProps) {
+  const normalizedStatus = occurrence.status.toLowerCase().replace(/\s+/g, "_")
+
   // Don't show buttons if task is already completed or skipped
-  if (occurrence.status === "Completed" || occurrence.status === "Skipped") {
+  if (normalizedStatus === "completed" || normalizedStatus === "skipped") {
     return null
   }
 

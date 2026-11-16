@@ -7,8 +7,8 @@ import { UrgentTasksList } from "~/components/dashboard/urgent-tasks-list"
 import { EventsList } from "~/components/dashboard/events-list"
 import { Badge } from "~/components/ui/badge"
 import { toast } from "sonner"
-import { mockHelpOccurrences, mockHelpEvents } from "~/lib/mock-help-data"
 import { CheckSquare, Calendar, TrendingUp, AlertCircle } from "lucide-react"
+import type { CalendarOccurrenceLike, CalendarEventLike } from "~/types/v2-ui"
 
 interface DashboardContentProps {
   id: string
@@ -17,16 +17,15 @@ interface DashboardContentProps {
 }
 
 export function DashboardContent({ id, completedOccurrences, setCompletedOccurrences }: DashboardContentProps) {
-  const urgentOccurrences = mockHelpOccurrences.filter(o => 
-    o.status === "Pending" && (o.limitDate ? new Date(o.limitDate) <= new Date() : false)
-  ).slice(0, 3)
+  const urgentOccurrences: CalendarOccurrenceLike[] = []
+  const helpEventsV2: CalendarEventLike[] = []
 
-  const handleCompleteTask = (occ: any) => {
+  const handleCompleteTask = (occ: CalendarOccurrenceLike) => {
     setCompletedOccurrences([...completedOccurrences, occ.id])
     toast.success("¡Tarea completada!")
   }
 
-  const handleSkipTask = (occ: any) => {
+  const handleSkipTask = (_occ: CalendarOccurrenceLike) => {
     toast.info("Tarea saltada")
   }
 
@@ -156,7 +155,7 @@ export function DashboardContent({ id, completedOccurrences, setCompletedOccurre
                 <div>
                   <h4 className="font-semibold mb-3">Ejemplo interactivo: Eventos de Hoy</h4>
                   <div className="border rounded-lg p-4 bg-muted/5">
-                    <EventsList events={mockHelpEvents.slice(0, 3)} title="Eventos de Hoy" />
+                    <EventsList events={helpEventsV2.slice(0, 3)} title="Eventos de Hoy" />
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
                     💡 Los eventos muestran su horario y estado actual

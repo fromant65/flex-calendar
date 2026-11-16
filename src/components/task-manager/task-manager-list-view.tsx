@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import type { TaskType } from "~/server/api/services/types";
 import type { OccurrenceWithTask } from "~/types";
 import { TaskCard } from "./task-card";
 import { UnifiedFilterBar } from "~/components/common/unified-filter-bar";
@@ -93,14 +92,13 @@ export function TaskManagerListView({
           animate="visible"
         >
           {sortedTasks.map(({ task, occurrences: taskOccurrences }) => {
-            const taskType = task.taskType as TaskType;
             const isExpanded = selectedTaskId === task.id;
 
             return (
               <TaskCard
                 key={task.id}
                 task={task}
-                taskType={taskType}
+                taskType={task.taskType}
                 occurrences={taskOccurrences}
                 isExpanded={isExpanded}
                 nextOccurrenceDate={isExpanded ? nextOccurrenceDate : null}

@@ -13,7 +13,7 @@
  * Refactored to use DateDomainService for consistent date handling
  */
 
-import type { TaskOccurrence } from "../types";
+import type { TaskOccurrence, OccurrenceWithTask } from "../types";
 import { OccurrenceAdapter } from "../../adapter";
 import { DateDomainService } from "../dates";
 
@@ -51,11 +51,11 @@ export class TaskStreakService {
       };
     }
 
-    // Sort by start date descending (most recent first)
+    // Sort by slot start descending, falling back to creation time
     const sorted = [...occurrences].sort((a, b) => {
-      const dateA = this.dateService.dateToDeadline(a.startDate);
-      const dateB = this.dateService.dateToDeadline(b.startDate);
-      return dateB.isBefore(dateA) ? -1 : 1;
+      const timeA = (a.slotStartAt ?? a.createdAt).getTime();
+      const timeB = (b.slotStartAt ?? b.createdAt).getTime();
+      return timeB - timeA;
     });
 
     const now = this.dateService.now();
@@ -63,9 +63,9 @@ export class TaskStreakService {
 
     // Check for expired occurrences first - these reset the streak
     const hasExpiredOccurrence = sorted.some((occ) => {
-      if (occ.status === "Pending" || occ.status === "In Progress") {
-        if (occ.limitDate) {
-          const limitTimestamp = this.dateService.dateToTimestamp(occ.limitDate);
+      if (occ.status === "pending" || occ.status === "in_progress") {
+        if (occ.dueAt) {
+          const limitTimestamp = this.dateService.dateToTimestamp(occ.dueAt);
           return limitTimestamp.isBefore(now);
         }
       }
@@ -78,9 +78,9 @@ export class TaskStreakService {
     } else {
       // Count consecutive completions from most recent
       for (const occ of sorted) {
-        if (occ.status === "Completed") {
+        if (occ.status === "completed") {
           currentStreak++;
-        } else if (occ.status === "Skipped") {
+        } else if (occ.status === "skipped") {
           // Skip breaks the streak
           break;
         }
@@ -89,7 +89,7 @@ export class TaskStreakService {
     }
 
     // Calculate total stats
-    const totalCompleted = occurrences.filter((o) => o.status === "Completed").length;
+    const totalCompleted = occurrences.filter((o) => o.status === "completed").length;
     const totalOccurrences = occurrences.length;
     const completionRate = totalOccurrences > 0 
       ? (totalCompleted / totalOccurrences) * 100 
@@ -132,12 +132,12 @@ export class TaskStreakService {
     
     // Group by task ID
     // Cast needed: adapter returns occurrence with string status instead of literal type
-    const occurrencesByTask = new Map<number, TaskOccurrence[]>();
+    const occurrencesByTask = new Map<number, OccurrenceWithTask[]>();
     occurrences.forEach((occ) => {
-      if (!occurrencesByTask.has(occ.associatedTaskId)) {
-        occurrencesByTask.set(occ.associatedTaskId, []);
+      if (!occurrencesByTask.has(occ.taskId)) {
+        occurrencesByTask.set(occ.taskId, []);
       }
-      occurrencesByTask.get(occ.associatedTaskId)!.push(occ as TaskOccurrence);
+      occurrencesByTask.get(occ.taskId)!.push(occ);
     });
 
     // Calculate streak for each task

@@ -21,7 +21,9 @@ import {
   DropdownMenuLabel
 } from "~/components/ui/dropdown-menu";
 import { ArrowUpDown, Check } from "lucide-react";
-import type { TaskOccurrenceStatus, TaskType } from "~/types";
+
+type TaskOccurrenceStatusV2 = "pending" | "in_progress" | "completed" | "skipped" | "unassigned"
+type TaskTypeV2 = "Única" | "Recurrente Finita" | "Hábito" | "Hábito +" | "Fija Única" | "Fija Repetitiva"
 
 export type SortOption = 
   | "closest-target" 
@@ -32,8 +34,8 @@ export type SortOption =
 
 export type TaskManagerFilter = {
   searchQuery: string;
-  statusFilter: TaskOccurrenceStatus | "all";
-  taskTypeFilter: TaskType | "all";
+  statusFilter: TaskOccurrenceStatusV2 | "all";
+  taskTypeFilter: TaskTypeV2 | "all";
   sortBy: SortOption;
 };
 
@@ -44,7 +46,7 @@ interface TaskManagerFilterBarProps {
   filteredCount: number;
 }
 
-const taskTypes: (TaskType | "all")[] = [
+const taskTypes: (TaskTypeV2 | "all")[] = [
   "all",
   "Única",
   "Recurrente Finita",
@@ -54,20 +56,21 @@ const taskTypes: (TaskType | "all")[] = [
   "Fija Repetitiva",
 ];
 
-const statusOptions: (TaskOccurrenceStatus | "all")[] = [
+const statusOptions: (TaskOccurrenceStatusV2 | "all")[] = [
   "all",
-  "Pending",
-  "In Progress",
-  "Completed",
-  "Skipped",
+  "pending",
+  "in_progress",
+  "completed",
+  "skipped",
 ];
 
-const statusLabels: Record<TaskOccurrenceStatus | "all", string> = {
+const statusLabels: Record<TaskOccurrenceStatusV2 | "all", string> = {
   all: "Todos los estados",
-  Pending: "Pendiente",
-  "In Progress": "En Progreso",
-  Completed: "Completada",
-  Skipped: "Saltada",
+  pending: "Pendiente",
+  in_progress: "En Progreso",
+  completed: "Completada",
+  skipped: "Saltada",
+  unassigned: "No asignada",
 };
 
 const sortLabels: Record<SortOption, string> = {
@@ -193,7 +196,7 @@ export function TaskManagerFilterBar({
           onValueChange={(value) =>
             onFiltersChange({
               ...filters,
-              statusFilter: value as TaskOccurrenceStatus | "all",
+              statusFilter: value as TaskOccurrenceStatusV2 | "all",
             })
           }
         >
@@ -218,7 +221,7 @@ export function TaskManagerFilterBar({
           onValueChange={(value) =>
             onFiltersChange({
               ...filters,
-              taskTypeFilter: value as TaskType | "all",
+              taskTypeFilter: value as TaskTypeV2 | "all",
             })
           }
         >

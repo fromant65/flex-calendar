@@ -1,51 +1,76 @@
 "use client"
 
 import { Calendar, TrendingUp, CheckCircle2, Clock, Repeat, Zap, Target, Activity } from "lucide-react"
-import type { TaskWithDetails } from "~/types"
+import type { TaskGetMyTasksOutput } from "~/server/api/routers/derived-endpoint-types"
 
 interface TaskStatsProps {
-  tasks: TaskWithDetails[]
+  tasks: TaskGetMyTasksOutput
+}
+
+type TaskFromList = TaskGetMyTasksOutput[number]
+
+function isTaskActive(task: TaskFromList): boolean {
+  if ("status" in task && typeof task.status === "string") {
+    return task.status === "active"
+  }
+  return Boolean(task.isActive)
+}
+
+function deriveTaskType(task: TaskFromList): string {
+  if ("taskType" in task && typeof task.taskType === "string" && task.taskType.length > 0) {
+    return task.taskType
+  }
+
+  const recurrence = task.recurrence as { maxOccurrences?: number | null } | null | undefined
+  const hasRecurrence = !!recurrence
+  const maxOccurrences = recurrence?.maxOccurrences ?? null
+
+  if (task.isFixed && hasRecurrence) return "Fija Repetitiva"
+  if (task.isFixed) return "Fija Única"
+  if (typeof maxOccurrences === "number" && maxOccurrences > 1) return "Recurrente Finita"
+  if (hasRecurrence) return "Hábito"
+  return "Única"
 }
 
 export function TaskStats({ tasks }: TaskStatsProps) {
   // Calcular estadísticas generales
   const totalTasks = tasks.length
-  const activeTasks = tasks.filter((t) => t.isActive).length
-  const inactiveTasks = tasks.filter((t) => !t.isActive).length
+  const activeTasks = tasks.filter((t) => isTaskActive(t)).length
+  const inactiveTasks = tasks.filter((t) => !isTaskActive(t)).length
   const fixedTasks = tasks.filter((t) => t.isFixed).length
   const flexibleTasks = tasks.filter((t) => !t.isFixed).length
 
   // Calcular estadísticas por tipo (total, activas, inactivas)
   const tasksByType = {
     "Única": {
-      total: tasks.filter((t) => t.taskType === "Única").length,
-      active: tasks.filter((t) => t.taskType === "Única" && t.isActive).length,
-      inactive: tasks.filter((t) => t.taskType === "Única" && !t.isActive).length,
+      total: tasks.filter((t) => deriveTaskType(t) === "Única").length,
+      active: tasks.filter((t) => deriveTaskType(t) === "Única" && isTaskActive(t)).length,
+      inactive: tasks.filter((t) => deriveTaskType(t) === "Única" && !isTaskActive(t)).length,
     },
     "Recurrente Finita": {
-      total: tasks.filter((t) => t.taskType === "Recurrente Finita").length,
-      active: tasks.filter((t) => t.taskType === "Recurrente Finita" && t.isActive).length,
-      inactive: tasks.filter((t) => t.taskType === "Recurrente Finita" && !t.isActive).length,
+      total: tasks.filter((t) => deriveTaskType(t) === "Recurrente Finita").length,
+      active: tasks.filter((t) => deriveTaskType(t) === "Recurrente Finita" && isTaskActive(t)).length,
+      inactive: tasks.filter((t) => deriveTaskType(t) === "Recurrente Finita" && !isTaskActive(t)).length,
     },
     "Hábito": {
-      total: tasks.filter((t) => t.taskType === "Hábito").length,
-      active: tasks.filter((t) => t.taskType === "Hábito" && t.isActive).length,
-      inactive: tasks.filter((t) => t.taskType === "Hábito" && !t.isActive).length,
+      total: tasks.filter((t) => deriveTaskType(t) === "Hábito").length,
+      active: tasks.filter((t) => deriveTaskType(t) === "Hábito" && isTaskActive(t)).length,
+      inactive: tasks.filter((t) => deriveTaskType(t) === "Hábito" && !isTaskActive(t)).length,
     },
     "Hábito +": {
-      total: tasks.filter((t) => t.taskType === "Hábito +" ).length,
-      active: tasks.filter((t) => t.taskType === "Hábito +" && t.isActive).length,
-      inactive: tasks.filter((t) => t.taskType === "Hábito +" && !t.isActive).length,
+      total: tasks.filter((t) => deriveTaskType(t) === "Hábito +" ).length,
+      active: tasks.filter((t) => deriveTaskType(t) === "Hábito +" && isTaskActive(t)).length,
+      inactive: tasks.filter((t) => deriveTaskType(t) === "Hábito +" && !isTaskActive(t)).length,
     },
     "Fija Única": {
-      total: tasks.filter((t) => t.taskType === "Fija Única").length,
-      active: tasks.filter((t) => t.taskType === "Fija Única" && t.isActive).length,
-      inactive: tasks.filter((t) => t.taskType === "Fija Única" && !t.isActive).length,
+      total: tasks.filter((t) => deriveTaskType(t) === "Fija Única").length,
+      active: tasks.filter((t) => deriveTaskType(t) === "Fija Única" && isTaskActive(t)).length,
+      inactive: tasks.filter((t) => deriveTaskType(t) === "Fija Única" && !isTaskActive(t)).length,
     },
     "Fija Repetitiva": {
-      total: tasks.filter((t) => t.taskType === "Fija Repetitiva").length,
-      active: tasks.filter((t) => t.taskType === "Fija Repetitiva" && t.isActive).length,
-      inactive: tasks.filter((t) => t.taskType === "Fija Repetitiva" && !t.isActive).length,
+      total: tasks.filter((t) => deriveTaskType(t) === "Fija Repetitiva").length,
+      active: tasks.filter((t) => deriveTaskType(t) === "Fija Repetitiva" && isTaskActive(t)).length,
+      inactive: tasks.filter((t) => deriveTaskType(t) === "Fija Repetitiva" && !isTaskActive(t)).length,
     },
   }
 

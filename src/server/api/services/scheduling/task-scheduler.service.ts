@@ -79,7 +79,7 @@ export class TaskSchedulerService {
     if (!latestOccurrence) return true;
 
     // Only create new occurrence if the last one was completed or skipped
-    return latestOccurrence.status === "Completed" || latestOccurrence.status === "Skipped";
+    return latestOccurrence.status === "completed" || latestOccurrence.status === "skipped";
   }
 
   /**
@@ -154,6 +154,9 @@ export class TaskSchedulerService {
     initialDates?: {
       targetDate?: Date;
       limitDate?: Date;
+      tentativeAt?: Date;
+      dueAt?: Date;
+      targetTimeMinutes?: number;
       targetTimeConsumption?: number;
     }
   ): Promise<void> {
@@ -221,7 +224,7 @@ export class TaskSchedulerService {
     const tasks = await this.taskAdapter.getTasksWithRecurrenceByOwnerId(userId);
     
     for (const task of tasks) {
-      if (task.recurrence && task.isActive) {
+      if (task.recurrence && task.status === "active") {
         try {
           await this.createNextOccurrence(task.id);
         } catch (error) {

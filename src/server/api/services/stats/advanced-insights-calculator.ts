@@ -3,7 +3,7 @@
  */
 
 import type { AdvancedInsights, LowComplianceHabit, TrendPoint, Bottleneck } from "~/types";
-import type { StatsDataset, StatsTask, StatsOccurrence, StatsRecurrence } from "./stats-types";
+import type { StatsDataset, StatsTask, StatsOccurrence } from "./stats-types";
 import { StatsUtils } from "./stats-utils";
 import { AdvancedInsightsGenerator } from "./insights-generators";
 
@@ -13,19 +13,17 @@ export class AdvancedInsightsCalculator {
    */
   calculate(dataset: StatsDataset): AdvancedInsights {
     try {
-      const { tasks: userTasks = [], occurrences = [], recurrenceMap } = dataset;
+      const { tasks: userTasks = [], occurrences = [] } = dataset;
 
       const insights: AdvancedInsights = {
         lowComplianceHabits: this.calculateLowComplianceHabits(
           userTasks,
-          occurrences,
-          recurrenceMap
+          occurrences
         ),
         completionTrend: this.calculateCompletionTrend(occurrences),
         recurringVsUniqueComparison: this.calculateRecurringVsUniqueComparison(
           userTasks,
-          occurrences,
-          recurrenceMap
+          occurrences
         ),
         bottlenecks: this.calculateBottlenecks(userTasks, occurrences),
       };
@@ -45,20 +43,15 @@ export class AdvancedInsightsCalculator {
    */
   private calculateLowComplianceHabits(
     userTasks: StatsTask[],
-    occurrences: StatsOccurrence[],
-    recurrenceMap: Map<number, StatsRecurrence>
+    occurrences: StatsOccurrence[]
   ): LowComplianceHabit[] {
-    // Filter habits (tasks with recurrence and no maxOccurrences or maxOccurrences > 10)
-    const habitTasks = userTasks.filter((t) => {
-      if (!t?.recurrenceId) return false;
-      const rec = recurrenceMap.get(t.recurrenceId);
-      return rec && (!rec.maxOccurrences || rec.maxOccurrences > 10);
-    });
+    // In V2 we infer habits by repeated occurrences for the same task.
+    const habitTasks = userTasks.filter((t) => occurrences.filter((o) => o.taskId === t.id).length > 1);
 
     return habitTasks
       .map((task) => {
-        const taskOccs = occurrences.filter((o) => o?.associatedTaskId === task.id);
-        const completed = taskOccs.filter((o) => o?.status === "Completed").length;
+        const taskOccs = occurrences.filter((o) => o?.taskId === task.id);
+        const completed = taskOccs.filter((o) => o?.status === "completed").length;
         const completionRate = taskOccs.length > 0 ? (completed / taskOccs.length) * 100 : 0;
 
         return {
@@ -82,13 +75,13 @@ export class AdvancedInsightsCalculator {
     let invalidDates = 0;
 
     for (const occ of occurrences) {
-      if (!occ?.startDate) {
+      if (!occ?.slotStartAt && !occ?.createdAt) {
         invalidDates++;
         continue;
       }
 
       try {
-        const date = new Date(occ.startDate);
+        const date = new Date(occ.slotStartAt ?? occ.createdAt);
         if (isNaN(date.getTime())) {
           invalidDates++;
           continue;
@@ -101,7 +94,7 @@ export class AdvancedInsightsCalculator {
         }
         const week = trendByWeek.get(weekKey)!;
         week.total++;
-        if (occ.status === "Completed") {
+        if (occ.status === "completed") {
           week.completed++;
         }
       } catch (error) {
@@ -130,31 +123,30 @@ export class AdvancedInsightsCalculator {
    */
   private calculateRecurringVsUniqueComparison(
     userTasks: StatsTask[],
-    occurrences: StatsOccurrence[],
-    recurrenceMap: Map<number, StatsRecurrence>
+    occurrences: StatsOccurrence[]
   ) {
     const recurringTaskIds = new Set(
-      userTasks.filter((t) => StatsUtils.isRecurringTask(t, recurrenceMap)).map((t) => t.id)
+      userTasks.filter((t) => StatsUtils.isRecurringTask(t, occurrences)).map((t) => t.id)
     );
     const uniqueTaskIds = new Set(
-      userTasks.filter((t) => StatsUtils.isUniqueTask(t, recurrenceMap)).map((t) => t.id)
+      userTasks.filter((t) => StatsUtils.isUniqueTask(t, occurrences)).map((t) => t.id)
     );
     
     const recurringOccs = occurrences.filter((o) =>
-      o?.associatedTaskId ? recurringTaskIds.has(o.associatedTaskId) : false
+      o?.taskId ? recurringTaskIds.has(o.taskId) : false
     );
     const uniqueOccs = occurrences.filter((o) =>
-      o?.associatedTaskId ? uniqueTaskIds.has(o.associatedTaskId) : false
+      o?.taskId ? uniqueTaskIds.has(o.taskId) : false
     );
 
     const recurringCompletionRate =
       recurringOccs.length > 0
-        ? (recurringOccs.filter((o) => o?.status === "Completed").length / recurringOccs.length) *
+        ? (recurringOccs.filter((o) => o?.status === "completed").length / recurringOccs.length) *
           100
         : 0;
     const uniqueCompletionRate =
       uniqueOccs.length > 0
-        ? (uniqueOccs.filter((o) => o?.status === "Completed").length / uniqueOccs.length) * 100
+        ? (uniqueOccs.filter((o) => o?.status === "completed").length / uniqueOccs.length) * 100
         : 0;
 
     return {
@@ -170,12 +162,12 @@ export class AdvancedInsightsCalculator {
     const taskOccurrenceMap = new Map<number, any[]>();
 
     for (const occ of occurrences) {
-      if (!occ?.associatedTaskId) continue;
+      if (!occ?.taskId) continue;
 
-      if (!taskOccurrenceMap.has(occ.associatedTaskId)) {
-        taskOccurrenceMap.set(occ.associatedTaskId, []);
+      if (!taskOccurrenceMap.has(occ.taskId)) {
+        taskOccurrenceMap.set(occ.taskId, []);
       }
-      taskOccurrenceMap.get(occ.associatedTaskId)!.push(occ);
+      taskOccurrenceMap.get(occ.taskId)!.push(occ);
     }
 
     return Array.from(taskOccurrenceMap.entries())
@@ -183,8 +175,8 @@ export class AdvancedInsightsCalculator {
         const task = userTasks.find((t) => t?.id === taskId);
         if (!task) return null;
 
-        const pending = occs.filter((o) => o?.status === "Pending").length;
-        const skipped = occs.filter((o) => o?.status === "Skipped").length;
+        const pending = occs.filter((o) => o?.status === "pending" || o?.status === "in_progress").length;
+        const skipped = occs.filter((o) => o?.status === "skipped").length;
 
         return {
           taskId,

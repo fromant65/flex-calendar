@@ -16,7 +16,33 @@ interface TaskCardProps {
   index?: number
 }
 
+function deriveTaskTypeLabel(task: TaskFromList): string {
+  if ("taskType" in task && typeof task.taskType === "string" && task.taskType.length > 0) {
+    return task.taskType
+  }
+
+  const recurrence = task.recurrence as { maxOccurrences?: number | null } | null | undefined
+  const hasRecurrence = !!recurrence
+  const maxOccurrences = recurrence?.maxOccurrences ?? null
+
+  if (task.isFixed && hasRecurrence) return "Fija Repetitiva"
+  if (task.isFixed) return "Fija Única"
+  if (typeof maxOccurrences === "number" && maxOccurrences > 1) return "Recurrente Finita"
+  if (hasRecurrence) return "Hábito"
+  return "Única"
+}
+
+function isTaskActive(task: TaskFromList): boolean {
+  if ("status" in task && typeof task.status === "string") {
+    return task.status === "active"
+  }
+  return Boolean(task.isActive)
+}
+
 export function TaskCard({ task, onEdit, onDuplicate, onDelete, onClick, index = 0 }: TaskCardProps) {
+  const taskTypeLabel = deriveTaskTypeLabel(task)
+  const taskIsActive = isTaskActive(task)
+
   const getTaskTypeIcon = () => {
     if (!task.recurrence || task.recurrence.maxOccurrences === 1) return <Calendar className="h-4 w-4" />
     if (task.recurrence.maxOccurrences && task.recurrence.maxOccurrences > 1 && !task.recurrence.interval) {
@@ -45,7 +71,7 @@ export function TaskCard({ task, onEdit, onDuplicate, onDelete, onClick, index =
         <div className="flex flex-wrap items-center gap-2">
           <div className="rounded-lg bg-primary/10 p-2 text-primary">{getTaskTypeIcon()}</div>
           <Badge variant="outline" className="text-xs">
-            {task.taskType}
+            {taskTypeLabel}
           </Badge>
           {task.isFixed && (
             <Badge variant="secondary" className="text-xs">
@@ -75,7 +101,7 @@ export function TaskCard({ task, onEdit, onDuplicate, onDelete, onClick, index =
           >
             <Copy className="h-3.5 w-3.5" />
           </button>
-          {task.isActive && (
+          {taskIsActive && (
             <button
               onClick={(e) => {
                 e.stopPropagation()
@@ -116,7 +142,7 @@ export function TaskCard({ task, onEdit, onDuplicate, onDelete, onClick, index =
             />
           </div>
         </div>
-        {!task.isActive && (
+        {!taskIsActive && (
           <Badge variant="destructive" className="text-xs">
             Inactiva
           </Badge>

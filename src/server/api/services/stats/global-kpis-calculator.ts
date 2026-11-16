@@ -52,7 +52,7 @@ export class GlobalKPIsCalculator {
   private calculateCompletionRate(validOccurrences: StatsOccurrence[]): number {
     if (validOccurrences.length === 0) return 0;
 
-    const completedOccurrences = validOccurrences.filter((o) => o?.status === "Completed").length;
+    const completedOccurrences = validOccurrences.filter((o) => o?.status === "completed").length;
     return (completedOccurrences / validOccurrences.length) * 100;
   }
 
@@ -65,14 +65,14 @@ export class GlobalKPIsCalculator {
 
     // Time from occurrences (in minutes, convert to hours)
     const occurrenceTime = validOccurrences.reduce((sum, occ) => {
-      if (!occ?.timeConsumed) return sum;
+      if (!occ?.timeSpentMinutes) return sum;
 
-      if (typeof occ.timeConsumed !== "number" || occ.timeConsumed < 0) {
+      if (typeof occ.timeSpentMinutes !== "number" || occ.timeSpentMinutes < 0) {
         invalidOccurrenceTimes++;
         return sum;
       }
 
-      return sum + occ.timeConsumed / 60; // Convert minutes to hours
+      return sum + occ.timeSpentMinutes / 60; // Convert minutes to hours
     }, 0);
 
     // Time from events (calculate duration)
@@ -135,23 +135,23 @@ export class GlobalKPIsCalculator {
       if (!event?.associatedOccurrenceId || !event?.dedicatedTime) continue;
 
       const occ = validOccurrences.find((o) => o?.id === event.associatedOccurrenceId);
-      if (!occ?.timeConsumed || occ.timeConsumed === 0) continue;
+      if (!occ?.timeSpentMinutes || occ.timeSpentMinutes === 0) continue;
 
       // Validate values
       if (
         typeof event.dedicatedTime !== "number" ||
-        typeof occ.timeConsumed !== "number" ||
+        typeof occ.timeSpentMinutes !== "number" ||
         event.dedicatedTime <= 0 ||
-        occ.timeConsumed <= 0
+        occ.timeSpentMinutes <= 0
       ) {
         console.warn(
           `[GlobalKPIs] Invalid efficiency values for event ${event.id}:`,
-          { dedicatedTime: event.dedicatedTime, timeConsumed: occ.timeConsumed }
+          { dedicatedTime: event.dedicatedTime, timeSpentMinutes: occ.timeSpentMinutes }
         );
         continue;
       }
 
-      const timeConsumedHours = occ.timeConsumed / 60; // Convert minutes to hours
+      const timeConsumedHours = occ.timeSpentMinutes / 60; // Convert minutes to hours
       const efficiency = event.dedicatedTime / timeConsumedHours;
 
       // Filter out unrealistic efficiency values (e.g., > 10x or < 0.1x)
@@ -237,44 +237,42 @@ export class GlobalKPIsCalculator {
     validOccurrences: StatsOccurrence[],
     userTasks: StatsTask[]
   ): ImportanceBalance {
-    const getTaskImportance = (occId: number): number => {
-      const task = userTasks.find((t) =>
-        validOccurrences.some((o) => o?.id === occId && o?.associatedTaskId === t?.id)
-      );
+    const getTaskImportance = (taskId: number): number => {
+      const task = userTasks.find((t) => t?.id === taskId);
       return task?.importance ?? 5;
     };
 
     const lowImportanceOccs = validOccurrences.filter((o) => {
-      const importance = getTaskImportance(o?.id || 0);
+      const importance = getTaskImportance(o?.taskId || 0);
       return importance >= 1 && importance <= 3;
     });
 
     const mediumImportanceOccs = validOccurrences.filter((o) => {
-      const importance = getTaskImportance(o?.id || 0);
+      const importance = getTaskImportance(o?.taskId || 0);
       return importance >= 4 && importance <= 7;
     });
 
     const highImportanceOccs = validOccurrences.filter((o) => {
-      const importance = getTaskImportance(o?.id || 0);
+      const importance = getTaskImportance(o?.taskId || 0);
       return importance >= 8 && importance <= 10;
     });
 
     return {
       lowImportanceCompletionRate:
         lowImportanceOccs.length > 0
-          ? (lowImportanceOccs.filter((o) => o?.status === "Completed").length /
+          ? (lowImportanceOccs.filter((o) => o?.status === "completed").length /
               lowImportanceOccs.length) *
             100
           : 0,
       mediumImportanceCompletionRate:
         mediumImportanceOccs.length > 0
-          ? (mediumImportanceOccs.filter((o) => o?.status === "Completed").length /
+          ? (mediumImportanceOccs.filter((o) => o?.status === "completed").length /
               mediumImportanceOccs.length) *
             100
           : 0,
       highImportanceCompletionRate:
         highImportanceOccs.length > 0
-          ? (highImportanceOccs.filter((o) => o?.status === "Completed").length /
+          ? (highImportanceOccs.filter((o) => o?.status === "completed").length /
               highImportanceOccs.length) *
             100
           : 0,
@@ -286,7 +284,7 @@ export class GlobalKPIsCalculator {
    */
   private calculateUrgencyBalance(validOccurrences: StatsOccurrence[]): UrgencyBalance {
     const completedWithTiming = validOccurrences.filter(
-      (o) => o?.status === "Completed" && o?.completedAt && o?.limitDate
+      (o) => o?.status === "completed" && o?.completedAt && o?.dueAt
     );
 
     let earlyCount = 0;
@@ -296,8 +294,8 @@ export class GlobalKPIsCalculator {
     for (const occ of completedWithTiming) {
       try {
         const completedTime = new Date(occ.completedAt!).getTime();
-        const limitTime = new Date(occ.limitDate!).getTime();
-        const startTime = new Date(occ.startDate).getTime();
+        const limitTime = new Date(occ.dueAt!).getTime();
+        const startTime = new Date(occ.slotStartAt ?? occ.createdAt).getTime();
 
         if (isNaN(completedTime) || isNaN(limitTime) || isNaN(startTime)) continue;
 

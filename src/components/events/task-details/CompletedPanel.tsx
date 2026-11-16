@@ -1,10 +1,10 @@
 "use client"
 
 import { CheckCircle2 } from "lucide-react"
-import type { EventWithDetails } from "~/types"
+import type { CalendarEventLike } from "~/types/v2-ui"
 import { formatCompletedDateTime } from "~/lib/date-display-utils"
 
-export function CompletedPanel({ event }: { event: EventWithDetails }) {
+export function CompletedPanel({ event }: { event: CalendarEventLike }) {
   if (!event?.isCompleted) return null
   return (
     <div className="border-t border-border pt-4">

@@ -1,6 +1,6 @@
 "use client"
 
-import type { TaskWithRecurrence, TaskWithDetails } from "~/types"
+import type { TaskGetMyTasksOutput } from "~/server/api/routers/derived-endpoint-types"
 import { Dialog, DialogContent } from "~/components/ui/dialog"
 import { Button } from "~/components/ui/button"
 import { LoadingSpinner } from "~/components/ui/loading-spinner"
@@ -13,8 +13,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 interface TaskFormModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  editingTask?: TaskWithRecurrence | null
-  duplicatingTask?: TaskWithDetails | null
+  editingTask?: TaskGetMyTasksOutput[number] | null
+  duplicatingTask?: TaskGetMyTasksOutput[number] | null
   onSuccess: () => void
 }
 

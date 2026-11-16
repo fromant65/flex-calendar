@@ -10,7 +10,7 @@ import { TaskDetailsModal } from "~/components/events/task-details-modal"
 import { TaskConfirmationDialogs } from "~/components/dashboard/task-confirmation-dialogs"
 import { LoadingPage } from "~/components/ui/loading-spinner"
 import { useState, useEffect } from "react"
-import type { OccurrenceWithTask, EventWithDetails } from "~/types"
+import type { CalendarOccurrenceLike, CalendarEventLike } from "~/types/v2-ui"
 import { toast } from "sonner"
 import HelpTip from "../ui/help-tip"
 
@@ -20,13 +20,13 @@ interface DashboardClientProps {
 }
 
 export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
-  const [selectedOccurrence, setSelectedOccurrence] = useState<OccurrenceWithTask | null>(null)
-  const [selectedEvent, setSelectedEvent] = useState<EventWithDetails | null>(null)
+  const [selectedOccurrence, setSelectedOccurrence] = useState<CalendarOccurrenceLike | null>(null)
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEventLike | null>(null)
   const [detailsModalOpen, setDetailsModalOpen] = useState(false)
   const [confirmCompleteOpen, setConfirmCompleteOpen] = useState(false)
   const [confirmSkipOpen, setConfirmSkipOpen] = useState(false)
-  const [occurrenceToComplete, setOccurrenceToComplete] = useState<OccurrenceWithTask | null>(null)
-  const [occurrenceToSkip, setOccurrenceToSkip] = useState<OccurrenceWithTask | null>(null)
+  const [occurrenceToComplete, setOccurrenceToComplete] = useState<CalendarOccurrenceLike | null>(null)
+  const [occurrenceToSkip, setOccurrenceToSkip] = useState<CalendarOccurrenceLike | null>(null)
   const [eventsView, setEventsView] = useState<"list" | "calendar">("list")
   const [calendarView, setCalendarView] = useState<import("~/types").CalendarView>("week")
 
@@ -108,12 +108,12 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
     }
   })
 
-  const handleCompleteTask = (occurrence: OccurrenceWithTask) => {
+  const handleCompleteTask = (occurrence: CalendarOccurrenceLike) => {
     setOccurrenceToComplete(occurrence)
     setConfirmCompleteOpen(true)
   }
 
-  const handleSkipTask = (occurrence: OccurrenceWithTask) => {
+  const handleSkipTask = (occurrence: CalendarOccurrenceLike) => {
     setOccurrenceToSkip(occurrence)
     setConfirmSkipOpen(true)
   }
@@ -131,13 +131,13 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
     skipOccurrenceMutation.mutate({ id: occurrenceToSkip.id })
   }
 
-  const handleTaskClick = (occurrence: OccurrenceWithTask) => {
+  const handleTaskClick = (occurrence: CalendarOccurrenceLike) => {
     setSelectedOccurrence(occurrence)
     setSelectedEvent(null)
     setDetailsModalOpen(true)
   }
 
-  const handleEventClick = (event: EventWithDetails) => {
+  const handleEventClick = (event: CalendarEventLike) => {
     setSelectedEvent(event)
     setSelectedOccurrence(null)
     setDetailsModalOpen(true)
@@ -155,11 +155,11 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
     return <LoadingPage text="Cargando dashboard..." />
   }
 
-  // Take only top 5 most urgent/important tasks and cast to correct type
-  const topUrgentOccurrences = urgentOccurrences.slice(0, 5) as OccurrenceWithTask[]
-  const topImportantOccurrences = importantOccurrences.slice(0, 5) as OccurrenceWithTask[]
-  const todayEventsTyped = todayEvents as EventWithDetails[]
-  const weekEventsTyped = weekEvents as EventWithDetails[]
+  // Take only top 5 most urgent/important tasks
+  const topUrgentOccurrences = urgentOccurrences.slice(0, 5)
+  const topImportantOccurrences = importantOccurrences.slice(0, 5)
+  const todayEventsTyped = todayEvents
+  const weekEventsTyped = weekEvents
 
   return (
     <div className="flex flex-col min-h-full bg-background">
@@ -191,8 +191,8 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
           >
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-semibold text-foreground">Eventos Urgentes</h2>
-                <HelpTip title="Eventos urgentes">
+                <h2 className="text-xl font-semibold text-foreground">Ocurrencias Urgentes</h2>
+                <HelpTip title="Ocurrencias urgentes">
                   Estas son tus tareas con mayor puntuación de urgencia. Se ordenan por prioridad (1 = más urgente). <br />
                   Puedes tocar el título para ver los detalles de la tarea. <br />
                   Desde los botones de acción puedes marcar como completada o saltar. <br />
@@ -222,8 +222,8 @@ export function DashboardClient({ userName, userEmail }: DashboardClientProps) {
           >
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-semibold text-foreground">Eventos Importantes</h2>
-                <HelpTip title="Eventos importantes">
+                <h2 className="text-xl font-semibold text-foreground">Ocurrencias Importantes</h2>
+                <HelpTip title="Ocurrencias importantes">
                   Estas son tus tareas con mayor valor de importancia (mayor a 5). <br />
                   Puedes tocar el título para ver los detalles de la tarea. <br />
                   Desde los botones de acción puedes marcar como completada o saltar. <br />

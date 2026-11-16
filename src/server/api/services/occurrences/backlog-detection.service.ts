@@ -39,7 +39,7 @@ export class BacklogDetectionService {
     pendingCount: number;
     oldestPendingDate: Date | null;
     estimatedBacklogCount: number;
-    pendingOccurrences: Array<{ id: number; startDate: Date; status: string }>;
+    pendingOccurrences: Array<{ id: number; slotStartAt: Date; status: string }>;
     overdueCount: number;
     estimatedMissingCount: number;
   }> {
@@ -62,16 +62,16 @@ export class BacklogDetectionService {
 
     const now = new Date();
     
-    // Get all occurrences for this task, sorted by startDate
+    // Get all occurrences for this task, sorted by slot start (fallback to createdAt)
     const allOccurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
     const sortedOccurrences = allOccurrences.sort((a, b) => 
-      a.startDate.getTime() - b.startDate.getTime()
+      (a.slotStartAt ?? a.createdAt).getTime() - (b.slotStartAt ?? b.createdAt).getTime()
     );
 
     // Filter pending/in-progress occurrences
     const pendingOccurrences = sortedOccurrences
-      .filter(occ => occ.status === "Pending" || occ.status === "In Progress")
-      .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+      .filter(occ => occ.status === "pending" || occ.status === "in_progress")
+      .sort((a, b) => (a.slotStartAt ?? a.createdAt).getTime() - (b.slotStartAt ?? b.createdAt).getTime());
 
     // Calculate estimated missing occurrences ONLY for Hábito and Hábito+
     let estimatedMissingCount = 0;
@@ -80,7 +80,7 @@ export class BacklogDetectionService {
       const lastOccurrence = sortedOccurrences[sortedOccurrences.length - 1];
       
       if (lastOccurrence) {
-        let currentDate = new Date(lastOccurrence.startDate);
+        let currentDate = new Date(lastOccurrence.slotStartAt ?? lastOccurrence.createdAt);
         
         // Calculate how many occurrences should exist after the last one until today
         while (currentDate < now) {
@@ -97,7 +97,7 @@ export class BacklogDetectionService {
     
     // Count overdue occurrences (those whose limitDate has passed)
     const overdueCount = pendingOccurrences.filter(occ => 
-      occ.limitDate && occ.limitDate < now
+      occ.dueAt && occ.dueAt < now
     ).length;
 
     // IMPROVED: Detect backlog if there are ANY overdue occurrences OR missing occurrences
@@ -107,11 +107,11 @@ export class BacklogDetectionService {
     return {
       hasSevereBacklog,
       pendingCount: pendingOccurrences.length,
-      oldestPendingDate: pendingOccurrences[0]?.startDate ?? null,
+      oldestPendingDate: pendingOccurrences[0]?.slotStartAt ?? pendingOccurrences[0]?.createdAt ?? null,
       estimatedBacklogCount: totalEstimatedBacklog,
       pendingOccurrences: pendingOccurrences.map(occ => ({
         id: occ.id,
-        startDate: occ.startDate,
+        slotStartAt: occ.slotStartAt ?? occ.createdAt,
         status: occ.status,
       })),
       overdueCount,
@@ -155,14 +155,14 @@ export class BacklogDetectionService {
         // Get current occurrences
         const allOccurrences = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
         const sortedOccurrences = allOccurrences.sort((a, b) => 
-          a.startDate.getTime() - b.startDate.getTime()
+          (a.slotStartAt ?? a.createdAt).getTime() - (b.slotStartAt ?? b.createdAt).getTime()
         );
         
         const lastOccurrence = sortedOccurrences[sortedOccurrences.length - 1];
         
         // Calculate what the next occurrence date would be
         const nextDate = this.dateCalculator.calculateNextOccurrenceDate(
-          lastOccurrence?.startDate ?? new Date(),
+          lastOccurrence?.slotStartAt ?? lastOccurrence?.createdAt ?? new Date(),
           task.recurrence
         );
 
@@ -189,15 +189,15 @@ export class BacklogDetectionService {
     // Get fresh list of all occurrences after creation
     const allOccurrencesAfterCreation = await this.occurrenceAdapter.getOccurrencesByTaskId(taskId);
     const pendingAfterCreation = allOccurrencesAfterCreation
-      .filter(occ => occ.status === "Pending" || occ.status === "In Progress")
-      .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+      .filter(occ => occ.status === "pending" || occ.status === "in_progress")
+      .sort((a, b) => (a.slotStartAt ?? a.createdAt).getTime() - (b.slotStartAt ?? b.createdAt).getTime());
 
     // Skip all occurrences whose limitDate has passed, except keep the most recent one
     for (let i = 0; i < pendingAfterCreation.length - 1; i++) {
       const occ = pendingAfterCreation[i]!;
       
       // Skip if limitDate has passed
-      if (occ.limitDate && occ.limitDate < now) {
+      if (occ.dueAt && occ.dueAt < now) {
         try {
           await skipOccurrenceFn(occ.id);
           skippedCount++;

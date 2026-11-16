@@ -1,18 +1,17 @@
 "use client"
 
 import { useState } from "react"
-import type { EventWithDetails } from "~/types"
+import type { CalendarEventLike } from "~/types/v2-ui"
 import { ensureLocalDate } from "~/lib/calendar-utils"
-import { getTaskTypeClassName } from "~/lib/task-type-colors"
 import { Clock, ChevronDown, Calendar } from "lucide-react"
 import { cn } from "~/lib/utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "~/components/ui/dialog"
 
 interface OverlappingEventsIndicatorProps {
-  events: EventWithDetails[]
+  events: CalendarEventLike[]
   startHour: number
   duration: number
-  onEventClick: (event: EventWithDetails) => void
+  onEventClick: (event: CalendarEventLike) => void
 }
 
 export function OverlappingEventsIndicator({
@@ -28,7 +27,7 @@ export function OverlappingEventsIndicator({
     setIsOpen(true)
   }
 
-  const handleEventClick = (event: EventWithDetails) => {
+  const handleEventClick = (event: CalendarEventLike) => {
     setIsOpen(false)
     onEventClick(event)
   }
@@ -72,17 +71,14 @@ export function OverlappingEventsIndicator({
               {events.map((event) => {
                 const start = ensureLocalDate(event.start)
                 const finish = ensureLocalDate(event.finish)
-                const taskTypeClassName = getTaskTypeClassName(event.occurrence?.task?.taskType, {
-                  includeHover: true,
-                  includeRing: false,
-                })
+                const eventColorClassName = event.isCompleted ? "bg-muted/40 border-l-muted-foreground" : "bg-primary/10 hover:bg-primary/15 border-l-primary"
 
                 return (
                   <div
                     key={event.id}
                     className={cn(
                       "p-3 rounded-lg cursor-pointer transition-all border-l-4",
-                      taskTypeClassName,
+                      eventColorClassName,
                       "hover:shadow-md"
                     )}
                     onClick={() => handleEventClick(event)}

@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1761705158715,
-      "tag": "0000_orange_next_avengers",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1763832443700,
-      "tag": "0001_blushing_champions",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1763833629274,
-      "tag": "0002_broken_squadron_supreme",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1763835456087,
-      "tag": "0003_overconfident_ezekiel_stane",
+      "when": 1776120714680,
+      "tag": "0000_messy_longshot",
       "breakpoints": true
     }
   ]

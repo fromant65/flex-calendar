@@ -2,15 +2,14 @@
 
 import type React from "react"
 
-import type { EventWithDetails } from "~/types"
+import type { CalendarEventLike } from "~/types/v2-ui"
 import { getMonthDays, isSameDay, isToday, ensureLocalDate } from "~/lib/calendar-utils"
-import { getTaskTypeClassName } from "~/lib/task-type-colors"
 
 interface MonthViewProps {
   date: Date
-  events: EventWithDetails[]
+  events: CalendarEventLike[]
   onTimeSlotClick: (date: Date) => void
-  onEventClick: (event: EventWithDetails) => void
+  onEventClick: (event: CalendarEventLike) => void
   onDrop: (date: Date) => void
 }
 
@@ -72,15 +71,12 @@ export function MonthView({ date, events, onTimeSlotClick, onEventClick, onDrop 
               </div>
               <div className="space-y-0.5 lg:space-y-1">
                 {dayEvents.slice(0, 2).map((event) => {
-                  const taskTypeClassName = getTaskTypeClassName(event.occurrence?.task?.taskType, {
-                    includeHover: true,
-                    includeRing: false,
-                  })
+                  const eventColorClassName = event.isCompleted ? "bg-muted/40 border-l-muted-foreground" : "bg-primary/10 hover:bg-primary/15 border-l-primary"
                   
                   return (
                     <div
                       key={event.id}
-                      className={`text-[8px] lg:text-xs rounded px-0.5 lg:px-1 py-0.5 truncate cursor-pointer ${taskTypeClassName} ${
+                      className={`text-[8px] lg:text-xs rounded px-0.5 lg:px-1 py-0.5 truncate cursor-pointer border-l-2 ${eventColorClassName} ${
                           event.isCompleted ? "event--completed" : ""
                         }`}
                         onClick={(e) => {

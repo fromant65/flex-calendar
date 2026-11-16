@@ -20,5 +20,4 @@ export type {
   StatsTask,
   StatsOccurrence,
   StatsEvent,
-  StatsRecurrence,
 } from "./stats-types";

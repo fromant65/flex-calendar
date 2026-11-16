@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-import type { OccurrenceWithTask } from "~/types"
-import { getTaskTypeClassName } from "~/lib/task-type-colors"
+import type { CalendarOccurrenceLike } from "~/types/v2-ui"
 import { Clock, Flag, ArrowUpDown, Check, ArrowDownWideNarrow, ArrowUpNarrowWide } from "lucide-react"
 import { useMemo, useState } from "react"
 import { Button } from "~/components/ui/button"
@@ -18,11 +17,11 @@ import { formatDateShort } from "~/lib/date-display-utils"
 interface QuadrantPanelProps {
   title: string
   subtitle: string
-  tasks: OccurrenceWithTask[]
+  tasks: CalendarOccurrenceLike[]
   quadrant: "urgent-important" | "not-urgent-important" | "urgent-not-important" | "not-urgent-not-important"
-  onTaskSelect: (occurrence: OccurrenceWithTask) => void
-  onTaskDragStart: (occurrence: OccurrenceWithTask) => void
-  onTaskClick: (occurrence: OccurrenceWithTask) => void
+  onTaskSelect: (occurrence: CalendarOccurrenceLike) => void
+  onTaskDragStart: (occurrence: CalendarOccurrenceLike) => void
+  onTaskClick: (occurrence: CalendarOccurrenceLike) => void
   selectedTaskId?: number
 }
 
@@ -45,7 +44,7 @@ export function QuadrantPanel({
   const sortedTasks = useMemo(() => {
     const tasksCopy = [...tasks]
 
-    const compareFn = (a: OccurrenceWithTask, b: OccurrenceWithTask) => {
+    const compareFn = (a: CalendarOccurrenceLike, b: CalendarOccurrenceLike) => {
       let valueA = 0
       let valueB = 0
 
@@ -55,12 +54,12 @@ export function QuadrantPanel({
           valueB = b.task?.importance ?? 0
           break
         case "urgency":
-          valueA = a.urgency ?? 0
-          valueB = b.urgency ?? 0
+          valueA = a.dueAt ? new Date(a.dueAt).getTime() : Number.POSITIVE_INFINITY
+          valueB = b.dueAt ? new Date(b.dueAt).getTime() : Number.POSITIVE_INFINITY
           break
         case "duration":
-          valueA = a.targetTimeConsumption ?? 0
-          valueB = b.targetTimeConsumption ?? 0
+          valueA = a.targetTimeMinutes ?? 0
+          valueB = b.targetTimeMinutes ?? 0
           break
       }
 
@@ -138,20 +137,21 @@ export function QuadrantPanel({
 }
 
 interface TaskCardProps {
-  occurrence: OccurrenceWithTask
+  occurrence: CalendarOccurrenceLike
   quadrant: "urgent-important" | "not-urgent-important" | "urgent-not-important" | "not-urgent-not-important"
-  onSelect: (occurrence: OccurrenceWithTask) => void
-  onDragStart: (occurrence: OccurrenceWithTask) => void
-  onClick: (occurrence: OccurrenceWithTask) => void
+  onSelect: (occurrence: CalendarOccurrenceLike) => void
+  onDragStart: (occurrence: CalendarOccurrenceLike) => void
+  onClick: (occurrence: CalendarOccurrenceLike) => void
   isSelected: boolean
 }
 
 function TaskCard({ occurrence, quadrant, onSelect, onDragStart, onClick, isSelected }: TaskCardProps) {
-  const taskTypeClassName = getTaskTypeClassName(occurrence.task?.taskType, {
-    includeHover: true,
-    includeRing: true,
-    isSelected,
-  })
+  const quadrantColorClass = {
+    "urgent-important": "bg-red-500/10 border-red-500/30 hover:bg-red-500/20",
+    "not-urgent-important": "bg-primary/10 border-primary/30 hover:bg-primary/20",
+    "urgent-not-important": "bg-yellow-500/10 border-yellow-500/30 hover:bg-yellow-500/20",
+    "not-urgent-not-important": "bg-muted/60 border-border hover:bg-muted",
+  }[quadrant]
 
   const handleClick = (e: React.MouseEvent) => {
     if (e.detail === 1) {
@@ -168,7 +168,7 @@ function TaskCard({ occurrence, quadrant, onSelect, onDragStart, onClick, isSele
       draggable
       onDragStart={() => onDragStart(occurrence)}
       onClick={handleClick}
-      className={`p-3 rounded-lg border cursor-move transition-all hover:scale-[1.02] ${taskTypeClassName}`}
+      className={`p-3 rounded-lg border cursor-move transition-all hover:scale-[1.02] ${quadrantColorClass} ${isSelected ? "ring-2 ring-primary" : ""}`}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
         <h4 className="text-sm font-medium text-foreground line-clamp-2">{occurrence.task?.name}</h4>
@@ -181,28 +181,28 @@ function TaskCard({ occurrence, quadrant, onSelect, onDragStart, onClick, isSele
         <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{occurrence.task.description}</p>
       )}
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        {occurrence.targetTimeConsumption && (
+        {(occurrence.targetTimeMinutes) && (
           <div className="flex items-center gap-1">
             <Clock className="w-3 h-3 shrink-0" />
             <span className="whitespace-nowrap">
-              {occurrence.targetTimeConsumption} {occurrence.targetTimeConsumption === 1 ? "h" : "hs"}
+              {Math.round((occurrence.targetTimeMinutes * 60) / 60)} hs
             </span>
           </div>
         )}
         
         {/* Dates: targetDate and limitDate (inline with other metadata) */}
-        {occurrence.targetDate && (
+        {(occurrence.tentativeAt ) && (
           <div className="flex items-center gap-1">
             <span className="text-[10px]">Meta:</span>
-            <span className="font-medium whitespace-nowrap text-[11px]">{formatDateShort(occurrence.targetDate)}</span>
+            <span className="font-medium whitespace-nowrap text-[11px]">{formatDateShort(occurrence.tentativeAt)}</span>
           </div>
         )}
 
-        {occurrence.limitDate && (
+        {(occurrence.dueAt) && (
           <div className="flex items-center gap-1">
             <span className="text-[10px]">Límite:</span>
             <span className={`font-medium whitespace-nowrap text-[11px]`}>
-              {formatDateShort(occurrence.limitDate)}
+              {formatDateShort(occurrence.dueAt)}
             </span>
           </div>
         )}

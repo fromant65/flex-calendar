@@ -5,7 +5,11 @@
 import { useState, useEffect, useMemo } from "react"
 import { generateTimeSegments, getTasksWithActivityInRange, buildCellDataForTask } from "./timeline-utils"
 import type { TimeSegment } from "./timeline-utils"
-import type { TaskWithRecurrence, OccurrenceWithTask, EventWithDetails } from "~/types"
+import type { TimelineGetTimelineDataOutput } from "~/server/api/routers/derived-endpoint-types"
+
+type TimelineTask = TimelineGetTimelineDataOutput["tasks"][number]
+type TimelineOccurrence = TimelineGetTimelineDataOutput["occurrences"][number]
+type TimelineEvent = TimelineGetTimelineDataOutput["events"][number]
 
 /**
  * Hook to detect mobile screen size
@@ -62,9 +66,9 @@ export function useTimelineSegments(currentDate: Date, daysToShow: number, isMob
  * Hook to build cell data for tasks
  */
 export function useTaskCellData(
-  tasks: TaskWithRecurrence[],
-  occurrences: OccurrenceWithTask[],
-  events: EventWithDetails[],
+  tasks: TimelineTask[],
+  occurrences: TimelineOccurrence[],
+  events: TimelineEvent[],
   timeSegments: TimeSegment[]
 ) {
   return useMemo(() => {
@@ -81,8 +85,8 @@ export function useTaskCellData(
  * Hook to filter active tasks
  */
 export function useActiveTasks(
-  tasks: TaskWithRecurrence[],
-  occurrences: OccurrenceWithTask[],
+  tasks: TimelineTask[],
+  occurrences: TimelineOccurrence[],
   timeSegments: TimeSegment[]
 ) {
   return useMemo(() => {

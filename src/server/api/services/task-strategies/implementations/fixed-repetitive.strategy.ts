@@ -31,7 +31,7 @@ export class FixedRepetitiveStrategy extends AbstractTaskStrategy {
     // Increment completed occurrences counter
     await this.incrementCompletedOccurrences(
       context.recurrence.id,
-      context.occurrence.startDate
+      context.occurrence.slotStartAt ?? context.occurrence.createdAt
     );
 
     // Check if all occurrences are finished
@@ -53,7 +53,7 @@ export class FixedRepetitiveStrategy extends AbstractTaskStrategy {
     // Increment completed occurrences counter (skipped counts)
     await this.incrementCompletedOccurrences(
       context.recurrence.id,
-      context.occurrence.startDate
+      context.occurrence.slotStartAt ?? context.occurrence.createdAt
     );
 
     // Check if all occurrences are finished

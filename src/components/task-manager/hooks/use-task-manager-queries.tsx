@@ -4,6 +4,32 @@ import { toast } from "sonner";
 import type { UnifiedFilters } from "~/types/filters";
 import { calculateQuadrant } from "~/lib/eisenhower-utils";
 
+const normalizeOccurrenceStatus = (status: string): string => {
+  return status.toLowerCase().replace(/\s+/g, "_")
+}
+
+type TaskLike = {
+  taskType?: string
+  isFixed?: boolean
+  recurrence?: { maxOccurrences?: number | null } | null
+}
+
+const deriveTaskType = (task: TaskLike): string | null => {
+  const explicitType = task.taskType
+  if (typeof explicitType === "string" && explicitType.length > 0) return explicitType
+
+  const isFixed = task.isFixed === true
+  const recurrence = task.recurrence as { maxOccurrences?: number | null } | undefined
+  const hasRecurrence = !!recurrence
+  const maxOccurrences = recurrence?.maxOccurrences ?? null
+
+  if (isFixed && hasRecurrence) return "Fija Repetitiva"
+  if (isFixed) return "Fija Única"
+  if (typeof maxOccurrences === "number" && maxOccurrences > 1) return "Recurrente Finita"
+  if (hasRecurrence) return "Hábito"
+  return "Única"
+}
+
 export function useTaskManagerQueries(
   selectedTaskId: number | null,
   filters: UnifiedFilters
@@ -29,19 +55,23 @@ export function useTaskManagerQueries(
       
       // Status filter - multi-select support
       if (filters.taskOccurrenceStatusesFilter.length > 0) {
-        if (!filters.taskOccurrenceStatusesFilter.includes(occ.status)) return false;
+        const normalizedStatus = normalizeOccurrenceStatus(occ.status)
+        const selectedStatuses = filters.taskOccurrenceStatusesFilter.map(normalizeOccurrenceStatus)
+        if (!selectedStatuses.includes(normalizedStatus)) return false;
       } else if (filters.taskOccurrenceStatusFilter !== "all") {
         // Fallback to single select
-        if (occ.status !== filters.taskOccurrenceStatusFilter) return false;
+        const normalizedStatus = normalizeOccurrenceStatus(occ.status)
+        const selectedStatus = normalizeOccurrenceStatus(filters.taskOccurrenceStatusFilter)
+        if (normalizedStatus !== selectedStatus) return false;
       }
       
       // Task type filter - multi-select support
       if (filters.taskTypesFilter.length > 0) {
-        const taskType = 'taskType' in occ.task ? occ.task.taskType : null;
+        const taskType = deriveTaskType(occ.task as TaskLike) as (typeof filters.taskTypesFilter)[number]
         if (!taskType || !filters.taskTypesFilter.includes(taskType)) return false;
       } else if (filters.taskTypeFilter !== "all") {
         // Fallback to single select
-        const taskType = 'taskType' in occ.task ? occ.task.taskType : null;
+        const taskType = deriveTaskType(occ.task as TaskLike) as typeof filters.taskTypeFilter
         if (!taskType || taskType !== filters.taskTypeFilter) return false;
       }
       

@@ -16,6 +16,9 @@ export interface TaskSchedulerServiceInterface {
     initialDates?: {
       targetDate?: Date;
       limitDate?: Date;
+      tentativeAt?: Date;
+      dueAt?: Date;
+      targetTimeMinutes?: number;
       targetTimeConsumption?: number;
     }
   ): Promise<void>;

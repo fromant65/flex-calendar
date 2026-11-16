@@ -1,8 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import type { OccurrenceWithTask } from "~/types"
-import type { TimelineViewMode, TimelineGrouping } from "./task-manager-timeline"
+import type { TimelineViewMode, TimelineGrouping, TaskManagerOccurrence } from "./task-manager-timeline"
 import { OccurrenceTimelineCard } from "./occurrence-timeline-card"
 import { format, isSameDay, isToday } from "date-fns"
 import { es } from "date-fns/locale"
@@ -12,15 +11,24 @@ import { Calendar, Layers } from "lucide-react"
 
 interface TimelineDateGridProps {
   dateRange: Date[]
-  occurrences: OccurrenceWithTask[]
-  groupedOccurrences: Map<string, OccurrenceWithTask[]>
+  occurrences: TaskManagerOccurrence[]
+  groupedOccurrences: Map<string, TaskManagerOccurrence[]>
   grouping: TimelineGrouping
   viewMode: TimelineViewMode
-  onOccurrenceClick?: (occurrence: OccurrenceWithTask) => void
+  onOccurrenceClick?: (occurrence: TaskManagerOccurrence) => void
   onCompleteOccurrence?: (occurrenceId: number) => void
   onSkipOccurrence?: (occurrenceId: number) => void
-  onEditOccurrence?: (occurrence: OccurrenceWithTask) => void
+  onEditOccurrence?: (occurrence: TaskManagerOccurrence) => void
 }
+
+const getPrimaryDate = (occurrence: TaskManagerOccurrence): Date =>
+  occurrence.tentativeAt ??
+  occurrence.targetDate ??
+  occurrence.dueAt ??
+  occurrence.limitDate ??
+  occurrence.slotStartAt ??
+  occurrence.startDate ??
+  new Date()
 
 export function TimelineDateGrid({
   dateRange,
@@ -36,11 +44,11 @@ export function TimelineDateGrid({
   
   // Organize occurrences by date (using targetDate primarily, fallback to limitDate or startDate)
   const occurrencesByDate = useMemo(() => {
-    const byDate = new Map<string, OccurrenceWithTask[]>()
+    const byDate = new Map<string, TaskManagerOccurrence[]>()
     
     occurrences.forEach((occ) => {
       // Use targetDate if available, otherwise limitDate, otherwise startDate
-      const primaryDate = occ.targetDate ?? occ.limitDate ?? occ.startDate
+      const primaryDate = getPrimaryDate(occ)
       const dateKey = format(primaryDate, "yyyy-MM-dd")
       
       const existing = byDate.get(dateKey) ?? []
@@ -170,12 +178,12 @@ export function TimelineDateGrid({
                 {/* Organize group occurrences by date */}
                 {Array.from(
                   groupOccs.reduce((acc, occ) => {
-                    const primaryDate = occ.targetDate ?? occ.limitDate ?? occ.startDate
+                    const primaryDate = getPrimaryDate(occ)
                     const dateKey = format(primaryDate, "yyyy-MM-dd")
                     const existing = acc.get(dateKey) ?? []
                     acc.set(dateKey, [...existing, occ])
                     return acc
-                  }, new Map<string, OccurrenceWithTask[]>())
+                  }, new Map<string, TaskManagerOccurrence[]>())
                 ).map(([dateKey, dateOccs]) => {
                   const date = new Date(dateKey)
                   

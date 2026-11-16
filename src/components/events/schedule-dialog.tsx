@@ -1,6 +1,6 @@
 "use client"
 
-import type { EventWithDetails, OccurrenceWithTask } from "~/types"
+import type { CalendarEventLike, CalendarOccurrenceLike } from "~/types/v2-ui"
 import { useState, useEffect } from "react"
 import { Button } from "../ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog"
@@ -14,8 +14,8 @@ import { ensureLocalDate } from "~/lib/calendar-utils"
 interface ScheduleDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  occurrence: OccurrenceWithTask | null
-  event?: EventWithDetails | null
+  occurrence: CalendarOccurrenceLike | null
+  event?: CalendarEventLike | null
   selectedDate: Date | null
   selectedHour?: number
   onSchedule: (start: Date, finish: Date, context?: string) => void
@@ -52,7 +52,7 @@ export function ScheduleDialog({
       // New event with suggested hour
       setStartTime(`${String(selectedHour).padStart(2, "0")}:00`)
       // targetTimeConsumption is in HOURS, convert to minutes
-      const suggestedDurationMinutes = (occurrence?.targetTimeConsumption || 1) * 60
+      const suggestedDurationMinutes = occurrence?.targetTimeMinutes ?? 1 * 60
       const endHour = Math.floor((selectedHour * 60 + suggestedDurationMinutes) / 60)
       const endMinute = (selectedHour * 60 + suggestedDurationMinutes) % 60
       setEndTime(`${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`)
@@ -61,7 +61,7 @@ export function ScheduleDialog({
       // Default times
       setStartTime("09:00")
       // targetTimeConsumption is in HOURS, convert to minutes
-      const suggestedDurationMinutes = (occurrence?.targetTimeConsumption || 1) * 60
+      const suggestedDurationMinutes = occurrence?.targetTimeMinutes ?? 1 * 60
       const endHour = Math.floor((9 * 60 + suggestedDurationMinutes) / 60)
       const endMinute = (9 * 60 + suggestedDurationMinutes) % 60
       setEndTime(`${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`)

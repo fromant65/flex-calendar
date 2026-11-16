@@ -34,7 +34,7 @@ export class HabitPlusStrategy extends AbstractTaskStrategy {
     // The scheduler handles period transitions
     await this.incrementCompletedOccurrences(
       context.recurrence.id,
-      context.occurrence.startDate
+      context.occurrence.slotStartAt ?? context.occurrence.createdAt
     );
 
     return {
@@ -54,7 +54,7 @@ export class HabitPlusStrategy extends AbstractTaskStrategy {
     // Increment completed occurrences counter (skipped counts)
     await this.incrementCompletedOccurrences(
       context.recurrence.id,
-      context.occurrence.startDate
+      context.occurrence.slotStartAt ?? context.occurrence.createdAt
     );
 
     return {

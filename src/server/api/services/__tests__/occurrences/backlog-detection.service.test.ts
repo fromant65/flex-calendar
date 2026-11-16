@@ -1,8 +1,7 @@
 import '../mocks';
 import { BacklogDetectionService } from '../../occurrences/backlog-detection.service';
 import { OccurrenceAdapter } from '../../../adapter';
-import type { TaskWithRecurrence, TaskOccurrence } from '~/types';
-import { makeTaskWithRecurrence, makeTaskOccurrence } from '../fixtures';
+import type { TaskOccurrence } from '../../types';
 
 describe('BacklogDetectionService (skeleton)', () => {
   let service: BacklogDetectionService;
@@ -32,13 +31,40 @@ describe('BacklogDetectionService (skeleton)', () => {
 
   it('detectBacklog identifies overdue occurrences and marks severe backlog', async () => {
     // Prepare a task with recurrence and a pending overdue occurrence
-    (service as any).taskAdapter.getTaskWithRecurrence.mockResolvedValue(makeTaskWithRecurrence({ id: 1, recurrence: { id: 999, interval: 1, lastPeriodStart: new Date(), maxOccurrences: null, endDate: null, completedOccurrences: 0, daysOfWeek: null, daysOfMonth: null } as any }));
+    (service as any).taskAdapter.getTaskWithRecurrence.mockResolvedValue({
+      id: 1,
+      recurrence: {
+        id: 999,
+        interval: 1,
+        lastPeriodStart: new Date(),
+        maxOccurrences: null,
+        endDate: null,
+        completedOccurrences: 0,
+        daysOfWeek: null,
+        daysOfMonth: null,
+      },
+    });
 
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
 
-    // Provide a single pending occurrence with limitDate in the past
-    const occurrences: TaskOccurrence[] = [makeTaskOccurrence({ id: 1, startDate: yesterday, limitDate: new Date(yesterday.getTime() - 24 * 3600 * 1000), status: 'Pending' })];
+    // Provide a single pending occurrence with dueAt in the past
+    const occurrences: TaskOccurrence[] = [
+      {
+        id: 1,
+        taskId: 1,
+        slotStartAt: yesterday,
+        slotEndAt: null,
+        dueAt: new Date(yesterday.getTime() - 24 * 3600 * 1000),
+        tentativeAt: null,
+        targetTimeMinutes: null,
+        timeSpentMinutes: 0,
+        status: 'pending',
+        completedAt: null,
+        createdAt: yesterday,
+        updatedAt: null,
+      },
+    ];
 
     mockOccurrenceAdapter.getOccurrencesByTaskId.mockResolvedValue(occurrences);
 
@@ -60,14 +86,39 @@ describe('BacklogDetectionService (skeleton)', () => {
   // Additional backlog cases are tested: expired/pending/estimated-missing
   it('detectBacklog estimates missing occurrences for recurring habit tasks', async () => {
     // Task with recurrence
-    (service as any).taskAdapter.getTaskWithRecurrence.mockResolvedValue(makeTaskWithRecurrence({ id: 2, recurrence: { id: 1000, interval: 1, lastPeriodStart: new Date(), maxOccurrences: null, endDate: null, completedOccurrences: 0, daysOfWeek: null, daysOfMonth: null } as any }));
+    (service as any).taskAdapter.getTaskWithRecurrence.mockResolvedValue({
+      id: 2,
+      recurrence: {
+        id: 1000,
+        interval: 1,
+        lastPeriodStart: new Date(),
+        maxOccurrences: null,
+        endDate: null,
+        completedOccurrences: 0,
+        daysOfWeek: null,
+        daysOfMonth: null,
+      },
+    });
 
     // Provide sorted occurrences with the last one 2 days ago
     const lastOccurrence = new Date();
     lastOccurrence.setDate(lastOccurrence.getDate() - 2);
 
     (service as any).occurrenceAdapter.getOccurrencesByTaskId.mockResolvedValue([
-      makeTaskOccurrence({ id: 1, startDate: lastOccurrence, status: 'Completed' }),
+      {
+        id: 1,
+        taskId: 2,
+        slotStartAt: lastOccurrence,
+        slotEndAt: null,
+        dueAt: null,
+        tentativeAt: null,
+        targetTimeMinutes: null,
+        timeSpentMinutes: 0,
+        status: 'completed',
+        completedAt: null,
+        createdAt: lastOccurrence,
+        updatedAt: null,
+      },
     ]);
 
     // Ensure strategy indicates generation and next occurrence calculation yields one missing occurrence
@@ -75,7 +126,24 @@ describe('BacklogDetectionService (skeleton)', () => {
     service = new BacklogDetectionService(mockStrategyFactory as any);
 
     // Inject the same mocks
-    (service as any).occurrenceAdapter = { getOccurrencesByTaskId: jest.fn().mockResolvedValue([{ id: 1, startDate: lastOccurrence, status: 'Completed' }]) } as any;
+    (service as any).occurrenceAdapter = {
+      getOccurrencesByTaskId: jest.fn().mockResolvedValue([
+        {
+          id: 1,
+          taskId: 2,
+          slotStartAt: lastOccurrence,
+          slotEndAt: null,
+          dueAt: null,
+          tentativeAt: null,
+          targetTimeMinutes: null,
+          timeSpentMinutes: 0,
+          status: 'completed',
+          completedAt: null,
+          createdAt: lastOccurrence,
+          updatedAt: null,
+        },
+      ]),
+    } as any;
     (service as any).taskAdapter = { getTaskWithRecurrence: jest.fn().mockResolvedValue({ id: 2, recurrence: { type: 'daily' } }) } as any;
 
     // DateCalculator: first call returns next day (1 day after last), second call returns a date after now

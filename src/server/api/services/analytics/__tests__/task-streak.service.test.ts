@@ -52,28 +52,28 @@ describe('TaskStreakService', () => {
       const occurrences: Partial<TaskOccurrence>[] = [
         {
           id: 1,
-          associatedTaskId: 1,
-          startDate: new Date('2025-10-25'),
-          limitDate: new Date('2025-10-26'),
-          status: 'Completed',
+          taskId: 1,
+          slotStartAt: new Date('2025-10-25'),
+          dueAt: new Date('2025-10-26'),
+          status: 'completed',
           createdAt: new Date('2025-10-25'),
           updatedAt: null,
         },
         {
           id: 2,
-          associatedTaskId: 1,
-          startDate: new Date('2025-10-24'),
-          limitDate: new Date('2025-10-25'),
-          status: 'Completed',
+          taskId: 1,
+          slotStartAt: new Date('2025-10-24'),
+          dueAt: new Date('2025-10-25'),
+          status: 'completed',
           createdAt: new Date('2025-10-24'),
           updatedAt: null,
         },
         {
           id: 3,
-          associatedTaskId: 1,
-          startDate: new Date('2025-10-23'),
-          limitDate: new Date('2025-10-24'),
-          status: 'Completed',
+          taskId: 1,
+          slotStartAt: new Date('2025-10-23'),
+          dueAt: new Date('2025-10-24'),
+          status: 'completed',
           createdAt: new Date('2025-10-23'),
           updatedAt: null,
         },
@@ -93,28 +93,28 @@ describe('TaskStreakService', () => {
       const occurrences: Partial<TaskOccurrence>[] = [
         {
           id: 1,
-          associatedTaskId: 1,
-          startDate: new Date('2025-10-25'),
-          limitDate: new Date('2025-10-26'),
-          status: 'Completed',
+          taskId: 1,
+          slotStartAt: new Date('2025-10-25'),
+          dueAt: new Date('2025-10-26'),
+          status: 'completed',
           createdAt: new Date('2025-10-25'),
           updatedAt: null,
         },
         {
           id: 2,
-          associatedTaskId: 1,
-          startDate: new Date('2025-10-24'),
-          limitDate: new Date('2025-10-25'),
-          status: 'Skipped',
+          taskId: 1,
+          slotStartAt: new Date('2025-10-24'),
+          dueAt: new Date('2025-10-25'),
+          status: 'skipped',
           createdAt: new Date('2025-10-24'),
           updatedAt: null,
         },
         {
           id: 3,
-          associatedTaskId: 1,
-          startDate: new Date('2025-10-23'),
-          limitDate: new Date('2025-10-24'),
-          status: 'Completed',
+          taskId: 1,
+          slotStartAt: new Date('2025-10-23'),
+          dueAt: new Date('2025-10-24'),
+          status: 'completed',
           createdAt: new Date('2025-10-23'),
           updatedAt: null,
         },
@@ -138,19 +138,19 @@ describe('TaskStreakService', () => {
       const occurrences: Partial<TaskOccurrence>[] = [
         {
           id: 1,
-          associatedTaskId: 1,
-          startDate: new Date('2025-10-25'),
-          limitDate: new Date('2025-10-26'),
-          status: 'Completed',
+          taskId: 1,
+          slotStartAt: new Date('2025-10-25'),
+          dueAt: new Date('2025-10-26'),
+          status: 'completed',
           createdAt: new Date('2025-10-25'),
           updatedAt: null,
         },
         {
           id: 2,
-          associatedTaskId: 1,
-          startDate: new Date('2025-10-24'),
-          limitDate: new Date('2025-10-27'), // Expired (limit date < now)
-          status: 'Pending',
+          taskId: 1,
+          slotStartAt: new Date('2025-10-24'),
+          dueAt: new Date('2025-10-27'), // Expired (dueAt < now)
+          status: 'pending',
           createdAt: new Date('2025-10-24'),
           updatedAt: null,
         },
@@ -176,28 +176,28 @@ describe('TaskStreakService', () => {
       const occurrences: Partial<TaskOccurrence>[] = [
         {
           id: 1,
-          associatedTaskId: 1,
-          startDate: new Date('2025-10-27'),
-          limitDate: new Date('2025-10-30'), // Not expired yet
-          status: 'Pending',
+          taskId: 1,
+          slotStartAt: new Date('2025-10-27'),
+          dueAt: new Date('2025-10-30'), // Not expired yet
+          status: 'pending',
           createdAt: new Date('2025-10-27'),
           updatedAt: null,
         },
         {
           id: 2,
-          associatedTaskId: 1,
-          startDate: new Date('2025-10-26'),
-          limitDate: new Date('2025-10-27'),
-          status: 'Completed',
+          taskId: 1,
+          slotStartAt: new Date('2025-10-26'),
+          dueAt: new Date('2025-10-27'),
+          status: 'completed',
           createdAt: new Date('2025-10-26'),
           updatedAt: null,
         },
         {
           id: 3,
-          associatedTaskId: 1,
-          startDate: new Date('2025-10-25'),
-          limitDate: new Date('2025-10-26'),
-          status: 'Completed',
+          taskId: 1,
+          slotStartAt: new Date('2025-10-25'),
+          dueAt: new Date('2025-10-26'),
+          status: 'completed',
           createdAt: new Date('2025-10-25'),
           updatedAt: null,
         },
@@ -219,19 +219,19 @@ describe('TaskStreakService', () => {
       const occurrences: Partial<TaskOccurrence>[] = [
         {
           id: 1,
-          associatedTaskId: 1,
-          startDate: new Date('2025-10-25'),
-          limitDate: null,
-          status: 'Completed',
+          taskId: 1,
+          slotStartAt: new Date('2025-10-25'),
+          dueAt: null,
+          status: 'completed',
           createdAt: new Date('2025-10-25'),
           updatedAt: null,
         },
         {
           id: 2,
-          associatedTaskId: 1,
-          startDate: new Date('2025-10-24'),
-          limitDate: null,
-          status: 'Completed',
+          taskId: 1,
+          slotStartAt: new Date('2025-10-24'),
+          dueAt: null,
+          status: 'completed',
           createdAt: new Date('2025-10-24'),
           updatedAt: null,
         },
@@ -249,10 +249,10 @@ describe('TaskStreakService', () => {
 
     it('should calculate completion rate correctly', async () => {
       const occurrences: Partial<TaskOccurrence>[] = [
-        { id: 1, associatedTaskId: 1, startDate: new Date('2025-10-25'), status: 'Completed', createdAt: new Date(), updatedAt: null },
-        { id: 2, associatedTaskId: 1, startDate: new Date('2025-10-24'), status: 'Completed', createdAt: new Date(), updatedAt: null },
-        { id: 3, associatedTaskId: 1, startDate: new Date('2025-10-23'), status: 'Skipped', createdAt: new Date(), updatedAt: null },
-        { id: 4, associatedTaskId: 1, startDate: new Date('2025-10-22'), status: 'Pending', createdAt: new Date(), updatedAt: null },
+        { id: 1, taskId: 1, slotStartAt: new Date('2025-10-25'), status: 'completed', createdAt: new Date(), updatedAt: null, dueAt: null, tentativeAt: null, slotEndAt: null, timeSpentMinutes: 0 },
+        { id: 2, taskId: 1, slotStartAt: new Date('2025-10-24'), status: 'completed', createdAt: new Date(), updatedAt: null, dueAt: null, tentativeAt: null, slotEndAt: null, timeSpentMinutes: 0 },
+        { id: 3, taskId: 1, slotStartAt: new Date('2025-10-23'), status: 'skipped', createdAt: new Date(), updatedAt: null, dueAt: null, tentativeAt: null, slotEndAt: null, timeSpentMinutes: 0 },
+        { id: 4, taskId: 1, slotStartAt: new Date('2025-10-22'), status: 'pending', createdAt: new Date(), updatedAt: null, dueAt: null, tentativeAt: null, slotEndAt: null, timeSpentMinutes: 0 },
       ];
 
       mockAdapter.getOccurrencesByTaskIdRaw.mockResolvedValue(occurrences);
@@ -265,11 +265,11 @@ describe('TaskStreakService', () => {
 
     it('should count only last streak, not maximum streak', async () => {
       const occurrences: Partial<TaskOccurrence>[] = [
-        { id: 1, associatedTaskId: 1, startDate: new Date('2025-10-27'), status: 'Completed', createdAt: new Date(), updatedAt: null },
-        { id: 2, associatedTaskId: 1, startDate: new Date('2025-10-26'), status: 'Skipped', createdAt: new Date(), updatedAt: null },
-        { id: 3, associatedTaskId: 1, startDate: new Date('2025-10-25'), status: 'Completed', createdAt: new Date(), updatedAt: null },
-        { id: 4, associatedTaskId: 1, startDate: new Date('2025-10-24'), status: 'Completed', createdAt: new Date(), updatedAt: null },
-        { id: 5, associatedTaskId: 1, startDate: new Date('2025-10-23'), status: 'Completed', createdAt: new Date(), updatedAt: null },
+        { id: 1, taskId: 1, slotStartAt: new Date('2025-10-27'), status: 'completed', createdAt: new Date(), updatedAt: null, dueAt: null, tentativeAt: null, slotEndAt: null, timeSpentMinutes: 0 },
+        { id: 2, taskId: 1, slotStartAt: new Date('2025-10-26'), status: 'skipped', createdAt: new Date(), updatedAt: null, dueAt: null, tentativeAt: null, slotEndAt: null, timeSpentMinutes: 0 },
+        { id: 3, taskId: 1, slotStartAt: new Date('2025-10-25'), status: 'completed', createdAt: new Date(), updatedAt: null, dueAt: null, tentativeAt: null, slotEndAt: null, timeSpentMinutes: 0 },
+        { id: 4, taskId: 1, slotStartAt: new Date('2025-10-24'), status: 'completed', createdAt: new Date(), updatedAt: null, dueAt: null, tentativeAt: null, slotEndAt: null, timeSpentMinutes: 0 },
+        { id: 5, taskId: 1, slotStartAt: new Date('2025-10-23'), status: 'completed', createdAt: new Date(), updatedAt: null, dueAt: null, tentativeAt: null, slotEndAt: null, timeSpentMinutes: 0 },
       ];
 
       mockAdapter.getOccurrencesByTaskIdRaw.mockResolvedValue(occurrences);
@@ -285,11 +285,11 @@ describe('TaskStreakService', () => {
     it('should get streaks for multiple tasks', async () => {
       mockAdapter.getOccurrencesByTaskIdRaw
         .mockResolvedValueOnce([
-          { id: 1, associatedTaskId: 1, startDate: new Date('2025-10-25'), status: 'Completed', createdAt: new Date(), updatedAt: null },
-          { id: 2, associatedTaskId: 1, startDate: new Date('2025-10-24'), status: 'Completed', createdAt: new Date(), updatedAt: null },
+          { id: 1, taskId: 1, slotStartAt: new Date('2025-10-25'), status: 'completed', createdAt: new Date(), updatedAt: null, dueAt: null, tentativeAt: null, slotEndAt: null, timeSpentMinutes: 0 },
+          { id: 2, taskId: 1, slotStartAt: new Date('2025-10-24'), status: 'completed', createdAt: new Date(), updatedAt: null, dueAt: null, tentativeAt: null, slotEndAt: null, timeSpentMinutes: 0 },
         ])
         .mockResolvedValueOnce([
-          { id: 3, associatedTaskId: 2, startDate: new Date('2025-10-25'), status: 'Completed', createdAt: new Date(), updatedAt: null },
+          { id: 3, taskId: 2, slotStartAt: new Date('2025-10-25'), status: 'completed', createdAt: new Date(), updatedAt: null, dueAt: null, tentativeAt: null, slotEndAt: null, timeSpentMinutes: 0 },
         ]);
 
       const result = await service.getTaskStreaks([1, 2]);

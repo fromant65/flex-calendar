@@ -1,8 +1,10 @@
 import type { OccurrenceWithTask } from "~/types";
+import type { TaskManagerOccurrence } from "./task-manager-timeline";
 import { useTaskManagerState } from "./hooks/use-task-manager-state";
 import { useTaskManagerQueries } from "./hooks/use-task-manager-queries";
 import { useTaskManagerMutations } from "./hooks/use-task-manager-mutations";
 import { useTaskManagerComputed } from "./hooks/use-task-manager-computed";
+import type { TaskManagerOccurrenceLike } from "./hooks/use-task-manager-computed";
 
 export type { TaskWithOccurrences } from "./hooks/use-task-manager-computed";
 
@@ -44,10 +46,10 @@ export function useTaskManagerData() {
     groupedOccurrences,
     sortedTasks,
     totalTasksCount,
-  } = useTaskManagerComputed(allOccurrences, occurrences, filters);
+  } = useTaskManagerComputed(allOccurrences as TaskManagerOccurrenceLike[] | undefined, occurrences as TaskManagerOccurrenceLike[], filters);
 
   // Timeline handlers
-  const handleTimelineOccurrenceClick = (occurrence: OccurrenceWithTask) => {
+  const handleTimelineOccurrenceClick = (occurrence: TaskManagerOccurrence) => {
     setSelectedTaskId(occurrence.task.id);
   };
 
@@ -73,13 +75,23 @@ export function useTaskManagerData() {
     }
   };
 
-  const handleTimelineEdit = (occurrence: OccurrenceWithTask) => {
+  const handleTimelineEdit = (occurrence: TaskManagerOccurrence) => {
+    const occurrenceV2 = occurrence as TaskManagerOccurrence & {
+      timeConsumed?: number | null
+      timeSpentMinutes?: number | null
+      targetTimeMinutes?: number | null
+      tentativeAt?: Date | null
+      dueAt?: Date | null
+      targetDate?: Date | null
+      limitDate?: Date | null
+    }
+
     setEditingOccurrence({
       id: occurrence.id,
-      timeConsumed: occurrence.timeConsumed,
-      targetTimeConsumption: occurrence.targetTimeConsumption,
-      targetDate: occurrence.targetDate,
-      limitDate: occurrence.limitDate,
+      timeConsumed: occurrenceV2.timeSpentMinutes ?? occurrence.timeConsumed ?? null,
+      targetTimeConsumption: occurrenceV2.targetTimeMinutes ?? occurrence.targetTimeConsumption ?? null,
+      targetDate: occurrenceV2.tentativeAt ?? occurrence.targetDate ?? null,
+      limitDate: occurrenceV2.dueAt ?? occurrence.limitDate ?? null,
     });
   };
 

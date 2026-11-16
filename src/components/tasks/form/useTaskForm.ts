@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from "react"
 import { api } from "~/trpc/react"
-import type { TaskWithRecurrence, TaskWithDetails } from "~/types"
+import type { TaskGetMyTasksOutput } from "~/server/api/routers/derived-endpoint-types"
 import type { FormTaskType } from "./task-type-selector"
 import { toast } from "sonner"
 import {
@@ -17,8 +17,8 @@ import {
 
 interface UseTaskFormProps {
   open: boolean
-  editingTask?: TaskWithRecurrence | null
-  duplicatingTask?: TaskWithDetails | null
+  editingTask?: TaskGetMyTasksOutput[number] | null
+  duplicatingTask?: TaskGetMyTasksOutput[number] | null
   onSuccess: () => void
 }
 

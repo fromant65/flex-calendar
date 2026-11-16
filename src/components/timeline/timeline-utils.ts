@@ -2,8 +2,12 @@
  * Timeline utility functions
  */
 
-import type { TaskWithRecurrence, OccurrenceWithTask, EventWithDetails } from "~/types"
+import type { TimelineGetTimelineDataOutput } from "~/server/api/routers/derived-endpoint-types"
 import type { TimelineCellData } from "./timeline-cell"
+
+type TimelineTask = TimelineGetTimelineDataOutput["tasks"][number]
+type TimelineOccurrence = TimelineGetTimelineDataOutput["occurrences"][number]
+type TimelineEvent = TimelineGetTimelineDataOutput["events"][number]
 
 export interface TimeRange {
   start: Date
@@ -209,25 +213,26 @@ export const getSegmentKey = (segment: TimeSegment): string => {
  * Returns a map of segment keys to cell data
  */
 export const buildCellDataForTask = (
-  task: TaskWithRecurrence,
-  occurrences: OccurrenceWithTask[],
-  events: EventWithDetails[],
+  task: TimelineTask,
+  occurrences: TimelineOccurrence[],
+  events: TimelineEvent[],
   segments: TimeSegment[]
 ): Map<string, TimelineCellData> => {
   const cellDataMap = new Map<string, TimelineCellData>()
 
   // Filter occurrences for this task - Include all statuses
   const taskOccurrences = occurrences.filter(
-    (occ) => occ.associatedTaskId === task.id
+    (occ) => occ.taskId === task.id
   )
 
   // For each segment
-  segments.forEach((segment, segmentIndex) => {
+  segments.forEach((segment) => {
     const segmentKey = getSegmentKey(segment)
 
     // Find occurrences that fall within this segment
     const segmentOccurrences = taskOccurrences.filter((occ) => {
-      const occDate = new Date(occ.startDate)
+      if (!occ.slotStartAt) return false
+      const occDate = new Date(occ.slotStartAt)
       return isInSegment(occDate, segment)
     })
 
@@ -255,18 +260,18 @@ export const buildCellDataForTask = (
     // If no events but occurrences have time consumed, sum them
     if (segmentEvents.length === 0) {
       segmentOccurrences.forEach((occ) => {
-        if (occ.timeConsumed) {
-          totalTimeSpent += occ.timeConsumed
+        if (occ.timeSpentMinutes) {
+          totalTimeSpent += occ.timeSpentMinutes
         }
       })
     }
 
     // Determine status based on priority: completed > in-progress > pending > skipped > not-completed
     let status: TimelineCellData["status"] = "empty"
-    const hasCompleted = segmentOccurrences.some((occ) => occ.status === "Completed")
-    const hasInProgress = segmentOccurrences.some((occ) => occ.status === "In Progress")
-    const hasPending = segmentOccurrences.some((occ) => occ.status === "Pending")
-    const hasSkipped = segmentOccurrences.some((occ) => occ.status === "Skipped")
+    const hasCompleted = segmentOccurrences.some((occ) => occ.status === "completed")
+    const hasInProgress = segmentOccurrences.some((occ) => occ.status === "in_progress")
+    const hasPending = segmentOccurrences.some((occ) => occ.status === "pending")
+    const hasSkipped = segmentOccurrences.some((occ) => occ.status === "skipped")
 
     // Priority: show most significant status
     if (hasCompleted) {
@@ -283,7 +288,7 @@ export const buildCellDataForTask = (
     }
 
     // Get the latest completion date in the segment
-    const completedOccurrences = segmentOccurrences.filter((occ) => occ.status === "Completed")
+    const completedOccurrences = segmentOccurrences.filter((occ) => occ.status === "completed")
     const completedAt = completedOccurrences.length > 0
       ? completedOccurrences.reduce((latest, occ) => {
           if (!occ.completedAt) return latest
@@ -310,24 +315,22 @@ export const buildCellDataForTask = (
  * Get tasks that have activity in the segment range
  */
 export const getTasksWithActivityInRange = (
-  allTasks: TaskWithRecurrence[],
-  allOccurrences: OccurrenceWithTask[],
+  allTasks: TimelineTask[],
+  allOccurrences: TimelineOccurrence[],
   segments: TimeSegment[]
-): TaskWithRecurrence[] => {
+): TimelineTask[] => {
   if (segments.length === 0) return []
-
-  const firstSegment = segments[0]!
-  const lastSegment = segments[segments.length - 1]!
 
   // Get occurrence IDs that fall in the segment range - Include all statuses
   const activeOccurrenceTaskIds = new Set<number>()
 
   allOccurrences.forEach((occ) => {
-    const occDate = new Date(occ.startDate)
+    if (!occ.slotStartAt) return
+    const occDate = new Date(occ.slotStartAt)
     // Check if occurrence falls within any segment
     const inRange = segments.some((segment) => isInSegment(occDate, segment))
     if (inRange) {
-      activeOccurrenceTaskIds.add(occ.associatedTaskId)
+      activeOccurrenceTaskIds.add(occ.taskId)
     }
   })
 

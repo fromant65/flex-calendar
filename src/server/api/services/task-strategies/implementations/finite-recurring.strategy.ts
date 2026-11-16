@@ -31,7 +31,7 @@ export class FiniteRecurringStrategy extends AbstractTaskStrategy {
     // Increment completed occurrences counter for the period
     await this.incrementCompletedOccurrences(
       context.recurrence.id,
-      context.occurrence.startDate
+      context.occurrence.slotStartAt ?? context.occurrence.createdAt
     );
 
     // Count discarded occurrences (completed + skipped)
@@ -44,7 +44,7 @@ export class FiniteRecurringStrategy extends AbstractTaskStrategy {
         type: 'CREATE_NEXT_OCCURRENCE',
         params: {
           taskId: context.task.id,
-          targetTimeConsumption: context.occurrence.targetTimeConsumption ?? undefined,
+          targetTimeConsumption: context.occurrence.targetTimeMinutes ?? undefined,
         },
       };
     } else {
@@ -64,7 +64,7 @@ export class FiniteRecurringStrategy extends AbstractTaskStrategy {
     // Increment completed occurrences counter (skipped counts)
     await this.incrementCompletedOccurrences(
       context.recurrence.id,
-      context.occurrence.startDate
+      context.occurrence.slotStartAt ?? context.occurrence.createdAt
     );
 
     const { discarded } = this.countOccurrencesByStatus(context.allOccurrences);

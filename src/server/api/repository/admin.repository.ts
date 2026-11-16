@@ -2,8 +2,8 @@
  * Admin Repository - handles database queries for admin statistics and management
  */
 
-import { eq, and, sql, gte, lte, count, countDistinct } from "drizzle-orm";
-import { tasks, taskOccurrences, calendarEvents, users } from "~/server/db/schema";
+import { eq, and, sql, gte, lte, count } from "drizzle-orm";
+import { tasks, taskOccurrences, users } from "~/server/db/schema";
 import { db } from "~/server/db";
 
 export class AdminRepository {
@@ -17,7 +17,7 @@ export class AdminRepository {
 
   /**
    * Get number of active users (users with activity in the last month)
-   * Activity is defined as creating tasks, completing occurrences, or completing events
+  * Activity is defined as creating tasks or completing occurrences
    */
   async getActiveUsersCount() {
     const oneMonthAgo = new Date();
@@ -33,24 +33,12 @@ export class AdminRepository {
     const usersWithCompletedOccurrences = await db
       .selectDistinct({ userId: tasks.ownerId })
       .from(taskOccurrences)
-      .innerJoin(tasks, eq(taskOccurrences.associatedTaskId, tasks.id))
+      .innerJoin(tasks, eq(taskOccurrences.taskId, tasks.id))
       .where(
         and(
-          eq(taskOccurrences.status, "Completed"),
+          eq(taskOccurrences.status, "completed"),
           sql`${taskOccurrences.completedAt} IS NOT NULL`,
           gte(taskOccurrences.completedAt, oneMonthAgo)
-        )
-      );
-
-    // Get users who completed events in the last month
-    const usersWithCompletedEvents = await db
-      .selectDistinct({ userId: calendarEvents.ownerId })
-      .from(calendarEvents)
-      .where(
-        and(
-          eq(calendarEvents.isCompleted, true),
-          sql`${calendarEvents.completedAt} IS NOT NULL`,
-          gte(calendarEvents.completedAt, oneMonthAgo)
         )
       );
 
@@ -58,7 +46,6 @@ export class AdminRepository {
     const activeUserIds = new Set<string>();
     usersWithTasks.forEach((u) => activeUserIds.add(u.userId));
     usersWithCompletedOccurrences.forEach((u) => activeUserIds.add(u.userId));
-    usersWithCompletedEvents.forEach((u) => activeUserIds.add(u.userId));
 
     return activeUserIds.size;
   }
@@ -86,13 +73,20 @@ export class AdminRepository {
   }
 
   /**
-   * Get total events created in a date range across all users
+   * Get total scheduled agenda entries in a date range across all users
    */
   async getEventsCreatedInRange(startDate: Date, endDate: Date) {
     return await db
       .select()
-      .from(calendarEvents)
-      .where(and(gte(calendarEvents.createdAt, startDate), lte(calendarEvents.createdAt, endDate)));
+      .from(taskOccurrences)
+      .where(
+        and(
+          sql`${taskOccurrences.slotStartAt} IS NOT NULL`,
+          sql`${taskOccurrences.slotEndAt} IS NOT NULL`,
+          gte(taskOccurrences.slotStartAt, startDate),
+          lte(taskOccurrences.slotStartAt, endDate),
+        ),
+      );
   }
 
   /**
@@ -104,7 +98,7 @@ export class AdminRepository {
       .from(taskOccurrences)
       .where(
         and(
-          eq(taskOccurrences.status, "Completed"),
+          eq(taskOccurrences.status, "completed"),
           sql`${taskOccurrences.completedAt} IS NOT NULL`,
           gte(taskOccurrences.completedAt, startDate),
           lte(taskOccurrences.completedAt, endDate)
@@ -113,19 +107,21 @@ export class AdminRepository {
   }
 
   /**
-   * Get completed events in a date range across all users
+   * Get completed agenda entries in a date range across all users
    */
   async getCompletedEventsInRange(startDate: Date, endDate: Date) {
     return await db
       .select()
-      .from(calendarEvents)
+      .from(taskOccurrences)
       .where(
         and(
-          eq(calendarEvents.isCompleted, true),
-          sql`${calendarEvents.completedAt} IS NOT NULL`,
-          gte(calendarEvents.completedAt, startDate),
-          lte(calendarEvents.completedAt, endDate)
-        )
+          sql`${taskOccurrences.slotStartAt} IS NOT NULL`,
+          sql`${taskOccurrences.slotEndAt} IS NOT NULL`,
+          eq(taskOccurrences.status, "completed"),
+          sql`${taskOccurrences.completedAt} IS NOT NULL`,
+          gte(taskOccurrences.completedAt, startDate),
+          lte(taskOccurrences.completedAt, endDate),
+        ),
       );
   }
 
@@ -133,21 +129,15 @@ export class AdminRepository {
    * Get users with activity in a date range
    */
   async getUsersWithActivityInRange(startDate: Date, endDate: Date) {
-    // Get users who have created tasks, occurrences, or events in the range
+    // Get users who have created tasks in the range
     const usersWithTasks = await db
       .selectDistinct({ userId: tasks.ownerId })
       .from(tasks)
       .where(and(gte(tasks.createdAt, startDate), lte(tasks.createdAt, endDate)));
 
-    const usersWithEvents = await db
-      .selectDistinct({ userId: calendarEvents.ownerId })
-      .from(calendarEvents)
-      .where(and(gte(calendarEvents.createdAt, startDate), lte(calendarEvents.createdAt, endDate)));
-
     // Combine and deduplicate user IDs
     const userIds = new Set<string>();
     usersWithTasks.forEach((u) => userIds.add(u.userId));
-    usersWithEvents.forEach((u) => userIds.add(u.userId));
 
     if (userIds.size === 0) return [];
 
@@ -181,11 +171,11 @@ export class AdminRepository {
     return await db
       .select()
       .from(taskOccurrences)
-      .innerJoin(tasks, eq(taskOccurrences.associatedTaskId, tasks.id))
+      .innerJoin(tasks, eq(taskOccurrences.taskId, tasks.id))
       .where(
         and(
           eq(tasks.ownerId, userId),
-          eq(taskOccurrences.status, "Completed"),
+          eq(taskOccurrences.status, "completed"),
           sql`${taskOccurrences.completedAt} IS NOT NULL`,
           gte(taskOccurrences.completedAt, startDate),
           lte(taskOccurrences.completedAt, endDate)
@@ -194,20 +184,23 @@ export class AdminRepository {
   }
 
   /**
-   * Get events completed by a specific user in a date range
+   * Get completed agenda entries for a specific user in a date range
    */
   async getUserCompletedEventsInRange(userId: string, startDate: Date, endDate: Date) {
     return await db
       .select()
-      .from(calendarEvents)
+      .from(taskOccurrences)
+      .innerJoin(tasks, eq(taskOccurrences.taskId, tasks.id))
       .where(
         and(
-          eq(calendarEvents.ownerId, userId),
-          eq(calendarEvents.isCompleted, true),
-          sql`${calendarEvents.completedAt} IS NOT NULL`,
-          gte(calendarEvents.completedAt, startDate),
-          lte(calendarEvents.completedAt, endDate)
-        )
+          eq(tasks.ownerId, userId),
+          sql`${taskOccurrences.slotStartAt} IS NOT NULL`,
+          sql`${taskOccurrences.slotEndAt} IS NOT NULL`,
+          eq(taskOccurrences.status, "completed"),
+          sql`${taskOccurrences.completedAt} IS NOT NULL`,
+          gte(taskOccurrences.completedAt, startDate),
+          lte(taskOccurrences.completedAt, endDate),
+        ),
       );
   }
 
@@ -231,9 +224,19 @@ export class AdminRepository {
           db
             .select({ count: count() })
             .from(taskOccurrences)
-            .innerJoin(tasks, eq(taskOccurrences.associatedTaskId, tasks.id))
+            .innerJoin(tasks, eq(taskOccurrences.taskId, tasks.id))
             .where(eq(tasks.ownerId, user.id)),
-          db.select({ count: count() }).from(calendarEvents).where(eq(calendarEvents.ownerId, user.id)),
+          db
+            .select({ count: count() })
+            .from(taskOccurrences)
+            .innerJoin(tasks, eq(taskOccurrences.taskId, tasks.id))
+            .where(
+              and(
+                eq(tasks.ownerId, user.id),
+                sql`${taskOccurrences.slotStartAt} IS NOT NULL`,
+                sql`${taskOccurrences.slotEndAt} IS NOT NULL`,
+              ),
+            ),
         ]);
 
         return {

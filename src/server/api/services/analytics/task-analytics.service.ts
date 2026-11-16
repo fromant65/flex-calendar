@@ -23,16 +23,21 @@ export class TaskAnalyticsService {
    */
   enrichOccurrenceWithUrgency<T extends { 
     createdAt: Date; 
-    targetDate: Date | null; 
-    limitDate: Date | null 
+    targetDate?: Date | null;
+    limitDate?: Date | null;
+    tentativeAt?: Date | null;
+    dueAt?: Date | null;
   }>(
     occurrence: T
   ): T & { urgency: number } {
+    const targetDate = occurrence.targetDate ?? occurrence.tentativeAt ?? null;
+    const limitDate = occurrence.limitDate ?? occurrence.dueAt ?? null;
+
     const result = UrgencyCalculator.calculateUrgency({
       currentDate: new Date(),
       creationDate: occurrence.createdAt,
-      targetDate: occurrence.targetDate ?? undefined,
-      limitDate: occurrence.limitDate ?? undefined,
+      targetDate: targetDate ?? undefined,
+      limitDate: limitDate ?? undefined,
     });
 
     return {
@@ -46,8 +51,10 @@ export class TaskAnalyticsService {
    */
   enrichOccurrencesWithUrgency<T extends { 
     createdAt: Date; 
-    targetDate: Date | null; 
-    limitDate: Date | null 
+    targetDate?: Date | null;
+    limitDate?: Date | null;
+    tentativeAt?: Date | null;
+    dueAt?: Date | null;
   }>(
     occurrences: T[]
   ): Array<T & { urgency: number }> {
@@ -60,7 +67,7 @@ export class TaskAnalyticsService {
    */
   async getUserStatistics(userId: string): Promise<TaskStatistics> {
     const tasks = await this.taskAdapter.getTasksByOwnerId(userId);
-    const activeTasks = tasks.filter((t) => t.isActive);
+    const activeTasks = tasks.filter((t) => t.status === "active");
 
     // Get all occurrences for user's tasks
     const taskIds = tasks.map((t) => t.id);
@@ -69,13 +76,17 @@ export class TaskAnalyticsService {
     );
     const occurrences = allOccurrences.flat();
 
-    const completedOccurrences = occurrences.filter((o) => o.status === "Completed");
+    const completedOccurrences = occurrences.filter(
+      (o) => o.status === "completed"
+    );
     const pendingOccurrences = occurrences.filter(
-      (o) => o.status === "Pending" || o.status === "In Progress"
+      (o) =>
+        o.status === "pending" ||
+        o.status === "in_progress"
     );
 
     const totalTimeSpent = occurrences.reduce(
-      (sum, o) => sum + (o.timeConsumed ?? 0),
+      (sum, o) => sum + (o.timeSpentMinutes ?? 0),
       0
     );
 
@@ -103,7 +114,9 @@ export class TaskAnalyticsService {
     
     // Filter only pending/in-progress occurrences
     const activeOccurrences = occurrencesWithTask.filter(
-      (o) => o.status === "Pending" || o.status === "In Progress"
+      (o) =>
+        o.status === "pending" ||
+        o.status === "in_progress"
     );
     
     // Enrich with urgency
@@ -127,7 +140,9 @@ export class TaskAnalyticsService {
     
     // Filter only pending/in-progress occurrences
     const activeOccurrences = occurrencesWithTask.filter(
-      (o) => o.status === "Pending" || o.status === "In Progress"
+      (o) =>
+        o.status === "pending" ||
+        o.status === "in_progress" 
     );
     
     // Enrich with urgency

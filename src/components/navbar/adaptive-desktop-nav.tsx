@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, CheckSquare, BookmarkCheck, Calendar } from "lucide-react"
+import { Home, CheckSquare, BookmarkCheck, Calendar, Repeat2 } from "lucide-react"
 import { Button } from "~/components/ui/button"
 
 export function AdaptiveDesktopNav() {
@@ -31,6 +31,17 @@ export function AdaptiveDesktopNav() {
           >
             <BookmarkCheck className="h-4 w-4" />
             <span>Gestor</span>
+          </Button>
+        </Link>
+
+        <Link href="/routines">
+          <Button
+            variant={pathname === "/routines" ? "default" : "ghost"}
+            className="gap-2 transition-all cursor-pointer"
+            size="default"
+          >
+            <Repeat2 className="h-4 w-4" />
+            <span>Rutinas</span>
           </Button>
         </Link>
         
@@ -78,6 +89,17 @@ export function AdaptiveDesktopNav() {
           >
             <BookmarkCheck className="h-4 w-4" />
             <span>Gestor</span>
+          </Button>
+        </Link>
+
+        <Link href="/routines">
+          <Button
+            variant={pathname === "/routines" ? "default" : "ghost"}
+            className="gap-2 transition-all cursor-pointer"
+            size="default"
+          >
+            <Repeat2 className="h-4 w-4" />
+            <span>Rutinas</span>
           </Button>
         </Link>
         

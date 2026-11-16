@@ -256,6 +256,7 @@ const generateEvents = (occurrences: OccurrenceWithTask[]): EventWithDetails[] =
 
   occurrences.forEach((occ) => {
     const numEvents = Math.floor(Math.random() * 3) + 1 // 1-3 events per occurrence
+    if (!occ.startDate) return
     const occStart = new Date(occ.startDate)
     const occEnd = occ.completedAt ? new Date(occ.completedAt) : new Date(occStart.getTime() + 24 * 60 * 60 * 1000)
     
@@ -296,6 +297,7 @@ export const mockTimelineApi = {
 
     // Filter occurrences within date range
     const filteredOccurrences = allMockOccurrences.filter((occ) => {
+      if (!occ.startDate) return false
       const occStart = new Date(occ.startDate)
       const occEnd = occ.completedAt ? new Date(occ.completedAt) : occStart
       return occStart <= endDate && occEnd >= startDate

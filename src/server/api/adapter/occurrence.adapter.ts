@@ -2,7 +2,7 @@
  * Occurrence Adapter - connects service layer with repository layer for task occurrences
  */
 
-import { TaskOccurrenceRepository, CalendarEventRepository, TaskRecurrenceRepository } from "../repository";
+import { TaskOccurrenceRepository, CalendarEventRepository } from "../repository";
 import type {
   CreateOccurrenceDTO,
   UpdateOccurrenceDTO,
@@ -10,17 +10,15 @@ import type {
   TaskOccurrenceStatus,
   OccurrenceWithTask,
 } from "../services/types";
-import { calculateTaskType, normalizeDates, normalizeDatesArray } from "../helpers";
+import { normalizeDates, normalizeDatesArray } from "../helpers";
 
 export class OccurrenceAdapter {
   private occurrenceRepo: TaskOccurrenceRepository;
   private eventRepo: CalendarEventRepository;
-  private recurrenceRepo: TaskRecurrenceRepository;
 
   constructor() {
     this.occurrenceRepo = new TaskOccurrenceRepository();
     this.eventRepo = new CalendarEventRepository();
-    this.recurrenceRepo = new TaskRecurrenceRepository();
   }
 
   /**
@@ -28,14 +26,14 @@ export class OccurrenceAdapter {
    */
   async createOccurrence(data: CreateOccurrenceDTO): Promise<TaskOccurrence> {
     const occurrence = await this.occurrenceRepo.create({
-      associatedTaskId: data.associatedTaskId,
-      startDate: data.startDate,
-      limitDate: data.limitDate ?? null,
-      targetDate: data.targetDate ?? null,
-      targetTimeConsumption: data.targetTimeConsumption ?? null,
-      timeConsumed: 0,
-      status: "Pending",
-      urgency: 0,
+      taskId: data.taskId,
+      slotStartAt: data.slotStartAt ?? null,
+      slotEndAt: data.slotEndAt ?? null,
+      dueAt: data.dueAt ?? null,
+      tentativeAt: data.tentativeAt ?? null,
+      targetTimeMinutes: data.targetTimeMinutes ?? null,
+      timeSpentMinutes: 0,
+      status: data.slotStartAt && data.slotEndAt ? "pending" : "unassigned",
     });
     return occurrence as TaskOccurrence;
   }
@@ -48,7 +46,7 @@ export class OccurrenceAdapter {
     if (!occurrence) return undefined;
     
     // Normalize dates to ensure they are Date objects for SuperJSON serialization
-    return normalizeDates(occurrence as TaskOccurrence, ['startDate', 'limitDate', 'targetDate', 'createdAt', 'updatedAt']);
+    return normalizeDates(occurrence as TaskOccurrence, ['slotStartAt', 'slotEndAt', 'dueAt', 'tentativeAt', 'createdAt', 'updatedAt']);
   }
 
   /**
@@ -65,7 +63,7 @@ export class OccurrenceAdapter {
   async getOccurrencesByTaskId(taskId: number): Promise<TaskOccurrence[]> {
     const occurrences = await this.occurrenceRepo.findByTaskId(taskId);
     // Normalize dates for all occurrences
-    return normalizeDatesArray(occurrences, ['startDate', 'limitDate', 'targetDate', 'createdAt', 'updatedAt']) as TaskOccurrence[];
+    return normalizeDatesArray(occurrences, ['slotStartAt', 'slotEndAt', 'dueAt', 'tentativeAt', 'createdAt', 'updatedAt']) as TaskOccurrence[];
   }
 
   /**
@@ -74,72 +72,21 @@ export class OccurrenceAdapter {
   async getOccurrencesByTaskIdAndStatus(taskId: number, status: TaskOccurrenceStatus) {
     const occurrences = await this.occurrenceRepo.findByTaskIdAndStatus(taskId, status);
     // Normalize dates for all occurrences
-    return normalizeDatesArray(occurrences, ['startDate', 'limitDate', 'targetDate', 'createdAt', 'updatedAt']);
+    return normalizeDatesArray(occurrences, ['slotStartAt', 'slotEndAt', 'dueAt', 'tentativeAt', 'createdAt', 'updatedAt']);
   }
 
   /**
    * Get occurrences in a date range
    */
   async getOccurrencesByDateRange(startDate: Date, endDate: Date, userId?: string) {
-    const occurrences = await this.occurrenceRepo.findByDateRange(startDate, endDate, userId);
-    
-    // Enrich each occurrence's task with taskType
-    const enrichedOccurrences = await Promise.all(
-      occurrences.map(async (occurrence) => {
-        if (occurrence.task) {
-          // Get recurrence for the task using the recurrenceId
-          let recurrence = null;
-          if (occurrence.task.recurrenceId) {
-            recurrence = await this.recurrenceRepo.findById(occurrence.task.recurrenceId);
-          }
-          
-          // Calculate and add taskType
-          return {
-            ...occurrence,
-            task: {
-              ...occurrence.task,
-              taskType: calculateTaskType(recurrence, occurrence.task),
-            },
-          };
-        }
-        return occurrence;
-      })
-    );
-    
-    return enrichedOccurrences;
+    return await this.occurrenceRepo.findByDateRange(startDate, endDate, userId);
   }
 
   /**
    * Get all occurrences with task details for a user
    */
-  async getOccurrencesWithTaskByUserId(userId: string) {
-    const occurrences = await this.occurrenceRepo.findByOwnerIdWithTask(userId);
-    
-    // Enrich each occurrence's task with taskType
-    const enrichedOccurrences = await Promise.all(
-      occurrences.map(async (occurrence) => {
-        const typedOccurrence = occurrence as OccurrenceWithTask;
-        if (typedOccurrence.task) {
-          // Get recurrence for the task using the recurrenceId
-          let recurrence = null;
-          if (typedOccurrence.task.recurrenceId) {
-            recurrence = await this.recurrenceRepo.findById(typedOccurrence.task.recurrenceId);
-          }
-          
-          // Calculate and add taskType
-          return {
-            ...typedOccurrence,
-            task: {
-              ...typedOccurrence.task,
-              taskType: calculateTaskType(recurrence, typedOccurrence.task),
-            },
-          };
-        }
-        return typedOccurrence;
-      })
-    );
-    
-    return enrichedOccurrences;
+  async getOccurrencesWithTaskByUserId(userId: string): Promise<OccurrenceWithTask[]> {
+    return await this.occurrenceRepo.findByOwnerIdWithTask(userId);
   }
 
   /**
@@ -160,7 +107,15 @@ export class OccurrenceAdapter {
    * Update an occurrence
    */
   async updateOccurrence(occurrenceId: number, data: UpdateOccurrenceDTO) {
-    return await this.occurrenceRepo.updateById(occurrenceId, data);
+    return await this.occurrenceRepo.updateById(occurrenceId, {
+      slotStartAt: data.slotStartAt,
+      slotEndAt: data.slotEndAt,
+      dueAt: data.dueAt,
+      tentativeAt: data.tentativeAt,
+      targetTimeMinutes: data.targetTimeMinutes,
+      timeSpentMinutes: data.timeSpentMinutes,
+      status: this.normalizeStatus(data.status),
+    });
   }
 
   /**
@@ -170,9 +125,9 @@ export class OccurrenceAdapter {
     const occurrence = await this.occurrenceRepo.findById(occurrenceId);
     if (!occurrence) return undefined;
 
-    const currentTime = occurrence.timeConsumed ?? 0;
+    const currentTime = occurrence.timeSpentMinutes ?? 0;
     return await this.occurrenceRepo.updateById(occurrenceId, {
-      timeConsumed: currentTime + additionalTime,
+      timeSpentMinutes: currentTime + additionalTime,
     });
   }
 
@@ -181,7 +136,7 @@ export class OccurrenceAdapter {
    */
   async completeOccurrence(occurrenceId: number, completedAt?: Date) {
     return await this.occurrenceRepo.updateById(occurrenceId, {
-      status: "Completed",
+      status: "completed",
       completedAt: completedAt ?? new Date(),
     });
   }
@@ -191,15 +146,8 @@ export class OccurrenceAdapter {
    */
   async skipOccurrence(occurrenceId: number) {
     return await this.occurrenceRepo.updateById(occurrenceId, {
-      status: "Skipped",
+      status: "skipped",
     });
-  }
-
-  /**
-   * Update occurrence urgency
-   */
-  async updateUrgency(occurrenceId: number, urgency: number) {
-    return await this.occurrenceRepo.updateById(occurrenceId, { urgency });
   }
 
   /**
@@ -240,5 +188,9 @@ export class OccurrenceAdapter {
    */
   async getOccurrencesByTaskIdRaw(taskId: number) {
     return await this.occurrenceRepo.findByTaskId(taskId);
+  }
+
+  private normalizeStatus(status?: TaskOccurrenceStatus) {
+    return status;
   }
 }

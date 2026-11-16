@@ -32,7 +32,7 @@ export class FixedSingleStrategy extends AbstractTaskStrategy {
     // Increment completed occurrences counter
     await this.incrementCompletedOccurrences(
       context.recurrence.id,
-      context.occurrence.startDate
+      context.occurrence.slotStartAt ?? context.occurrence.createdAt
     );
 
     return { type: 'DEACTIVATE_TASK' };
@@ -49,7 +49,7 @@ export class FixedSingleStrategy extends AbstractTaskStrategy {
     // Increment completed occurrences counter (skipped counts)
     await this.incrementCompletedOccurrences(
       context.recurrence.id,
-      context.occurrence.startDate
+      context.occurrence.slotStartAt ?? context.occurrence.createdAt
     );
 
     return { type: 'DEACTIVATE_TASK' };

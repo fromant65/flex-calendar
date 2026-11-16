@@ -2,9 +2,11 @@
  * Statistics Repository - handles complex database queries for statistics
  */
 
-import { eq, and, sql, gte, lte, desc } from "drizzle-orm";
-import { tasks, taskRecurrences, taskOccurrences, calendarEvents } from "~/server/db/schema";
+import { eq, and, sql, gte, lte, desc, inArray } from "drizzle-orm";
+import { tasks, taskOccurrences } from "~/server/db/schema";
 import { db } from "~/server/db";
+import type { TaskOccurrenceStatus } from "../services/types";
+import type { StatsEvent } from "../services/stats/stats-types";
 
 export class StatisticsRepository {
   /**
@@ -14,15 +16,42 @@ export class StatisticsRepository {
     return await db
       .select()
       .from(taskOccurrences)
-      .innerJoin(tasks, eq(taskOccurrences.associatedTaskId, tasks.id))
+      .innerJoin(tasks, eq(taskOccurrences.taskId, tasks.id))
       .where(eq(tasks.ownerId, userId));
   }
 
   /**
-   * Get all calendar events for a user
+   * Get all agenda entries for a user (derived from scheduled occurrences)
    */
   async findUserCalendarEvents(userId: string) {
-    return await db.select().from(calendarEvents).where(eq(calendarEvents.ownerId, userId));
+    const rows = await db
+      .select({
+        occurrenceId: taskOccurrences.id,
+        ownerId: tasks.ownerId,
+        slotStartAt: taskOccurrences.slotStartAt,
+        slotEndAt: taskOccurrences.slotEndAt,
+        status: taskOccurrences.status,
+        timeSpentMinutes: taskOccurrences.timeSpentMinutes,
+      })
+      .from(taskOccurrences)
+      .innerJoin(tasks, eq(taskOccurrences.taskId, tasks.id))
+      .where(
+        and(
+          eq(tasks.ownerId, userId),
+          sql`${taskOccurrences.slotStartAt} IS NOT NULL`,
+          sql`${taskOccurrences.slotEndAt} IS NOT NULL`,
+        ),
+      );
+
+    return rows.map((row): StatsEvent => ({
+      id: row.occurrenceId,
+      ownerId: row.ownerId,
+      start: row.slotStartAt!,
+      finish: row.slotEndAt!,
+      isCompleted: row.status === "completed",
+      associatedOccurrenceId: row.occurrenceId,
+      dedicatedTime: row.timeSpentMinutes / 60,
+    }));
   }
 
   /**
@@ -30,18 +59,6 @@ export class StatisticsRepository {
    */
   async findUserTasks(userId: string) {
     return await db.select().from(tasks).where(eq(tasks.ownerId, userId));
-  }
-
-  /**
-   * Get recurrences for user's tasks
-   */
-  async findUserRecurrences(userId: string) {
-    return await db
-      .select()
-      .from(taskRecurrences)
-      .where(
-        sql`${taskRecurrences.id} IN (SELECT ${tasks.recurrenceId} FROM ${tasks} WHERE ${tasks.ownerId} = ${userId})`
-      );
   }
 
   /**
@@ -58,47 +75,43 @@ export class StatisticsRepository {
   /**
    * Get occurrences with specific status
    */
-  async findOccurrencesByStatus(userId: string, status: string) {
+  async findOccurrencesByStatus(userId: string, status: TaskOccurrenceStatus) {
     return await db
       .select()
       .from(taskOccurrences)
-      .innerJoin(tasks, eq(taskOccurrences.associatedTaskId, tasks.id))
+      .innerJoin(tasks, eq(taskOccurrences.taskId, tasks.id))
       .where(and(eq(tasks.ownerId, userId), eq(taskOccurrences.status, status)));
   }
 
   /**
-   * Get events within a date range
+   * Get agenda entries within a date range (derived from scheduled occurrences)
    */
   async findEventsInRange(userId: string, startDate: Date, endDate: Date) {
-    return await db
-      .select()
-      .from(calendarEvents)
-      .where(
-        and(
-          eq(calendarEvents.ownerId, userId),
-          gte(calendarEvents.start, startDate),
-          lte(calendarEvents.start, endDate)
-        )
-      )
-      .orderBy(calendarEvents.start);
+    const allEntries = await this.findUserCalendarEvents(userId);
+    return allEntries.filter((entry) => entry.start >= startDate && entry.start <= endDate);
   }
 
   /**
-   * Get habit tasks (recurring with no max occurrences or high max occurrences)
+   * Get habitual tasks inferred from repeated occurrences
    */
   async findHabitTasks(userId: string) {
-    const userTasks = await db
-      .select()
-      .from(tasks)
-      .innerJoin(taskRecurrences, eq(tasks.recurrenceId, taskRecurrences.id))
-      .where(
-        and(
-          eq(tasks.ownerId, userId),
-          sql`(${taskRecurrences.maxOccurrences} IS NULL OR ${taskRecurrences.maxOccurrences} > 10)`
-        )
-      );
+    const userTasks = await this.findUserTasks(userId);
+    const taskIds = userTasks.map((task) => task.id);
+    if (taskIds.length === 0) return [];
 
-    return userTasks;
+    const occurrences = await db
+      .select({
+        taskId: taskOccurrences.taskId,
+      })
+      .from(taskOccurrences)
+      .where(inArray(taskOccurrences.taskId, taskIds));
+
+    const countByTask = new Map<number, number>();
+    occurrences.forEach((occ) => {
+      countByTask.set(occ.taskId, (countByTask.get(occ.taskId) ?? 0) + 1);
+    });
+
+    return userTasks.filter((task) => (countByTask.get(task.id) ?? 0) > 1);
   }
 
   /**
@@ -110,6 +123,6 @@ export class StatisticsRepository {
     return await db
       .select()
       .from(taskOccurrences)
-      .where(sql`${taskOccurrences.associatedTaskId} IN (${sql.join(taskIds, sql`, `)})`);
+      .where(inArray(taskOccurrences.taskId, taskIds));
   }
 }

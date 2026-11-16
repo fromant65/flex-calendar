@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { motion } from "motion/react"
-import { mockTimelineApi, type TimelineData } from "~/lib/mock-timeline-data"
+import { mockTimelineApi } from "~/lib/mock-timeline-data"
 import { api } from "~/trpc/react"
 import { toast } from "sonner"
+import type { TimelineGetTimelineDataOutput } from "~/server/api/routers/derived-endpoint-types"
 import { TimelinePageHeader } from "./timeline-page-header"
 import type { NavigationInterval } from "./timeline-controls"
 import type { UnifiedFilters } from "~/types/filters"
@@ -30,10 +31,110 @@ interface TimelineViewProps {
   useMockData?: boolean
 }
 
+type MockTimelineData = ReturnType<typeof mockTimelineApi.getTimelineData>
+
+type TimelineTaskLike = {
+  id: number
+  name: string
+  description?: string | null
+  importance?: number
+  isActive?: boolean
+  status?: string
+  taskType?: string
+  isFixed?: boolean
+  recurrence?: { maxOccurrences?: number | null } | null
+}
+
+type TimelineOccurrenceLike = {
+  id: number
+  status: string
+  urgency?: number | null
+  taskId?: number
+  associatedTaskId?: number
+  slotStartAt?: Date | null
+  startDate?: Date
+  createdAt?: Date
+  dueAt?: Date | null
+  limitDate?: Date | null
+  tentativeAt?: Date | null
+  targetDate?: Date | null
+  timeSpentMinutes?: number | null
+  timeConsumed?: number | null
+}
+
+type TimelineEventLike = {
+  id: number
+  start: Date
+  dedicatedTime?: number | null
+}
+
+type TimelineCacheData = {
+  tasks: TimelineTaskLike[]
+  occurrences: TimelineOccurrenceLike[]
+  events: TimelineEventLike[]
+}
+
+type TimelineTask = TimelineGetTimelineDataOutput["tasks"][number]
+type TimelineOccurrence = TimelineGetTimelineDataOutput["occurrences"][number]
+type TimelineEvent = TimelineGetTimelineDataOutput["events"][number]
+
+const toTimelineCacheData = (data: TimelineGetTimelineDataOutput | MockTimelineData): TimelineCacheData => ({
+  tasks: data.tasks.map((task) => ({ ...task })),
+  occurrences: data.occurrences.map((occurrence) => ({ ...occurrence })),
+  events: data.events.map((event) => ({ ...event })),
+})
+
+const normalizeOccurrenceStatus = (status: string): string => {
+  return status.toLowerCase().replace(/\s+/g, "_")
+}
+
+const getOccurrenceTaskId = (occ: TimelineOccurrenceLike): number | null => {
+  if (typeof occ.taskId === "number") return occ.taskId
+  if (typeof occ.associatedTaskId === "number") return occ.associatedTaskId
+  return null
+}
+
+const getOccurrenceStart = (occ: TimelineOccurrenceLike): Date | null => {
+  const value = occ.slotStartAt ?? occ.startDate ?? occ.createdAt
+  return value instanceof Date ? value : value ? new Date(value as string) : null
+}
+
+const getOccurrenceDueAt = (occ: TimelineOccurrenceLike): Date | null => {
+  const value = occ.dueAt ?? occ.limitDate
+  return value instanceof Date ? value : value ? new Date(value as string) : null
+}
+
+const getOccurrenceTentativeAt = (occ: TimelineOccurrenceLike): Date | null => {
+  const value = occ.tentativeAt ?? occ.targetDate
+  return value instanceof Date ? value : value ? new Date(value as string) : null
+}
+
+const getOccurrenceTimeSpent = (occ: TimelineOccurrenceLike): number => {
+  if (typeof occ.timeSpentMinutes === "number") return occ.timeSpentMinutes
+  if (typeof occ.timeConsumed === "number") return occ.timeConsumed
+  return 0
+}
+
+const deriveTaskType = (task: TimelineTaskLike): string => {
+  const explicitType = task.taskType
+  if (typeof explicitType === "string" && explicitType.length > 0) return explicitType
+
+  const isFixed = task.isFixed === true
+  const recurrence = task.recurrence as { maxOccurrences?: number | null } | undefined
+  const hasRecurrence = !!recurrence
+  const maxOccurrences = recurrence?.maxOccurrences ?? null
+
+  if (isFixed && hasRecurrence) return "Fija Repetitiva"
+  if (isFixed) return "Fija Única"
+  if (typeof maxOccurrences === "number" && maxOccurrences > 1) return "Recurrente Finita"
+  if (hasRecurrence) return "Hábito"
+  return "Única"
+}
+
 export function TimelineView({ initialDays = 7, useMockData = true }: TimelineViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [daysToShow, setDaysToShow] = useState(initialDays)
-  const [dataCache, setDataCache] = useState<TimelineData | null>(null)
+  const [dataCache, setDataCache] = useState<TimelineCacheData | null>(null)
   const [cachedRange, setCachedRange] = useState<{ start: Date; end: Date } | null>(null)
   const [navigationInterval, setNavigationInterval] = useState<NavigationInterval>("day")
   const [selectedDayCell, setSelectedDayCell] = useState<DayCellDetails | null>(null)
@@ -85,7 +186,7 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
   // Update cache when new data arrives
   useEffect(() => {
     if (realData && extendedRange && !useMockData) {
-      setDataCache(realData)
+      setDataCache(toTimelineCacheData(realData))
       setCachedRange(extendedRange)
     }
   }, [realData, extendedRange, useMockData])
@@ -105,7 +206,7 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
     if (!useMockData || !extendedRange || isRangeCovered) return
 
     const data = mockTimelineApi.getTimelineData(extendedRange.start, extendedRange.end)
-    setDataCache(data)
+    setDataCache(toTimelineCacheData(data))
     setCachedRange(extendedRange)
   }, [useMockData, extendedRange, isRangeCovered])
 
@@ -117,7 +218,8 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
 
     // Filter data to visible range
     const filteredOccurrences = dataCache.occurrences.filter((occ) => {
-      const occDate = new Date(occ.startDate)
+      const occDate = getOccurrenceStart(occ)
+      if (!occDate) return false
       return occDate >= startDate && occDate <= endDate
     })
     
@@ -127,8 +229,12 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
     })
     
     // Get unique task IDs from filtered occurrences
-    const taskIds = new Set(filteredOccurrences.map(occ => occ.associatedTaskId))
-    const filteredTasks = dataCache.tasks.filter(task => taskIds.has(task.id))
+    const normalizedTaskIds = new Set(
+      filteredOccurrences
+        .map((occ) => getOccurrenceTaskId(occ))
+        .filter((taskId): taskId is number => typeof taskId === "number")
+    )
+    const filteredTasks = dataCache.tasks.filter(task => normalizedTaskIds.has(task.id))
     
     return {
       tasks: filteredTasks,
@@ -138,7 +244,11 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
   }, [startDate, endDate, dataCache])
 
   // Filter tasks to only show those with activity in the segment range
-  const activeTasks = useActiveTasks(currentData.tasks, currentData.occurrences, timeSegments)
+  const activeTasks = useActiveTasks(
+    currentData.tasks as TimelineTask[],
+    currentData.occurrences as TimelineOccurrence[],
+    timeSegments
+  )
 
   // Apply filters to active tasks
   const filteredTasks = useMemo(() => {
@@ -155,17 +265,23 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
 
     // Filter by task type - multi-select support
     if (filters.taskTypesFilter.length > 0) {
-      filtered = filtered.filter((task) => task.taskType && filters.taskTypesFilter.includes(task.taskType))
+      filtered = filtered.filter((task) => {
+        const taskType = deriveTaskType(task) as (typeof filters.taskTypesFilter)[number]
+        return filters.taskTypesFilter.includes(taskType)
+      })
     } else if (filters.taskTypeFilter !== "all") {
       // Fallback to single select
-      filtered = filtered.filter((task) => task.taskType === filters.taskTypeFilter)
+      filtered = filtered.filter((task) => {
+        const taskType = deriveTaskType(task) as typeof filters.taskTypeFilter
+        return taskType === filters.taskTypeFilter
+      })
     }
 
     // Filter by priority (Eisenhower matrix) - multi-select support
     if (filters.prioritiesFilter.length > 0) {
       filtered = filtered.filter((task) => {
         const taskOccurrences = currentData.occurrences.filter(
-          (occ) => occ.associatedTaskId === task.id
+          (occ) => getOccurrenceTaskId(occ) === task.id
         )
         
         // Calculate if task has occurrences in any of the selected quadrants
@@ -195,7 +311,7 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
       // Fallback to single select
       filtered = filtered.filter((task) => {
         const taskOccurrences = currentData.occurrences.filter(
-          (occ) => occ.associatedTaskId === task.id
+          (occ) => getOccurrenceTaskId(occ) === task.id
         )
         
         // Calculate if task has occurrences in the selected quadrant
@@ -225,27 +341,31 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
     if (filters.taskOccurrenceStatusesFilter.length > 0) {
       filtered = filtered.filter((task) => {
         const taskOccurrences = currentData.occurrences.filter(
-          (occ) => occ.associatedTaskId === task.id
+          (occ) => getOccurrenceTaskId(occ) === task.id
         )
-        return taskOccurrences.some((occ) => 
-          filters.taskOccurrenceStatusesFilter.includes(occ.status)
-        )
+        const selectedStatuses = filters.taskOccurrenceStatusesFilter.map(normalizeOccurrenceStatus)
+        return taskOccurrences.some((occ) => selectedStatuses.includes(normalizeOccurrenceStatus(occ.status)))
       })
     } else if (filters.taskOccurrenceStatusFilter !== "all") {
       // Fallback to single select
       filtered = filtered.filter((task) => {
         const taskOccurrences = currentData.occurrences.filter(
-          (occ) => occ.associatedTaskId === task.id
+          (occ) => getOccurrenceTaskId(occ) === task.id
         )
-        return taskOccurrences.some((occ) => occ.status === filters.taskOccurrenceStatusFilter)
+        const selectedStatus = normalizeOccurrenceStatus(filters.taskOccurrenceStatusFilter)
+        return taskOccurrences.some((occ) => normalizeOccurrenceStatus(occ.status) === selectedStatus)
       })
     }
 
     // Filter by active status
     if (filters.activeStatusFilter === "active") {
-      filtered = filtered.filter((task) => task.isActive === true)
+      filtered = filtered.filter((task) => {
+        return task.isActive === true
+      })
     } else if (filters.activeStatusFilter === "inactive") {
-      filtered = filtered.filter((task) => task.isActive === false)
+      filtered = filtered.filter((task) => {
+        return task.isActive === false
+      })
     }
 
     return filtered
@@ -257,10 +377,13 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
     const taskOccurrences = new Map(
       currentData.occurrences
         .reduce((acc, occ) => {
-          if (!acc.has(occ.associatedTaskId)) {
-            acc.set(occ.associatedTaskId, [])
+          const taskId = getOccurrenceTaskId(occ)
+          if (typeof taskId !== "number") return acc
+
+          if (!acc.has(taskId)) {
+            acc.set(taskId, [])
           }
-          acc.get(occ.associatedTaskId)!.push(occ)
+          acc.get(taskId)!.push(occ)
           return acc
         }, new Map<number, typeof currentData.occurrences>())
     )
@@ -272,31 +395,31 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
         return sorted.sort((a, b) => b.name.localeCompare(a.name))
       case "type":
         return sorted.sort((a, b) => {
-          const aType = a.taskType ?? ''
-          const bType = b.taskType ?? ''
+          const aType = deriveTaskType(a)
+          const bType = deriveTaskType(b)
           return aType.localeCompare(bType)
         })
       case "closest-target":
         return sorted.sort((a, b) => {
           const aOccs = taskOccurrences.get(a.id) ?? []
           const bOccs = taskOccurrences.get(b.id) ?? []
-          const aDate = aOccs.find(o => o.targetDate)?.targetDate ?? aOccs.find(o => o.limitDate)?.limitDate
-          const bDate = bOccs.find(o => o.targetDate)?.targetDate ?? bOccs.find(o => o.limitDate)?.limitDate
+          const aDate = aOccs.map((o) => getOccurrenceTentativeAt(o) ?? getOccurrenceDueAt(o)).find(Boolean) ?? null
+          const bDate = bOccs.map((o) => getOccurrenceTentativeAt(o) ?? getOccurrenceDueAt(o)).find(Boolean) ?? null
           if (!aDate && !bDate) return 0
           if (!aDate) return 1
           if (!bDate) return -1
-          return new Date(aDate).getTime() - new Date(bDate).getTime()
+          return aDate.getTime() - bDate.getTime()
         })
       case "closest-limit":
         return sorted.sort((a, b) => {
           const aOccs = taskOccurrences.get(a.id) ?? []
           const bOccs = taskOccurrences.get(b.id) ?? []
-          const aDate = aOccs.find(o => o.limitDate)?.limitDate
-          const bDate = bOccs.find(o => o.limitDate)?.limitDate
+          const aDate = aOccs.map((o) => getOccurrenceDueAt(o)).find(Boolean) ?? null
+          const bDate = bOccs.map((o) => getOccurrenceDueAt(o)).find(Boolean) ?? null
           if (!aDate && !bDate) return 0
           if (!aDate) return 1
           if (!bDate) return -1
-          return new Date(aDate).getTime() - new Date(bDate).getTime()
+          return aDate.getTime() - bDate.getTime()
         })
       case "importance":
         return sorted.sort((a, b) => (b.importance ?? 0) - (a.importance ?? 0))
@@ -385,9 +508,7 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
     // If no events, sum occurrence time
     if (totalTimeSpent === 0) {
       segmentOccurrences.forEach((occ) => {
-        if (occ.timeConsumed) {
-          totalTimeSpent += occ.timeConsumed
-        }
+        totalTimeSpent += getOccurrenceTimeSpent(occ)
       })
     }
 
@@ -399,8 +520,8 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
         description: task.description,
         importance: task.importance,
       },
-      occurrences: segmentOccurrences, // Pass all occurrences
-      events: segmentEvents,
+      occurrences: segmentOccurrences as TimelineOccurrence[],
+      events: segmentEvents as TimelineEvent[],
       totalTimeSpent,
       status: cellData.status as "completed" | "skipped" | "not-completed",
     })
@@ -458,8 +579,8 @@ export function TimelineView({ initialDays = 7, useMockData = true }: TimelineVi
                 // Build cell data for this task
                 const cellDataBySegment = buildCellDataForTask(
                   task,
-                  currentData.occurrences,
-                  currentData.events,
+                  currentData.occurrences as TimelineOccurrence[],
+                  currentData.events as TimelineEvent[],
                   timeSegments
                 )
 

@@ -4,10 +4,10 @@ import { Button } from "~/components/ui/button"
 import { LoadingSpinner } from "~/components/ui/loading-spinner"
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "~/components/ui/alert-dialog"
 import { Trash2 } from "lucide-react"
-import type { EventWithDetails } from "~/types"
+import type { CalendarEventLike } from "~/types/v2-ui"
 
 interface EventActionsProps {
-  event: EventWithDetails;
+  event: CalendarEventLike;
   deleteEventMutation: {
     isPending: boolean;
   };
@@ -15,6 +15,8 @@ interface EventActionsProps {
 }
 
 export function EventActions({ event, deleteEventMutation, deleteEventHandler }: EventActionsProps) {
+  const associatedOccurrenceId = "associatedOccurrenceId" in event ? event.associatedOccurrenceId : null
+
   return (
     <div className="border-t border-border pt-4">
       <AlertDialog>
@@ -37,7 +39,7 @@ export function EventActions({ event, deleteEventMutation, deleteEventHandler }:
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground">¿Eliminar evento?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">¿Estás seguro de que quieres eliminar este evento? Esta acción no se puede deshacer.
-              {event.associatedOccurrenceId && " La ocurrencia asociada será recuperada y estará disponible para reprogramación."}
+              {associatedOccurrenceId && " La ocurrencia asociada será recuperada y estará disponible para reprogramación."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

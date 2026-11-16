@@ -1,6 +1,7 @@
 /**
  * Statistics Service - Orchestrator for statistics calculations
- * Delegates to specialized calculators and maintains separation of concerns
+ * Delegates to specialized calculators and maintains separation of concerns.
+ * Calendar-related metrics are computed from agenda entries derived from occurrences.
  */
 
 import { StatisticsAdapter } from "../../adapter";

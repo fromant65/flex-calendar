@@ -51,7 +51,7 @@ export abstract class AbstractTaskStrategy implements ITaskStrategy {
     if (!context.lastOccurrence) return true; // No occurrence exists yet
 
     const lastStatus = context.lastOccurrence.status;
-    return lastStatus === 'Completed' || lastStatus === 'Skipped';
+    return lastStatus === 'completed' || lastStatus === 'skipped';
   }
 
   /**
@@ -92,10 +92,10 @@ export abstract class AbstractTaskStrategy implements ITaskStrategy {
    * Helper: Count occurrences by status
    */
   protected countOccurrencesByStatus(occurrences: Array<{ status: string }>) {
-    const completed = occurrences.filter((o) => o.status === 'Completed').length;
-    const skipped = occurrences.filter((o) => o.status === 'Skipped').length;
+    const completed = occurrences.filter((o) => o.status === 'completed').length;
+    const skipped = occurrences.filter((o) => o.status === 'skipped').length;
     const pending = occurrences.filter(
-      (o) => o.status === 'Pending' || o.status === 'InProgress'
+      (o) => o.status === 'pending' || o.status === 'in_progress'
     ).length;
 
     return { completed, skipped, pending, discarded: completed + skipped };
@@ -108,7 +108,7 @@ export abstract class AbstractTaskStrategy implements ITaskStrategy {
     if (occurrences.length === 0) return false;
 
     return occurrences.every(
-      (o) => o.status === 'Completed' || o.status === 'Skipped'
+      (o) => o.status === 'completed' || o.status === 'skipped'
     );
   }
 }

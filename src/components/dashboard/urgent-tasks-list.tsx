@@ -1,19 +1,18 @@
 "use client"
 
 import { motion } from "framer-motion"
-import type { OccurrenceWithTask } from "~/types"
+import type { CalendarOccurrenceLike } from "~/types/v2-ui"
 import { AlertCircle, Calendar, Clock, Flag } from "lucide-react"
 import { cn } from "~/lib/utils"
-import { getTaskTypeClassName } from "~/lib/task-type-colors"
 import { TaskActionButtons } from "./task-action-buttons"
 import { getLimitDateDisplay } from "~/lib/date-display-utils"
 import { Badge } from "~/components/ui/badge"
 
 interface UrgentTasksListProps {
-  occurrences: OccurrenceWithTask[]
-  onTaskClick?: (occurrence: OccurrenceWithTask) => void
-  onCompleteTask?: (occurrence: OccurrenceWithTask) => void
-  onSkipTask?: (occurrence: OccurrenceWithTask) => void
+  occurrences: CalendarOccurrenceLike[]
+  onTaskClick?: (occurrence: CalendarOccurrenceLike) => void
+  onCompleteTask?: (occurrence: CalendarOccurrenceLike) => void
+  onSkipTask?: (occurrence: CalendarOccurrenceLike) => void
 }
 
 const containerVariants = {
@@ -60,7 +59,9 @@ export function UrgentTasksList({ occurrences, onTaskClick, onCompleteTask, onSk
       {occurrences.map((occurrence, index) => {
         const task = occurrence.task
         const importance = task?.importance ?? 0
-        const limitDisplay = getLimitDateDisplay(occurrence.limitDate)
+        const limitDate = occurrence.dueAt ?? null
+        const targetTimeMinutes = occurrence.targetTimeMinutes ?? null
+        const limitDisplay = getLimitDateDisplay(limitDate)
         
         // Determine urgency level based on limit date proximity
         const urgencyLevel = 
@@ -121,7 +122,7 @@ export function UrgentTasksList({ occurrences, onTaskClick, onCompleteTask, onSk
               {/* Metrics */}
               <div className="flex flex-wrap items-center gap-2.5 text-xs">
                 {/* Limit date display */}
-                {occurrence.limitDate && (
+                {limitDate && (
                   <div className="flex items-center gap-1.5">
                     <Calendar className="h-3 w-3" />
                     <span className="font-medium">Límite:</span>
@@ -147,10 +148,10 @@ export function UrgentTasksList({ occurrences, onTaskClick, onCompleteTask, onSk
                   <span>Importancia: {importance}</span>
                 </div>
 
-                {occurrence.targetTimeConsumption && (
+                {targetTimeMinutes && (
                   <div className="flex items-center gap-1 text-muted-foreground">
                     <Clock className="h-3 w-3" />
-                    <span>{occurrence.targetTimeConsumption}h</span>
+                    <span>{targetTimeMinutes} min</span>
                   </div>
                 )}
               </div>

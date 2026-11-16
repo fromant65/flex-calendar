@@ -1,6 +1,7 @@
 "use client"
 
-import type { CalendarView, EventWithDetails, OccurrenceWithTask } from "~/types"
+import type { CalendarView } from "~/types"
+import type { CalendarEventLike, CalendarOccurrenceLike } from "~/types/v2-ui"
 import { createContext, useContext, useState, type ReactNode } from "react"
 
 // Context for managing events page state and reducing prop drilling
@@ -17,14 +18,14 @@ interface EventsContextValue {
   setCalendarView: (view: CalendarView) => void
   
   // Selection state
-  selectedTask: OccurrenceWithTask | null
-  setSelectedTask: (task: OccurrenceWithTask | null) => void
+  selectedTask: CalendarOccurrenceLike | null
+  setSelectedTask: (task: CalendarOccurrenceLike | null) => void
   
   // Drag state
-  draggedTask: OccurrenceWithTask | null
-  setDraggedTask: (task: OccurrenceWithTask | null) => void
-  draggedEvent: EventWithDetails | null
-  setDraggedEvent: (event: EventWithDetails | null) => void
+  draggedTask: CalendarOccurrenceLike | null
+  setDraggedTask: (task: CalendarOccurrenceLike | null) => void
+  draggedEvent: CalendarEventLike | null
+  setDraggedEvent: (event: CalendarEventLike | null) => void
   
   // Schedule dialog state
   scheduleDialogOpen: boolean
@@ -33,16 +34,16 @@ interface EventsContextValue {
   setSelectedDate: (date: Date | null) => void
   selectedHour: number | undefined
   setSelectedHour: (hour: number | undefined) => void
-  eventToReschedule: EventWithDetails | null
-  setEventToReschedule: (event: EventWithDetails | null) => void
+  eventToReschedule: CalendarEventLike | null
+  setEventToReschedule: (event: CalendarEventLike | null) => void
   
   // Details modal state
   detailsModalOpen: boolean
   setDetailsModalOpen: (open: boolean) => void
-  detailsOccurrence: OccurrenceWithTask | null
-  setDetailsOccurrence: (occurrence: OccurrenceWithTask | null) => void
-  detailsEvent: EventWithDetails | null
-  setDetailsEvent: (event: EventWithDetails | null) => void
+  detailsOccurrence: CalendarOccurrenceLike | null
+  setDetailsOccurrence: (occurrence: CalendarOccurrenceLike | null) => void
+  detailsEvent: CalendarEventLike | null
+  setDetailsEvent: (event: CalendarEventLike | null) => void
   
   // Mobile view state
   mobileView: "matrix" | "calendar"
@@ -51,8 +52,8 @@ interface EventsContextValue {
   // Confirmation dialog state (mobile)
   confirmScheduleDialogOpen: boolean
   setConfirmScheduleDialogOpen: (open: boolean) => void
-  pendingScheduleTask: OccurrenceWithTask | null
-  setPendingScheduleTask: (task: OccurrenceWithTask | null) => void
+  pendingScheduleTask: CalendarOccurrenceLike | null
+  setPendingScheduleTask: (task: CalendarOccurrenceLike | null) => void
   
   // Date range filter state
   filterStartDate: Date
@@ -76,33 +77,33 @@ export function EventsProvider({ children }: { children: ReactNode }) {
   const [calendarView, setCalendarView] = useState<CalendarView>("week")
   
   // Selection state
-  const [selectedTask, setSelectedTask] = useState<OccurrenceWithTask | null>(null)
+  const [selectedTask, setSelectedTask] = useState<CalendarOccurrenceLike | null>(null)
   
   // Date range filter state
   const [filterStartDate, setFilterStartDate] = useState<Date>(defaultStartOfWeek)
   const [filterEndDate, setFilterEndDate] = useState<Date>(defaultEndOfWeek)
   
   // Drag state
-  const [draggedTask, setDraggedTask] = useState<OccurrenceWithTask | null>(null)
-  const [draggedEvent, setDraggedEvent] = useState<EventWithDetails | null>(null)
+  const [draggedTask, setDraggedTask] = useState<CalendarOccurrenceLike | null>(null)
+  const [draggedEvent, setDraggedEvent] = useState<CalendarEventLike | null>(null)
   
   // Schedule dialog state
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedHour, setSelectedHour] = useState<number | undefined>(undefined)
-  const [eventToReschedule, setEventToReschedule] = useState<EventWithDetails | null>(null)
+  const [eventToReschedule, setEventToReschedule] = useState<CalendarEventLike | null>(null)
   
   // Details modal state
   const [detailsModalOpen, setDetailsModalOpen] = useState(false)
-  const [detailsOccurrence, setDetailsOccurrence] = useState<OccurrenceWithTask | null>(null)
-  const [detailsEvent, setDetailsEvent] = useState<EventWithDetails | null>(null)
+  const [detailsOccurrence, setDetailsOccurrence] = useState<CalendarOccurrenceLike | null>(null)
+  const [detailsEvent, setDetailsEvent] = useState<CalendarEventLike | null>(null)
   
   // Mobile view state
   const [mobileView, setMobileView] = useState<"matrix" | "calendar">("matrix")
   
   // Confirmation dialog state (mobile)
   const [confirmScheduleDialogOpen, setConfirmScheduleDialogOpen] = useState(false)
-  const [pendingScheduleTask, setPendingScheduleTask] = useState<OccurrenceWithTask | null>(null)
+  const [pendingScheduleTask, setPendingScheduleTask] = useState<CalendarOccurrenceLike | null>(null)
 
   return (
     <EventsContext.Provider

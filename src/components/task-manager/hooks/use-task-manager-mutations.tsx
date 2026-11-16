@@ -112,14 +112,16 @@ export function useTaskManagerMutations(
       timeConsumed: number | null;
       targetDate?: Date | null;
       limitDate?: Date | null;
+      targetTimeConsumption?: number | null;
     }
   ) => {
     updateOccurrence.mutate({
       id,
       data: {
-        timeConsumed: data.timeConsumed ?? undefined,
-        targetDate: data.targetDate === null ? undefined : data.targetDate,
-        limitDate: data.limitDate === null ? undefined : data.limitDate,
+        timeSpentMinutes: data.timeConsumed ?? undefined,
+        targetTimeMinutes: data.targetTimeConsumption ?? undefined,
+        tentativeAt: data.targetDate === null ? undefined : data.targetDate,
+        dueAt: data.limitDate === null ? undefined : data.limitDate,
       },
     });
   };

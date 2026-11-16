@@ -1,17 +1,17 @@
 "use client"
 
 import { motion } from "framer-motion"
-import type { OccurrenceWithTask } from "~/types"
+import type { CalendarOccurrenceLike } from "~/types/v2-ui"
 import { Star, Calendar, Clock, Flag } from "lucide-react"
 import { cn } from "~/lib/utils"
 import { TaskActionButtons } from "./task-action-buttons"
 import { getLimitDateDisplay } from "~/lib/date-display-utils"
 
 interface ImportantTasksListProps {
-  occurrences: OccurrenceWithTask[]
-  onTaskClick?: (occurrence: OccurrenceWithTask) => void
-  onCompleteTask?: (occurrence: OccurrenceWithTask) => void
-  onSkipTask?: (occurrence: OccurrenceWithTask) => void
+  occurrences: CalendarOccurrenceLike[]
+  onTaskClick?: (occurrence: CalendarOccurrenceLike) => void
+  onCompleteTask?: (occurrence: CalendarOccurrenceLike) => void
+  onSkipTask?: (occurrence: CalendarOccurrenceLike) => void
 }
 
 const containerVariants = {
@@ -58,7 +58,7 @@ export function ImportantTasksList({ occurrences, onTaskClick, onCompleteTask, o
       {occurrences.map((occurrence, index) => {
         const task = occurrence.task
         const importance = task?.importance ?? 0
-        const limitDisplay = getLimitDateDisplay(occurrence.limitDate)
+        const limitDisplay = getLimitDateDisplay(occurrence.dueAt ?? null)
         
         // Determine importance level for styling
         const importanceLevel = 
@@ -128,7 +128,7 @@ export function ImportantTasksList({ occurrences, onTaskClick, onCompleteTask, o
                 </div>
                 
                 {/* Limit date display */}
-                {occurrence.limitDate && (
+                {occurrence.dueAt && (
                   <div className="flex items-center gap-1.5 text-muted-foreground">
                     <Calendar className="h-3 w-3" />
                     <span>Límite: </span>
@@ -138,10 +138,10 @@ export function ImportantTasksList({ occurrences, onTaskClick, onCompleteTask, o
                   </div>
                 )}
 
-                {occurrence.targetTimeConsumption && (
+                {(occurrence.targetTimeMinutes ) && (
                   <div className="flex items-center gap-1 text-muted-foreground">
                     <Clock className="h-3 w-3" />
-                    <span>{occurrence.targetTimeConsumption}h</span>
+                    <span>{Math.round(occurrence.targetTimeMinutes / 60)}h</span>
                   </div>
                 )}
               </div>

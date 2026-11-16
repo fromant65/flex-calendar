@@ -13,27 +13,25 @@ export class RecurrenceStatsCalculator {
    */
   calculate(dataset: StatsDataset): RecurrenceStatsData {
     try {
-      const { tasks: userTasks = [], occurrences = [], recurrenceMap } = dataset;
+      const { tasks: userTasks = [], occurrences = [] } = dataset;
 
       // Validate data
-      if (!Array.isArray(userTasks) || !Array.isArray(occurrences) || !recurrenceMap) {
+      if (!Array.isArray(userTasks) || !Array.isArray(occurrences)) {
         console.error("[RecurrenceStats] Invalid data structure:", {
           tasksIsArray: Array.isArray(userTasks),
           occurrencesIsArray: Array.isArray(occurrences),
-          hasRecurrenceMap: !!recurrenceMap,
         });
         return this.getDefaultStats();
       }
 
       console.log(
-        `[RecurrenceStats] Processing ${userTasks.length} tasks, ${occurrences.length} occurrences, ${recurrenceMap.size} recurrences`
+        `[RecurrenceStats] Processing ${userTasks.length} tasks and ${occurrences.length} occurrences`
       );
 
-      // Filter habits (tasks with recurrence and no maxOccurrences or maxOccurrences > 10)
+      // In V2 we infer habitual tasks by repeated generated occurrences.
       const habitTasks = userTasks.filter((t) => {
-        if (!t?.recurrenceId) return false;
-        const rec = recurrenceMap.get(t.recurrenceId);
-        return rec && (!rec.maxOccurrences || rec.maxOccurrences > 10);
+        const taskOccurrences = occurrences.filter((o) => o.taskId === t.id);
+        return taskOccurrences.length > 1;
       });
 
       console.log(`[RecurrenceStats] Found ${habitTasks.length} habit tasks`);
@@ -45,7 +43,7 @@ export class RecurrenceStatsCalculator {
 
       const habitTaskIds = new Set(habitTasks.map((t) => t.id));
       const habitOccurrences = occurrences.filter(
-        (o) => o?.associatedTaskId && habitTaskIds.has(o.associatedTaskId)
+        (o) => o?.taskId && habitTaskIds.has(o.taskId)
       );
 
       console.log(`[RecurrenceStats] Found ${habitOccurrences.length} habit occurrences`);
@@ -88,15 +86,15 @@ export class RecurrenceStatsCalculator {
     let invalidDates = 0;
 
     for (const occ of habitOccurrences) {
-      if (!occ?.startDate) {
+      if (!occ?.slotStartAt && !occ?.createdAt) {
         invalidDates++;
         continue;
       }
 
       try {
-        const date = new Date(occ.startDate);
+        const date = new Date(occ.slotStartAt ?? occ.createdAt);
         if (isNaN(date.getTime())) {
-          console.warn(`[RecurrenceStats] Invalid startDate for occurrence ${occ.id}: ${occ.startDate}`);
+          console.warn(`[RecurrenceStats] Invalid slotStartAt for occurrence ${occ.id}: ${occ.slotStartAt}`);
           invalidDates++;
           continue;
         }
@@ -109,7 +107,7 @@ export class RecurrenceStatsCalculator {
 
         const week = complianceByWeek.get(weekKey)!;
         week.total++;
-        if (occ.status === "Completed") {
+        if (occ.status === "completed") {
           week.completed++;
         }
       } catch (error) {
@@ -163,8 +161,8 @@ export class RecurrenceStatsCalculator {
         }
 
         // Count all occurrences
-        if (occ?.startDate) {
-          const date = new Date(occ.startDate);
+        if (occ?.slotStartAt || occ?.createdAt) {
+          const date = new Date(occ.slotStartAt ?? occ.createdAt);
           if (!isNaN(date.getTime())) {
             const dayIndex = date.getDay() === 0 ? 6 : date.getDay() - 1;
             const dayName = dayNames[dayIndex];

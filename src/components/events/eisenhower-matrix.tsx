@@ -1,6 +1,7 @@
 "use client"
 
-import type { OccurrenceWithTask, QuadrantPosition } from "~/types"
+import type { QuadrantPosition } from "~/types"
+import type { CalendarOccurrenceLike } from "~/types/v2-ui"
 import { calculateQuadrant, getQuadrantLabel } from "~/lib/eisenhower-utils"
 import { useMemo, useState } from "react"
 import { QuadrantPanel } from "./quadrant-panel"
@@ -14,10 +15,10 @@ import { useEventsContext } from "./events-context"
 // Main matrix layout, delegates quadrant rendering to QuadrantPanel
 
 interface EisenhowerMatrixProps {
-  occurrences: OccurrenceWithTask[]
-  onTaskSelect: (occurrence: OccurrenceWithTask) => void
-  onTaskDragStart: (occurrence: OccurrenceWithTask) => void
-  onTaskClick: (occurrence: OccurrenceWithTask) => void
+  occurrences: CalendarOccurrenceLike[]
+  onTaskSelect: (occurrence: CalendarOccurrenceLike) => void
+  onTaskDragStart: (occurrence: CalendarOccurrenceLike) => void
+  onTaskClick: (occurrence: CalendarOccurrenceLike) => void
   selectedTaskId?: number
 }
 
@@ -43,11 +44,11 @@ export function EisenhowerMatrix({
   }
 
   const quadrants = useMemo(() => {
-    const grouped: Record<QuadrantPosition["quadrant"], OccurrenceWithTask[]> = {
-      "urgent-important": [] as OccurrenceWithTask[],
-      "not-urgent-important": [] as OccurrenceWithTask[],
-      "urgent-not-important": [] as OccurrenceWithTask[],
-      "not-urgent-not-important": [] as OccurrenceWithTask[],
+    const grouped: Record<QuadrantPosition["quadrant"], CalendarOccurrenceLike[]> = {
+      "urgent-important": [] as CalendarOccurrenceLike[],
+      "not-urgent-important": [] as CalendarOccurrenceLike[],
+      "urgent-not-important": [] as CalendarOccurrenceLike[],
+      "not-urgent-not-important": [] as CalendarOccurrenceLike[],
     }
 
     // Filter by search query
@@ -104,8 +105,8 @@ export function EisenhowerMatrix({
         break
       case "closest-target":
         sortedFiltered.sort((a, b) => {
-          const aDate = a.targetDate ?? a.limitDate
-          const bDate = b.targetDate ?? b.limitDate
+          const aDate = a.tentativeAt ?? a.dueAt 
+          const bDate = b.tentativeAt ?? b.dueAt 
           if (!aDate && !bDate) return 0
           if (!aDate) return 1
           if (!bDate) return -1
@@ -114,10 +115,12 @@ export function EisenhowerMatrix({
         break
       case "closest-limit":
         sortedFiltered.sort((a, b) => {
-          if (!a.limitDate && !b.limitDate) return 0
-          if (!a.limitDate) return 1
-          if (!b.limitDate) return -1
-          return a.limitDate.getTime() - b.limitDate.getTime()
+          const aLimit = a.dueAt
+          const bLimit = b.dueAt
+          if (!aLimit && !bLimit) return 0
+          if (!aLimit) return 1
+          if (!bLimit) return -1
+          return aLimit.getTime() - bLimit.getTime()
         })
         break
     }

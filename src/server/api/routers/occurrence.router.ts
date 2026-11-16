@@ -8,20 +8,22 @@ import { TaskLifecycleService, TaskAnalyticsService, TaskStreakService } from ".
 import { verifyOccurrenceOwnership, verifyTaskOwnership } from "../helpers";
 
 const createOccurrenceSchema = z.object({
-  associatedTaskId: z.number(),
-  startDate: z.date(),
-  limitDate: z.date().optional(),
-  targetDate: z.date().optional(),
-  targetTimeConsumption: z.number().positive().optional(),
+  taskId: z.number(),
+  slotStartAt: z.date().nullable().optional(),
+  slotEndAt: z.date().nullable().optional(),
+  dueAt: z.date().optional(),
+  tentativeAt: z.date().optional(),
+  targetTimeMinutes: z.number().nonnegative().optional(),
 });
 
 const updateOccurrenceSchema = z.object({
-  startDate: z.date().optional(),
-  limitDate: z.date().optional(),
-  targetDate: z.date().optional(),
-  targetTimeConsumption: z.number().positive().optional(),
-  timeConsumed: z.number().nonnegative().optional(),
-  status: z.enum(["Pending", "In Progress", "Completed", "Skipped"]).optional(),
+  slotStartAt: z.date().nullable().optional(),
+  slotEndAt: z.date().nullable().optional(),
+  dueAt: z.date().nullable().optional(),
+  tentativeAt: z.date().nullable().optional(),
+  targetTimeMinutes: z.number().nonnegative().optional(),
+  timeSpentMinutes: z.number().nonnegative().optional(),
+  status: z.enum(["pending", "in_progress", "completed", "skipped"]).optional(),
 });
 
 export const occurrenceRouter = createTRPCRouter({
@@ -32,7 +34,7 @@ export const occurrenceRouter = createTRPCRouter({
     .input(createOccurrenceSchema)
     .mutation(async ({ ctx, input }) => {
       // Verify that the task belongs to the user
-      await verifyTaskOwnership(input.associatedTaskId, ctx.session.user.id);
+      await verifyTaskOwnership(input.taskId, ctx.session.user.id);
       
       const service = new TaskLifecycleService();
       return await service.createOccurrence(input);

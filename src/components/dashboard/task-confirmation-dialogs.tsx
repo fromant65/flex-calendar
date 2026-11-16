@@ -13,20 +13,20 @@ import {
 } from "~/components/ui/alert-dialog"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
-import type { OccurrenceWithTask } from "~/types"
+import type { CalendarOccurrenceLike } from "~/types/v2-ui"
 
 interface TaskConfirmationDialogsProps {
   // Complete dialog
   confirmCompleteOpen: boolean
   onConfirmCompleteChange: (open: boolean) => void
-  occurrenceToComplete: OccurrenceWithTask | null
+  occurrenceToComplete: CalendarOccurrenceLike | null
   onConfirmComplete: (completedAt?: Date) => void
   isCompleting: boolean
   
   // Skip dialog
   confirmSkipOpen: boolean
   onConfirmSkipChange: (open: boolean) => void
-  occurrenceToSkip: OccurrenceWithTask | null
+  occurrenceToSkip: CalendarOccurrenceLike | null
   onConfirmSkip: () => void
   isSkipping: boolean
 }

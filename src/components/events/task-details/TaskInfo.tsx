@@ -1,14 +1,26 @@
 "use client"
 
-import type { TaskWithRecurrence } from "~/types"
+import type { TaskGetMyTasksOutput } from "~/server/api/routers/derived-endpoint-types"
 import { Activity, Calendar, CheckCircle2, Clock, Flag, XCircle } from "lucide-react"
 
+type TaskFromList = TaskGetMyTasksOutput[number]
+
+export type TaskInfoTask = Partial<TaskFromList> & {
+  taskType?: string
+  isActive?: boolean
+}
+
 interface TaskInfoProps {
-  task?: Partial<TaskWithRecurrence> | null
+  task?: TaskInfoTask | null
 }
 
 export function TaskInfo({ task }: TaskInfoProps) {
   if (!task) return null
+
+  const isActive =
+    typeof task.isActive === "boolean"
+      ? task.isActive
+      : task.status === "active"
 
   return (
     <div className="space-y-3">
@@ -38,10 +50,10 @@ export function TaskInfo({ task }: TaskInfoProps) {
           </div>
         )}
 
-        {task.isActive !== undefined && (
-          <div className={`flex items-center gap-2.5 rounded-lg p-2.5 ${task.isActive ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
-            <div className={`flex h-8 w-8 items-center justify-center rounded-md ${task.isActive ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
-              {task.isActive ? (
+        {(task.isActive !== undefined || task.status !== undefined) && (
+          <div className={`flex items-center gap-2.5 rounded-lg p-2.5 ${isActive ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+            <div className={`flex h-8 w-8 items-center justify-center rounded-md ${isActive ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+              {isActive ? (
                 <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
               ) : (
                 <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
@@ -50,7 +62,7 @@ export function TaskInfo({ task }: TaskInfoProps) {
             <div>
               <p className="text-xs text-muted-foreground">Estado</p>
               <p className="text-sm font-semibold text-foreground">
-                {task.isActive ? 'Activa' : 'Inactiva'}
+                {isActive ? 'Activa' : 'Inactiva'}
               </p>
             </div>
           </div>
